@@ -1,0 +1,46 @@
+//Easy semantic version based off describe + tags
+def getVersionName = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'describe', '--tags', '--dirty', '--long'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
+
+description = "Kryptnostic libraries for fully homomorphic encryption."
+group = "com.kryptnostic"
+version = getVersionName()
+
+allprojects { 
+    apply plugin: "maven-publish"
+    apply plugin: "java"
+    apply plugin: "maven"
+    apply plugin: "idea"
+
+    task wrapper(type: Wrapper) {
+        gradleVersion = '1.10'
+    }
+
+    task sourceJar (type : Jar) {
+      classifier = 'sources'
+      from sourceSets.main.allSource
+    }
+
+    task javadocJar(type: Jar, dependsOn:javadoc) {
+      classifier = 'javadoc'
+      from javadoc.destinationDir
+    }
+
+    ext.sourceCompatibility=JavaVersion.VERSION_1_7
+    ext.targetCompatibility=JavaVersion.VERSION_1_7
+
+    ext.spring_security_version='3.2.0.RELEASE'
+    ext.spring_framework_version='3.2.6.RELEASE'
+    ext.jackson_version='2.3.0'
+    ext.jetty_version='9.1.0.v20131115'
+
+}
+
+
+

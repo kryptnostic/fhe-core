@@ -1,0 +1,210 @@
+//Easy semantic version based off describe + tags
+def getVersionName = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'describe', '--tags', '--dirty', '--long'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
+
+description = "Java Framework for building clustered RESTful web applications"
+group = "com.kryptnostic"
+version = getVersionName()
+
+apply plugin: "maven-publish"
+apply plugin: "application"
+apply plugin: "java"
+apply plugin: "maven"
+apply plugin: "eclipse"
+apply plugin: "eclipse-wtp"
+apply plugin: "idea"
+apply plugin: "war"
+apply from: "publish.gradle"
+
+mainClassName = ""
+
+ext.sourceCompatibility=JavaVersion.VERSION_1_7
+ext.targetCompatibility=JavaVersion.VERSION_1_7
+
+repositories {
+  mavenCentral()  
+  mavenRepo url: "https://build.shibboleth.net/nexus/content/groups/public/"
+  mavenRepo url: "http://maven.springframework.org/snapshot"
+  mavenRepo url: "http://maven.springframework.org/milestone"
+  mavenRepo url: "http://repo.maven.apache.org/maven2"
+  maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+  }
+
+}
+
+ext.spring_security_version='3.2.0.RELEASE'
+ext.spring_framework_version='3.2.6.RELEASE'
+ext.jackson_version='2.3.0'
+ext.jetty_version='9.1.0.v20131115'
+
+dependencies {
+    /*
+     * Servlet API 3.1 
+     * 100% Java Servlet Container and Servlet Configuration
+     */
+    providedCompile 'javax.servlet.jsp:javax.servlet.jsp-api:2.3.1'
+    providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
+    compile group: 'javax.servlet', name: 'jstl', version:'1.2'
+
+    /*
+     * SL4J + LOG4J
+     * Currently use Log4J through sl4j. 
+     * TODO: Switch to logback
+     */
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version:'1.7.5'
+    compile group: 'org.slf4j', name: 'slf4j-api', version:'1.7.5'
+
+//    compile "ch.qos.logback:logback-classic:1.0.13"
+    compile "log4j:log4j:1.2.17"
+    
+    /*
+     * CORE SPRING FRAMEWORK DEPENDENCIES
+     * Depending injection, asynchronous execution, task scheduling, aspect oriented proxies, and more.
+     */
+    compile "org.springframework:spring-core:${project.spring_framework_version}"
+    compile "org.springframework:spring-beans:${project.spring_framework_version}"
+    compile "org.springframework:spring-context:${project.spring_framework_version}"
+    compile "org.springframework:spring-aop:${project.spring_framework_version}"
+    compile "org.springframework:spring-web:${project.spring_framework_version}"
+    compile "org.springframework:spring-webmvc:${project.spring_framework_version}"
+    compile "org.springframework:spring-test:${project.spring_framework_version}"
+
+    /*
+     * SPRING SECURITY DEPENDENCIES
+     * Solid and battle tested security AuthN/AuthZ framwork
+     */
+    compile "org.springframework.security:spring-security-core:${project.spring_security_version}"
+    compile "org.springframework.security:spring-security-web:${project.spring_security_version}"
+    compile "org.springframework.security:spring-security-ldap:${project.spring_security_version}"
+    compile "org.springframework.security:spring-security-config:${project.spring_security_version}"
+
+    /*
+     * Metrics
+     * Awesome reporting-- defaults to Graphite
+     * TODO: Integrate Ryan's Spring integration 
+     */
+    compile 'com.codahale.metrics:metrics-core:3.0.1'
+    compile 'com.codahale.metrics:metrics-graphite:3.0.1'
+    compile 'com.ryantenney.metrics:metrics-spring:3.0.0-RC4'
+
+    /*
+     * GUAVA 
+     * EventBus, FluentIterables, ListenableFutures and more
+     */
+    compile 'com.google.guava:guava:15.0'
+
+    /*
+     JODA TIME - A better datetime class.
+     */
+    compile 'joda-time:joda-time:2.3'
+    
+    /*
+     * APACHE COMMONS
+     * Logging, StringUtils, RandomStringUtils, IOUtils, and more
+     */
+
+    compile 'commons-io:commons-io:2.4'
+    compile 'org.apache.commons:commons-lang3:3.1'
+    compile 'commons-logging:commons-logging:1.1.3'
+    compile 'commons-collections:commons-collections:3.2.1'
+
+    /*
+     * JACKSON SERIALIZATION
+     * YAML via SnakeYaml
+     * Afterburner for faster serialization
+     * Guava integration
+     * Smile for binary serialization
+     * Jersey integration
+     * Jaxb annotation support
+     */
+    compile "com.fasterxml.jackson.core:jackson-core:${jackson_version}"
+    compile "com.fasterxml.jackson.core:jackson-databind:${jackson_version}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-guava:${jackson_version}"
+    compile "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:${jackson_version}"
+    compile "com.fasterxml.jackson.module:jackson-module-afterburner:${jackson_version}"
+    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-smile:${jackson_version}"
+    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson_version}"
+    compile "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${jackson_version}"
+    compile 'org.yaml:snakeyaml:1.13'
+
+    /*
+     * @Inject and @Nullable support
+     */
+    compile 'javax.inject:javax.inject:1'
+    compile 'com.google.code.findbugs:jsr305:1.3.9'
+    
+    /*
+     * Jersey Spring Integration
+     */
+    compile 'org.glassfish.jersey.ext:jersey-spring3:2.5'
+    
+    /*
+     * Linear algebra including GF(2) matrices
+     * TODO: Move to a separate plugin / remove from core
+     */
+	compile 'colt:colt:1.2.0'
+
+    /*
+     * Kryo serialization -- faster generic Java serialization
+     */
+    compile 'com.esotericsoftware.kryo:kryo:2.22'
+
+    /*
+     * HAZELCAST - DISTRIBUTED DATA GRID
+     * Transparent http clustering, distributed java.util collections
+     */
+    compile 'com.hazelcast:hazelcast:3.2-SNAPSHOT'
+    compile 'com.hazelcast:hazelcast-client:3.2-SNAPSHOT'
+    compile 'com.hazelcast:hazelcast-wm:3.2-SNAPSHOT'
+    compile 'com.hazelcast:hazelcast-spring:3.2-SNAPSHOT'
+
+    /*
+     * EMBEDDED JETTY FOR LOCAL TESTING
+     * TODO: Add support for Tomcat
+     * TODO: Integrate with application plugin for standalone deployment
+     */ 
+    providedCompile "org.eclipse.jetty:jetty-server:${jetty_version}"
+    providedCompile "org.eclipse.jetty:jetty-servlets:${jetty_version}"
+    providedCompile "org.eclipse.jetty:jetty-servlet:${jetty_version}"
+    providedCompile "org.eclipse.jetty:jetty-webapp:${jetty_version}"
+    providedCompile "org.eclipse.jetty:jetty-spring:${jetty_version}"
+    providedCompile "org.eclipse.jetty:jetty-jsp:${jetty_version}"
+    providedCompile "org.eclipse.jetty:jetty-continuation:${jetty_version}"
+    providedCompile "org.eclipse.jetty:jetty-annotations:${jetty_version}"
+    providedCompile "org.eclipse.jetty.websocket:websocket-server:${jetty_version}"
+
+    /*
+     * ATMOSPHERE 
+     * Websocket / CometD support
+     */
+    compile "org.atmosphere:atmosphere-runtime:2.0.5"
+
+    compile( project(":kryptnostic-api") )
+    compile( project(":kryptnostic-core") )
+
+    /*
+     * TESTING
+     */
+    testCompile 'junit:junit:4.11'
+}
+
+
+eclipse {
+    ext.downloadSources = true
+    ext.downloadJavadoc = true
+    wtp {
+        facet {
+            facet name: "java", version:"1.7"
+            facet name:"jst.web" , version:"3.1"
+        }
+    }
+    ext.sourceCompatibility=JavaVersion.VERSION_1_7
+    ext.targetCompatibility=JavaVersion.VERSION_1_7
+}
