@@ -17,6 +17,16 @@ public class BitUtils {
         return l & 1L;
     }
     
+    public static int getFirstSetBit( BitVector v ) {
+        //TODO: Optimize
+        for( int i = 0 ; i < v.size() ; ++i ) {
+            if( v.get( i ) ) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
     public static BitVector randomBitVector( int length ) {
         //TODO: Optimize this
         BitVector v = new BitVector( length );

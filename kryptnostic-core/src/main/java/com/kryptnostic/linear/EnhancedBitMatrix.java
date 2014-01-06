@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.kryptnostic.multivariate.MultivariateUtils;
@@ -49,7 +48,7 @@ public class EnhancedBitMatrix {
     public EnhancedBitMatrix inverse() throws SingularMatrixException {
         EnhancedBitMatrix inverse = identity( rows.size() );
         EnhancedBitMatrix current = new EnhancedBitMatrix( rows );
-        int lastRow = current.rows.size() - 1;
+        int lastRow = current.rows.size();
         
         /*
          * Gaussian elimination
@@ -60,7 +59,7 @@ public class EnhancedBitMatrix {
             BitVector currentRow = current.rows.get( row );
             //If the the row #row has the row-th entry set proceed with elimination;
             if( !currentRow.get( row ) ) {
-                for( int remainingRow = row + 1 ; remainingRow < current.rows.size() ; ++remainingRow ) {
+                for( int remainingRow = row + 1 ; remainingRow < lastRow ; ++remainingRow ) {
                     BitVector alternateRow = current.rows.get( remainingRow ); 
                     if( alternateRow.get( row ) ) {
                         inverse.swap( row, remainingRow );
@@ -79,7 +78,7 @@ public class EnhancedBitMatrix {
              */
             
             if( successful ) { 
-                for( int remainingRow = 0 ; remainingRow < rows.size() ; ++remainingRow ) {
+                for( int remainingRow = 0 ; remainingRow < lastRow ; ++remainingRow ) {
                     if( remainingRow == row ) {
                         continue;
                     }
@@ -94,19 +93,44 @@ public class EnhancedBitMatrix {
             }
         }
         
-        BitVector finalRow = current.rows.get( lastRow );
-        if( finalRow.cardinality() == 1 && finalRow.get( lastRow ) ) {
+        BitVector finalRow = current.rows.get( lastRow - 1);
+        if( finalRow.cardinality() == 1 && finalRow.get( lastRow - 1 ) ) {
             return inverse;
         } else {
             throw new SingularMatrixException("Unable to compute the inverse of a singular matrix.");
         }
     }
     
-    @Override
-    public String toString() {
-        return "EnhancedBitMatrix [rows=" + rows + "]";
+    public EnhancedBitMatrix rowReducedEchelonForm() {
+        EnhancedBitMatrix current = new EnhancedBitMatrix( rows );
+        rowReducedEchelonForm( current );
+        return current;
     }
-
+    
+    public EnhancedBitMatrix getNullspaceBasis() {
+        //TODO: Implement this
+        EnhancedBitMatrix rref = rowReducedEchelonForm();
+        int limit = Math.min( rref.cols() , rref.rows() );
+        for( int i = 0 ; i < rref.rows() ; ++i ) {
+//            int BitUtils.getFirstSetBit( rref.rows.get( i ) );
+        }
+        return null;
+        
+    }
+    
+    public EnhancedBitMatrix getLeftNullifyingMatrix() {
+        //TODO: Implement this
+        return null;
+        
+    }
+    
+    public EnhancedBitMatrix tranpose() {
+        EnhancedBitMatrix transposed = new EnhancedBitMatrix( this ); 
+        transpose( transposed  );
+        return transposed;
+    }
+    
+   
     public BitVector multiply( BitVector v ) {
         //TODO: Optimize this a little better.
         BitVector result = new BitVector( rows.size() );
@@ -161,21 +185,9 @@ public class EnhancedBitMatrix {
         rows.set( rowB , vA );
     }
 
-    public static class SingularMatrixException extends Exception {
-        private static final long serialVersionUID = -1261170128691437282L;
-
-        public SingularMatrixException(String message) {
-            super( message );
-        }
-    }
-    
-    public static EnhancedBitMatrix randomSqrMatrix( int size ) { 
-        ImmutableList.Builder<BitVector> builder = ImmutableList.builder();
-        for( int i = 0 ; i < size ; ++i ) {
-            builder.add( MultivariateUtils.randomVector( size ) );
-        }
-        
-        return new EnhancedBitMatrix( builder.build() );
+    @Override
+    public String toString() {
+        return "EnhancedBitMatrix [rows=" + rows + "]";
     }
 
     @Override
@@ -201,5 +213,84 @@ public class EnhancedBitMatrix {
         } else if (!rows.equals(other.rows))
             return false;
         return true;
+    }   
+    
+    public static void transpose( EnhancedBitMatrix m ) {
+        List<BitVector> newRows = Lists.newArrayListWithCapacity( m.cols() );
+        
+        for( int i = 0 ; i < m.cols() ; ++i ) {
+            newRows.add( new BitVector( m.rows() ) );
+        }
+        
+        for( int i = 0 ; i < m.rows() ; ++i ) {
+            BitVector row = m.rows.get( i );
+            for( int j = 0 ; j < row.size() ; ++j ) {
+                if( row.get( j ) ) {
+                    newRows.get( j ).set( i );
+                }
+            }
+        }
     }
+    
+    public static void rowReducedEchelonForm( EnhancedBitMatrix m ) {
+        List<BitVector> rows = m.rows;
+        int lastRow = rows.size();
+        
+        /*
+         * Gaussian elimination
+         */
+        
+        for( int row = 0 ; row < lastRow; ++row ) {
+            BitVector currentRow = rows.get( row );
+            //If the the row #row has the row-th entry set proceed with elimination;
+            if( !currentRow.get( row ) ) {
+                for( int remainingRow = row + 1 ; remainingRow < lastRow ; ++remainingRow ) {
+                    BitVector alternateRow = rows.get( remainingRow ); 
+                    if( alternateRow.get( row ) ) {
+                        m.swap( row, remainingRow );
+                        currentRow = alternateRow;
+                        break;
+                    }
+                }
+            }            
+            /*
+             * Zero the the row-th column in all other rows. If no suitable row was found throw an exception.
+             */
+            
+                for( int remainingRow = 0 ; remainingRow < lastRow ; ++remainingRow ) {
+                    if( remainingRow == row ) {
+                        continue;
+                    }
+                    BitVector rRow = rows.get( remainingRow );
+                    if( rRow.get( row ) ) {
+                        rRow.xor( currentRow );
+                    }
+                }   
+        }
+        
+    }
+    
+    public static EnhancedBitMatrix randomSqrMatrix( int size ) { 
+        List<BitVector> rows = Lists.newArrayListWithExpectedSize( size );
+        for( int i = 0 ; i < size ; ++i ) {
+            rows.add( MultivariateUtils.randomVector( size ) );
+        }
+        return new EnhancedBitMatrix( rows );
+    }
+    
+    public static EnhancedBitMatrix randomMatrix( int numRows , int numCols ) {
+        List<BitVector> rows = Lists.newArrayListWithExpectedSize( numRows );
+        for( int i = 0 ; i < numRows ; ++i ) {
+            rows.add( MultivariateUtils.randomVector( numCols ) );
+        }
+        return new EnhancedBitMatrix( rows );
+    }
+    public static class SingularMatrixException extends Exception {
+        private static final long serialVersionUID = -1261170128691437282L;
+
+        public SingularMatrixException(String message) {
+            super( message );
+        }
+    }
+    
 }

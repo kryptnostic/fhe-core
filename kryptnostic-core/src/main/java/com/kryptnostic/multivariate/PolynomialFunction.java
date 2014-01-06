@@ -48,8 +48,7 @@ public class PolynomialFunction extends PolynomialFunctionRepresentation {
                 result.xor( contributions.get( i ) );
             }
         }
-        Algebra a = new Algebra();
-        
+                
         return result;
     }
     

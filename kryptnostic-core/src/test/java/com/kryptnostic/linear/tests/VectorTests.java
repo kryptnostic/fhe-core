@@ -22,7 +22,7 @@ public class VectorTests {
         v.set(0);
         Assert.assertEquals( v.elements()[0], (1L<<63) | 1L );
         logger.info( "Actual representation: {}" , v.elements()[0] );
-        
+
     }
     
     @Test

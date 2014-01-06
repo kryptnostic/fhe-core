@@ -14,11 +14,15 @@ import junit.framework.Assert;
 public class MatrixTests {
     private static final Logger logger = LoggerFactory.getLogger( MatrixTests.class );
     
+    /**
+     * This test may randomly fail if 100 singular matrices are chosen in a row.
+     * @throws SingularMatrixException
+     */
     @Test
-    public void inverseTest() throws SingularMatrixException {
+    public void inverseAndMultiplyTest() throws SingularMatrixException {
         int count = 0 ;
         boolean success = false;
-        while( count < 10 ) {
+        while( count < 100 ) {
             EnhancedBitMatrix m = EnhancedBitMatrix.randomSqrMatrix( 10 );
             EnhancedBitMatrix mcpy = new EnhancedBitMatrix( m );
             EnhancedBitMatrix minv;
@@ -27,8 +31,8 @@ public class MatrixTests {
                 Assert.assertEquals( m , mcpy);
                 EnhancedBitMatrix identity = minv.multiply( m );
                 Assert.assertEquals( identity , EnhancedBitMatrix.identity( 10 ) );
-                count = 10;
                 success = true;
+                break;
             } catch( SingularMatrixException e ) {
                 logger.error( "Singlur matrices cannot be inverted." , e );
                 ++count;
