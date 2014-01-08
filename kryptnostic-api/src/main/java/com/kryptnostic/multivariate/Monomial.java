@@ -49,4 +49,10 @@ public class Monomial extends BitVector {
     public static Monomial constantMonomial( int size ) {
         return new Monomial( size );
     }
+    
+    public static Monomial linearMonomial( int size , int term ) {
+        Monomial m = new Monomial( size );
+        m.set( term );
+        return m;
+    }
 }

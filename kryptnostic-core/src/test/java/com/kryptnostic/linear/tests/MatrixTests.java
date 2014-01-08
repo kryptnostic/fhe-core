@@ -108,9 +108,45 @@ public class MatrixTests {
         
         Assert.assertEquals( r3.get( 0 ) , true );
         Assert.assertEquals( r3.get( 1 ) , true );
-        
-        
     }
     
+    @Test 
+    public void transposeTest() {
+        EnhancedBitMatrix m = EnhancedBitMatrix.randomMatrix(63 , 65);
+        EnhancedBitMatrix mt = m.tranpose();
+        
+        for( int row = 0 ; row < m.rows() ; ++row ) {
+            for( int col = 0 ; col < m.cols() ; ++col ) {
+                Assert.assertEquals( m.get( row , col ) , mt.get( col , row ) ); 
+            }
+        }
+    }
+    
+    @Test
+    public void zeroTest() {
+        EnhancedBitMatrix m = new EnhancedBitMatrix( 4 , 6 );
+        Assert.assertEquals( true , m.isZero() );
+        m.set( 1  ,  5 );
+        Assert.assertEquals( false , m.isZero() );
+    }
+    
+    @Test 
+    public void nullspaceTest() {
+        EnhancedBitMatrix m = EnhancedBitMatrix.randomMatrix( 65 , 210 );
+        EnhancedBitMatrix nsBasis = m.getNullspaceBasis();
+        logger.info( "Nullspace basis ({},{}): {}" , nsBasis.rows() , nsBasis.cols() );
+        EnhancedBitMatrix result = m.multiply( nsBasis );
+        logger.info(  "Nullified: {}" , result );
+        Assert.assertEquals( true , result.isZero() );
+    }
+    
+    @Test
+    public void generalizedInverseTest() throws SingularMatrixException {
+        EnhancedBitMatrix m = EnhancedBitMatrix.randomMatrix( 65 , 257 );
+        Assert.assertEquals( EnhancedBitMatrix.identity( 65 ) , m.multiply( m.rightGeneralizedInverse() ) );
+        
+        m = EnhancedBitMatrix.randomMatrix( 257 , 65 );
+        Assert.assertEquals( EnhancedBitMatrix.identity( 65 ) , m.leftGeneralizedInverse().multiply( m ) );
+    }
     
 }

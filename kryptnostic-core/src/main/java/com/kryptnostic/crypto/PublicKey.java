@@ -1,17 +1,21 @@
 package com.kryptnostic.crypto;
 
-import java.util.List;
-
-import com.kryptnostic.multivariate.Monomial;
 import com.kryptnostic.multivariate.PolynomialFunction;
 
-import cern.colt.bitvector.BitVector;
-
-public class PublicKey extends PolynomialFunction {
-
+public class PublicKey {
+    private final PolynomialFunction encrypter;
+    
     public PublicKey( PrivateKey privateKey ) {
-        super(inputLength, outputLength, monomials, contributions);
-        // TODO Auto-generated constructor stub
+        int inputLen =  privateKey.getE1().cols();
+        PolynomialFunction input = PolynomialFunction.identity( inputLen );
+        PolynomialFunction randInput  = PolynomialFunction.identity( inputLen  );
+//        encrypter = privateKey.getE1().multiply( input ).add( privateKey.getE2().multiply( ) );
+        encrypter = null;
+                
     }
-
+    
+    public byte[] encrypt( byte[] plaintext ) {
+        return null;
+    }
+    
 }

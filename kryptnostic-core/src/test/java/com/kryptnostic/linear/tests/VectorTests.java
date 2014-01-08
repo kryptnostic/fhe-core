@@ -34,4 +34,5 @@ public class VectorTests {
         Assert.assertEquals( BitUtils.parity( c ), 1L );
         Assert.assertEquals( BitUtils.parity( d ), 0L );
     }
+    
 }

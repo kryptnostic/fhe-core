@@ -4,8 +4,9 @@ import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import cern.colt.matrix.linalg.Algebra;
+import com.google.common.collect.Lists;
 
+import cern.colt.matrix.linalg.Algebra;
 import cern.colt.bitvector.BitVector;
 
 public class PolynomialFunction extends PolynomialFunctionRepresentation {
@@ -52,5 +53,21 @@ public class PolynomialFunction extends PolynomialFunctionRepresentation {
         return result;
     }
     
+    public static PolynomialFunction randomFunction( int intputLen , int outputLen ) {
+        return null;
+    }
     
+    public static PolynomialFunction identity( int monomialCount ) {
+        List<Monomial> monomials = Lists.newArrayList();
+        List<BitVector> contributions = Lists.newArrayList();
+        
+        for( int i = 0 ; i < monomialCount ; ++i ) {
+            monomials.add( Monomial.linearMonomial( monomialCount , i) );
+            BitVector contribution = new BitVector( monomialCount );
+            contribution.set( i );
+            contributions.add( contribution );
+        }
+        
+        return new PolynomialFunction( monomialCount , monomialCount , monomials , contributions);
+    }
 }
