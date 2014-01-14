@@ -1,12 +1,15 @@
 package com.kryptnostic.multivariate;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
-import cern.colt.matrix.linalg.Algebra;
 import cern.colt.bitvector.BitVector;
 
 public class PolynomialFunction extends PolynomialFunctionRepresentation {
@@ -38,6 +41,27 @@ public class PolynomialFunction extends PolynomialFunctionRepresentation {
     
     public static Builder builder(int inputLength, int outputLength) {
         return new Builder(inputLength, outputLength);
+    }
+    
+    public PolynomialFunction compose( PolynomialFunction inner ) {
+        Map<Monomial, BitVector> results = Maps.newHashMap();
+        for( int i = 0 ; i < monomials.size() ; ++i ) {
+            for( int j = 0 ;  j < inner.monomials.size(); ++j ) {
+                Monomial product = this.monomials.get( i ).product( inner.monomials.get( j ) );
+                BitVector contribution = this.contributions.get( i ).copy();
+                contribution.and( inner.contributions.get( j ) );
+                contribution.xor( Objects.firstNonNull( results.get( product ) , new BitVector( outputLength ) ) );
+                results.put( product , contribution );
+            }
+        }
+        List<Monomial> monomials = Lists.newArrayListWithExpectedSize( results.size() );
+        List<BitVector> contributions = Lists.newArrayListWithExpectedSize( results.size() );
+        for( Entry<Monomial ,BitVector> result : results.entrySet() ) {
+            monomials.add( result.getKey() );
+            contributions.add( result.getValue() );
+        }
+        
+        return new PolynomialFunction( inner.inputLength , outputLength, monomials, contributions);
     }
     
     public BitVector evalute( BitVector input ) {

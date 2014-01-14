@@ -1,9 +1,11 @@
 package com.kryptnostic.multivariate;
 
 import java.security.InvalidParameterException;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.Set;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 
 import cern.colt.bitvector.BitVector;
@@ -27,6 +29,14 @@ public class Monomial extends BitVector {
         } else {
             throw new InvalidParameterException("Number of terms in input doesn't not much number of terms in Monomial.");
         }
+    }
+    
+    public Monomial product( Monomial monomial ) {
+        Preconditions.checkArgument( this.size() == monomial.size() , "Cannot compute product due to polynomial ring mismatch.");
+        Monomial result = new Monomial( monomial.size() );
+        result.elements( Arrays.copyOf( this.elements() , this.elements().length ) , this.elements().length );
+        result.and( monomial );
+        return result;
     }
     
     public static Monomial randomMonomial( int size , int maxOrder ) {
