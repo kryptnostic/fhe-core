@@ -278,22 +278,25 @@ public class EnhancedBitMatrix {
     }
     
     public static void transpose( EnhancedBitMatrix m ) {
-        List<BitVector> newRows = Lists.newArrayListWithCapacity( m.cols() );
-        
-        for( int i = 0 ; i < m.cols() ; ++i ) {
-            newRows.add( new BitVector( m.rows() ) );
+        transpose( m.rows , m.cols() );
+    }
+    
+    public static void transpose( List<BitVector> rows , int cols ) {
+        List<BitVector> newRows = Lists.newArrayListWithCapacity( cols );
+        for( int i = 0 ; i < cols ; ++i ) {
+            newRows.add( new BitVector( cols ) );
         }
         
-        for( int i = 0 ; i < m.rows() ; ++i ) {
-            BitVector row = m.rows.get( i );
+        for( int i = 0 ; i < rows.size() ; ++i ) {
+            BitVector row = rows.get( i );
             for( int j = 0 ; j < row.size() ; ++j ) {
                 if( row.get( j ) ) {
                     newRows.get( j ).set( i );
                 }
             }
         }
-        m.rows.clear();
-        m.rows.addAll( newRows );
+        rows.clear();
+        rows.addAll( newRows );
     }
     
     public static void rowReducedEchelonForm( EnhancedBitMatrix m , EnhancedBitMatrix ... augments ) {

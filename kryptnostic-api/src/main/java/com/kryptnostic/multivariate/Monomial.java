@@ -33,10 +33,36 @@ public class Monomial extends BitVector {
     
     public Monomial product( Monomial monomial ) {
         Preconditions.checkArgument( this.size() == monomial.size() , "Cannot compute product due to polynomial ring mismatch.");
-        Monomial result = new Monomial( monomial.size() );
-        result.elements( Arrays.copyOf( this.elements() , this.elements().length ) , this.elements().length );
-        result.and( monomial );
+        Monomial result = clone();
+        result.or( monomial );
         return result;
+    }
+    
+    public Set<Monomial> subsets( int order ) {
+        int len = size();
+        Set<Monomial> subsets = Sets.newHashSet( Monomial.constantMonomial( len ) );
+        for( int ss = 0 ; ss < order ; ++ss ) {
+            Set<Monomial> nextSubsets = Sets.newHashSet();
+            for( Monomial m : subsets ) {
+                for( int i = 0 ; i < len ; ++i ) {
+                    if( this.get( i ) && !m.get( i ) ) {
+                        nextSubsets.add( m.clone().chainSet( i ) );
+                    }
+                }
+            }
+            subsets = nextSubsets;
+        }
+        return subsets;
+    }
+    
+    public Monomial chainSet(int index) {
+        super.set(index);
+        return this;
+    }
+    @Override
+    public Monomial clone() {
+        long[] e = this.elements();
+        return new Monomial( Arrays.copyOf( e, e.length ) , this.size() );
     }
     
     public static Monomial randomMonomial( int size , int maxOrder ) {
@@ -65,4 +91,5 @@ public class Monomial extends BitVector {
         m.set( term );
         return m;
     }
+
 }

@@ -3,12 +3,17 @@ package com.kryptnostic.multivariate;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.kryptnostic.linear.EnhancedBitMatrix;
 
 import cern.colt.bitvector.BitVector;
 
@@ -43,7 +48,7 @@ public class PolynomialFunction extends PolynomialFunctionRepresentation {
         return new Builder(inputLength, outputLength);
     }
     
-    public PolynomialFunction compose( PolynomialFunction inner ) {
+    public PolynomialFunction product( PolynomialFunction inner ) {
         Map<Monomial, BitVector> results = Maps.newHashMap();
         for( int i = 0 ; i < monomials.size() ; ++i ) {
             for( int j = 0 ;  j < inner.monomials.size(); ++j ) {
@@ -77,6 +82,65 @@ public class PolynomialFunction extends PolynomialFunctionRepresentation {
         return result;
     }
     
+    public PolynomialFunction compose( PolynomialFunction inner ) {
+        /*
+         * f(g(x)) 
+         * We compute this by determing CDAWG for the set of monomials in the outer function
+         */
+        
+        Map<Monomial, Integer> frequencies = Maps.newHashMap();
+        for( Monomial m : monomials ) {
+            for( Monomial pair : m.subsets( 2 ) ) {
+                frequencies.put( pair , Objects.firstNonNull( frequencies.get( pair ) , 0 ) + 1 );
+            }
+        }
+        
+        TreeSet<MonomialCountHolder> sortedFrequencies = Sets.newTreeSet( Iterables.transform( frequencies.entrySet() , MonomialCountHolder.getFrequencyTransformer() ) );
+        frequencies = null;
+        
+        for( MonomialCountHolder frequency : sortedFrequencies ) {
+            /*
+             * For each monomial product 
+             */
+        }
+        
+        List<BitVector> transposeContrib = Lists.newArrayList( contributions ); 
+        EnhancedBitMatrix.transpose( transposeContrib , outputLength );
+        
+        Map<Monomial, Map<Monomial,BitVector>> computeCache;
+        
+        
+        
+        PolynomialFunction composed = new PolynomialFunction(inputLength, outputLength, monomials, contributions);
+        
+        return composed;
+        
+    }
+    
+    public static Set<Monomial> product( Monomial productMask, List<Monomial> monomials, List<BitVector> contributions ) {
+        Set<Monomial> results = Sets.newHashSet(Monomial.constantMonomial( productMask.size() ) );
+        for( int i = 0 ; i < productMask.size() ; ++i ) {
+            Set<Monomial> next = Sets.newHashSet();
+            if( productMask.get( i ) ) {
+                for( int j = 0 ; j < contributions.size() ; ++j ) {
+                    BitVector contribution = contributions.get( j );
+                    if( contribution.get( i ) ) {
+                        Monomial m = monomials.get( j );
+                        for( Monomial monomial : results ) {
+                            Monomial product = monomial.product( m );
+                            if( !next.add( product ) ) {
+                                next.remove( product );
+                            }
+                        }
+                        
+                    }
+                }
+                results = next;
+            }
+        }
+        return results;
+    }
+    
     public static PolynomialFunction randomFunction( int intputLen , int outputLen ) {
         return null;
     }
@@ -94,4 +158,5 @@ public class PolynomialFunction extends PolynomialFunctionRepresentation {
         
         return new PolynomialFunction( monomialCount , monomialCount , monomials , contributions);
     }
+    
 }
