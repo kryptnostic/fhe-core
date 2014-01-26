@@ -48,6 +48,33 @@ public class PolynomialFunction extends PolynomialFunctionRepresentation {
         return new Builder(inputLength, outputLength);
     }
     
+    public PolynomialFunction add( PolynomialFunction rhs ) {
+        Map<Monomial, BitVector> result = Maps.newHashMap();
+        for( int i = 0 ; i < monomials.size() ; ++i  ) {
+            result.put( monomials.get(i) , contributions.get( i ) );
+        }
+        
+        for( int i = 0 ; i < rhs.monomials.size() ; ++i  ) {
+            Monomial m = rhs.monomials.get( i );
+            BitVector contribution = Objects.firstNonNull( result.get( rhs.monomials.get( i ) ) , new BitVector( outputLength ) );
+            contribution.xor( rhs.contributions.get( i ) );
+            result.put( m , contribution );
+        }
+        
+        
+        List<Monomial> newMonomials = Lists.newArrayListWithExpectedSize( result.size() );
+        List<BitVector> newContributions = Lists.newArrayListWithExpectedSize( result.size() );
+        
+        for( Entry<Monomial,BitVector> entry : result.entrySet() ) {
+            BitVector contribution = entry.getValue();
+            if( contribution.cardinality() > 0 ) {
+                newMonomials.add( entry.getKey() );
+                newContributions.add( contribution );
+            }
+        }
+        
+        return new PolynomialFunction(inputLength, outputLength, newMonomials, newContributions);
+    }
     public PolynomialFunction product( PolynomialFunction inner ) {
         Map<Monomial, BitVector> results = Maps.newHashMap();
         for( int i = 0 ; i < monomials.size() ; ++i ) {
@@ -141,8 +168,14 @@ public class PolynomialFunction extends PolynomialFunctionRepresentation {
         return results;
     }
     
-    public static PolynomialFunction randomFunction( int intputLen , int outputLen ) {
-        return null;
+    public static PolynomialFunction randomFunction( int inputLen , int outputLen ) {
+        PolynomialFunction.Builder builder = PolynomialFunction.builder( inputLen , outputLen );
+        for( int i = 0 ; i < 1024 ; ++i ) {
+            BitVector contribution = MultivariateUtils.randomVector( 256 );
+            builder.setMonomialContribution( Monomial.randomMonomial( 256 , 4 ) , contribution);
+        }
+        
+        return builder.build();
     }
     
     public static PolynomialFunction identity( int monomialCount ) {
@@ -158,5 +191,6 @@ public class PolynomialFunction extends PolynomialFunctionRepresentation {
         
         return new PolynomialFunction( monomialCount , monomialCount , monomials , contributions);
     }
+    
     
 }

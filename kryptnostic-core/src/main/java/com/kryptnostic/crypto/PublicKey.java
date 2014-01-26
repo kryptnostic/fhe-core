@@ -18,6 +18,7 @@ public class PublicKey {
          */
         
 //        encrypter = privateKey.getE1().multiply( input ).add( privateKey.getE2().multiply( ) );
+        
         encrypter = null;
                 
     }

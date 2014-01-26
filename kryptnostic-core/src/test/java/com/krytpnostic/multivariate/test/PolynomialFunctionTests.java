@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.Monomial;
 import com.kryptnostic.multivariate.MultivariateUtils;
 import com.kryptnostic.multivariate.PolynomialFunction;
@@ -88,5 +89,15 @@ public class PolynomialFunctionTests {
        logger.info("Expected: {}", expected );
        Set<Monomial> actual = PolynomialFunction.product( mask , monomials , contributions );
        Assert.assertEquals( expected , actual );
+   }
+   
+   @Test 
+   public void addTest() {
+       PolynomialFunction lhs = PolynomialFunction.randomFunction(256, 256);
+       PolynomialFunction rhs = PolynomialFunction.randomFunction(256, 256);
+       BitVector val = BitUtils.randomBitVector( 256 ) ;
+       BitVector expected = lhs.evalute( val );
+       expected.xor( rhs.evalute( val ) );
+       Assert.assertEquals( expected, lhs.add( rhs ).evalute( val ) );
    }
 }
