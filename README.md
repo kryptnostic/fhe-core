@@ -1,4 +1,4 @@
-crypto-core
+fhe-core
 ===========
 
 Libraries for fully homomorphic encryption
