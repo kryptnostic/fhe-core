@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate;
+package com.kryptnostic.multivariate.gf2;
 
 import java.security.InvalidParameterException;
 import java.util.List;
@@ -17,14 +17,15 @@ import cern.colt.bitvector.BitVector;
  * Base class for storing and transmission of polynomial representations.
  * @author Matthew Tamayo-Rios
  */
-public class PolynomialFunctionRepresentation {
+public class PolynomialFunctionRepresentationGF2 {
     protected final int inputLength;
     protected final int outputLength;
     
+    //TODO: Switch to primitive arrays, don't get much from using lists. 
     protected final List<Monomial> monomials;
     protected final List<BitVector> contributions;
     
-    public PolynomialFunctionRepresentation(int inputLength, int outputLength , List<Monomial> monomials , List<BitVector> contributions ) {
+    public PolynomialFunctionRepresentationGF2(int inputLength, int outputLength , List<Monomial> monomials , List<BitVector> contributions ) {
         this.inputLength = inputLength;
         this.outputLength = outputLength;
         this.monomials = monomials;
@@ -63,9 +64,9 @@ public class PolynomialFunctionRepresentation {
         }
 
         
-        public PolynomialFunctionRepresentation build() {
+        public PolynomialFunctionRepresentationGF2 build() {
             Pair<List<Monomial> , List<BitVector> > monomialsAndContributions = getMonomialsAndContributions(); 
-            return new PolynomialFunctionRepresentation(inputLength, outputLength, monomialsAndContributions.getLeft() , monomialsAndContributions.getRight() );
+            return new PolynomialFunctionRepresentationGF2(inputLength, outputLength, monomialsAndContributions.getLeft() , monomialsAndContributions.getRight() );
         }
         
         protected Pair<List<Monomial> , List<BitVector> > getMonomialsAndContributions() {
@@ -78,8 +79,8 @@ public class PolynomialFunctionRepresentation {
             return Pair.<List<Monomial> , List<BitVector> >of(monomialsBuilder.build(), contribBuilder.build());
         }
         
-        protected PolynomialFunctionRepresentation make(int inputLength, int outputLength , List<Monomial> monomials , List<BitVector> contributions ) {
-            return new PolynomialFunctionRepresentation(inputLength, outputLength, monomials , contributions );
+        protected PolynomialFunctionRepresentationGF2 make(int inputLength, int outputLength , List<Monomial> monomials , List<BitVector> contributions ) {
+            return new PolynomialFunctionRepresentationGF2(inputLength, outputLength, monomials , contributions );
         }
     }
     

@@ -5,14 +5,15 @@ import java.security.InvalidParameterException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
-import com.kryptnostic.multivariate.PolynomialFunction;
+import com.kryptnostic.multivariate.MultivariatePolynomialFunction;
+import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 
 public class PrivateKey {
     private static ObjectMapper mapper = new ObjectMapper();
     private final EnhancedBitMatrix D;
     private final EnhancedBitMatrix E1;
     private final EnhancedBitMatrix E2;
-    private final PolynomialFunction F;
+    private final MultivariatePolynomialFunction F;
     
     /**
      * Construct a private key instance that can be used for decrypting data encrypted with the public key.
@@ -52,7 +53,7 @@ public class PrivateKey {
         E1 = e1gen;
         E2 = e2gen;
         
-        F = PolynomialFunction.randomFunction( cipherTextBlockLength , plainTextBlockLength );
+        F = PolynomialFunctionGF2.randomFunction( cipherTextBlockLength , plainTextBlockLength );
     }
     
     public EnhancedBitMatrix getD() {
@@ -67,7 +68,7 @@ public class PrivateKey {
         return E2;
     }
 
-    public PolynomialFunction getF() {
+    public MultivariatePolynomialFunction getF() {
         return F;
     }
 

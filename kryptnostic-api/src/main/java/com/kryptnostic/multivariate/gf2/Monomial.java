@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate;
+package com.kryptnostic.multivariate.gf2;
 
 import java.security.InvalidParameterException;
 import java.util.Arrays;
@@ -7,18 +7,41 @@ import java.util.Set;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
+import com.kryptnostic.multivariate.predicates.MonomialOrderHomogeneityPredicate;
 
 import cern.colt.bitvector.BitVector;
 
 public class Monomial extends BitVector {
     private static final long serialVersionUID = -8751413919025034976L;
-
+    private static final MonomialOrderHomogeneityPredicate linearHomogeneityPredicate = new MonomialOrderHomogeneityPredicate( 1 );
+    
     public Monomial( int size ) {
         super( size );
     }
     
     public Monomial( long[] bits , int size ) {
         super( bits , size );
+    }
+    
+    public boolean hasFactor( Monomial m ) {
+        if( m.size() > size() ) {
+            throw new InvalidParameterException( "Monomial to test as factor cannot be of higher order than monomial that it factors into." );
+        }
+        for( int i = 0 ; i < bits.length ; ++i ) {
+            if( ( bits[i] & m.bits[i] ) != m.bits[i] ) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    public boolean isZero() {
+        for( long l : bits ) {
+            if( l!=0 ) {
+                return false;
+            }
+        }
+        return true;
     }
     
     public boolean eval( BitVector input ) {
@@ -91,5 +114,8 @@ public class Monomial extends BitVector {
         m.set( term );
         return m;
     }
-
+    
+    public static MonomialOrderHomogeneityPredicate getLinearHomogeneityPredicate() { 
+        return linearHomogeneityPredicate;
+    }
 }
