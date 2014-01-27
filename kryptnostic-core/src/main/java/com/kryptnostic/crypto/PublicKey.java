@@ -1,17 +1,18 @@
 package com.kryptnostic.crypto;
 
-import com.kryptnostic.multivariate.PolynomialFunction;
+import com.kryptnostic.multivariate.MultivariatePolynomialFunction;
+import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 
 public class PublicKey {
-    private final PolynomialFunction encrypter;
+    private final MultivariatePolynomialFunction encrypter;
     
     public PublicKey( PrivateKey privateKey ) {
         int inputLen =  privateKey.getE1().cols();
         int outputLen = privateKey.getE1().rows();
-        PolynomialFunction input = PolynomialFunction.identity( outputLen );
+        MultivariatePolynomialFunction input = PolynomialFunctionGF2.identity( outputLen );
 //        PolynomialFunction randInput  = PolynomialFunction.identity( inputLen  );
-        PolynomialFunction R = PolynomialFunction.randomFunction( outputLen , inputLen );
-        PolynomialFunction F = PolynomialFunction.randomFunction( inputLen  , inputLen );
+        MultivariatePolynomialFunction R = PolynomialFunctionGF2.randomFunction( outputLen , inputLen );
+        MultivariatePolynomialFunction F = PolynomialFunctionGF2.randomFunction( inputLen  , inputLen );
 //        E1( F.compose( R )
         /*
          * E(m) = E1(m + F( R(m,r)) ) + E2(R(m,r))

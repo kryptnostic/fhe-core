@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate;
+package com.kryptnostic.multivariate.gf2;
 
 import java.util.Map.Entry;
 
