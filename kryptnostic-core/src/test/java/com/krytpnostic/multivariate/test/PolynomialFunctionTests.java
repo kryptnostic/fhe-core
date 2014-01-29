@@ -1,12 +1,13 @@
 package com.krytpnostic.multivariate.test;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.kryptnostic.linear.BitUtils;
@@ -19,7 +20,6 @@ import junit.framework.Assert;
 
 
 public class PolynomialFunctionTests {
-    private static final Random r = new Random( System.currentTimeMillis() );
     private static final Logger logger = LoggerFactory.getLogger( PolynomialFunctionTests.class );
     
     @Test
@@ -50,10 +50,16 @@ public class PolynomialFunctionTests {
         Assert.assertEquals( result.size() ,  256 );
     }
     
-    
    @Test
-   public void productTest() {
-       Monomial mask = new Monomial( 256 ).chainSet( 25 ).chainSet( 100 );
+   public void identityTest() {
+       PolynomialFunctionGF2 f = PolynomialFunctionGF2.identity( 256 );
+       BitVector input = BitUtils.randomBitVector( 256 );
+       
+       Assert.assertEquals( input , f.evaluate( input ) );
+   }
+   
+   @Test
+   public void monomialSetProductTest() {
        Set<Monomial> mset = Sets.newHashSet();
        Set<BitVector> cset = Sets.newHashSet();
        while( mset.size() < 256 ) {
@@ -88,7 +94,7 @@ public class PolynomialFunctionTests {
            }
        }
        logger.info("Expected: {}", expected );
-       Set<Monomial> actual = PolynomialFunctionGF2.product( mask , monomials , contributions );
+       Set<Monomial> actual = PolynomialFunctionGF2.product( rowA , rowB );
        Assert.assertEquals( expected , actual );
    }
    
@@ -100,6 +106,39 @@ public class PolynomialFunctionTests {
        BitVector expected = lhs.evaluate( val );
        expected.xor( rhs.evaluate( val ) );
        Assert.assertEquals( expected, lhs.add( rhs ).evaluate( val ) );
+   }
+   
+   @Test
+   public void productTest() {
+       PolynomialFunctionGF2 lhs = PolynomialFunctionGF2.randomFunction(256, 256);
+       PolynomialFunctionGF2 rhs = PolynomialFunctionGF2.randomFunction(256, 256);
+       BitVector val = BitUtils.randomBitVector( 256 ) ;
+       BitVector expected = lhs.evaluate( val );
+       expected.and( rhs.evaluate( val ) );
+       Assert.assertEquals( expected, lhs.product( rhs ).evaluate( val ) );
+   }
+   
+   @Test 
+   public void mostFrequentFactorTest() {
+       Monomial[] monomials = new Monomial[] { 
+         new Monomial( 256 ).chainSet( 0 ).chainSet(1) ,
+         new Monomial( 256 ).chainSet( 0 ).chainSet(1).chainSet(2) ,
+         new Monomial( 256 ).chainSet( 0 ).chainSet(1).chainSet(2).chainSet(3) ,
+         new Monomial( 256 ).chainSet( 0 ).chainSet(1).chainSet(4) ,
+       };
+       BitVector[] contributions = new BitVector[] {
+               BitUtils.randomBitVector( 256 ) ,
+               BitUtils.randomBitVector( 256 ) ,
+               BitUtils.randomBitVector( 256 ) ,
+               BitUtils.randomBitVector( 256 )
+       };
+       
+       
+       Map<Monomial, Set<Monomial>> memoizedComputations = PolynomialFunctionGF2.initializeMemoMap( 256 , monomials , contributions );
+       Map<Monomial, List<Monomial>> possibleProducts = PolynomialFunctionGF2.allPossibleProduct( memoizedComputations.keySet() );  // 1
+       Monomial mostFrequent = PolynomialFunctionGF2.mostFrequentFactor( monomials , possibleProducts.keySet() , ImmutableSet.<Monomial>of() );
+       logger.info( "Most frequent monomial found: {}" , mostFrequent );
+       Assert.assertEquals( new Monomial( 256 ).chainSet( 0 ).chainSet( 1 ) , mostFrequent );
    }
    
    @Test

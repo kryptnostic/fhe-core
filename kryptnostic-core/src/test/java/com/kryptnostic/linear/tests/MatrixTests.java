@@ -5,8 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
+import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
+import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 
 import cern.colt.bitvector.BitVector;
 import junit.framework.Assert;
@@ -120,6 +122,15 @@ public class MatrixTests {
                 Assert.assertEquals( m.get( row , col ) , mt.get( col , row ) ); 
             }
         }
+        
+        m = EnhancedBitMatrix.randomMatrix(65 , 63);
+        mt = m.tranpose();
+        
+        for( int row = 0 ; row < m.rows() ; ++row ) {
+            for( int col = 0 ; col < m.cols() ; ++col ) {
+                Assert.assertEquals( m.get( row , col ) , mt.get( col , row ) ); 
+            }
+        }
     }
     
     @Test
@@ -131,10 +142,29 @@ public class MatrixTests {
     }
     
     @Test 
+    public void nullifyingTest() {
+        EnhancedBitMatrix m = EnhancedBitMatrix.randomMatrix( 210 , 65  );
+        EnhancedBitMatrix nsBasis = m.getLeftNullifyingMatrix();
+        
+        Assert.assertEquals( nsBasis.rows() , m.cols() );
+        Assert.assertEquals( nsBasis.cols() , m.rows() );
+        logger.info( "Nullifying matrix ({},{}): {}" , nsBasis.rows() , nsBasis.cols() , nsBasis );
+
+        EnhancedBitMatrix result = nsBasis.multiply( m );
+        Assert.assertEquals( true , result.isZero() );
+        logger.info(  "Nullified: {}" , result );
+    }
+    
+    @Test
+    public void leftInvertibilityTest() {
+        
+    }
+    
+    @Test 
     public void nullspaceTest() {
         EnhancedBitMatrix m = EnhancedBitMatrix.randomMatrix( 65 , 210 );
         EnhancedBitMatrix nsBasis = m.getNullspaceBasis();
-        logger.info( "Nullspace basis ({},{}): {}" , nsBasis.rows() , nsBasis.cols() );
+        logger.info( "Nullspace basis ({},{}): {}" , nsBasis.rows() , nsBasis.cols() , nsBasis );
         EnhancedBitMatrix result = m.multiply( nsBasis );
         logger.info(  "Nullified: {}" , result );
         Assert.assertEquals( true , result.isZero() );
@@ -147,6 +177,45 @@ public class MatrixTests {
         
         m = EnhancedBitMatrix.randomMatrix( 257 , 65 );
         Assert.assertEquals( EnhancedBitMatrix.identity( 65 ) , m.leftGeneralizedInverse().multiply( m ) );
+    }
+    
+    @Test
+    public void testPolynomialFunctionMultiply() {
+        //Generate test function 
+        PolynomialFunctionGF2 f = PolynomialFunctionGF2.randomFunction(256, 256);
+        //Generate test matrices
+        EnhancedBitMatrix m1 = EnhancedBitMatrix.randomMatrix( 256 , 256 );
+        EnhancedBitMatrix m2 = EnhancedBitMatrix.randomMatrix( 512 , 256 );
+        EnhancedBitMatrix m3 = EnhancedBitMatrix.randomMatrix( 128 , 256 );
+        //Generate test vectors
+        BitVector v1 = BitUtils.randomBitVector( 256 );
+        BitVector v2 = BitUtils.randomBitVector( 256 );
+        BitVector v3 = BitUtils.randomBitVector( 256 );
+        //Multiply vectorial polynomial function by matrix
+        PolynomialFunctionGF2 r1 = m1.multiply( f );
+        PolynomialFunctionGF2 r2 = m2.multiply( f );
+        PolynomialFunctionGF2 r3 = m3.multiply( f );
+        //Compute expected values
+        BitVector ev1 = m1.multiply( f.evaluate( v1 ) );
+        BitVector ev2 = m2.multiply( f.evaluate( v2 ) );
+        BitVector ev3 = m3.multiply( f.evaluate( v3 ) );
+        //Compute actual values
+        BitVector av1 = r1.evaluate( v1 );
+        BitVector av2 = r2.evaluate( v2 );
+        BitVector av3 = r3.evaluate( v3 );
+        
+        logger.info( "Expected output for v1: {}" , ev1 );
+        logger.info( "Actual output for v1: {}" , av1 );
+        Assert.assertEquals( ev1 , av1 );
+        
+        logger.info( "Expected output for v2: {}" , ev2 );
+        logger.info( "Actual output for v1: {}" , av2 );
+        Assert.assertEquals( ev2 , av2 );
+        
+        logger.info( "Expected output for v3: {}" , ev3 );
+        logger.info( "Actual output for v1: {}" , av3 );
+        Assert.assertEquals( ev3 , av3 );
+        
     }
     
 }
