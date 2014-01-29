@@ -1,6 +1,7 @@
 package com.kryptnostic.multivariate.gf2;
 
 import java.security.InvalidParameterException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -8,7 +9,9 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import cern.colt.bitvector.BitVector;
 
@@ -41,6 +44,51 @@ public class PolynomialFunctionRepresentationGF2 {
         this.contributions = contributions;
     }
     
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.hashCode(contributions);
+        result = prime * result + inputLength;
+        result = prime * result + Arrays.hashCode(monomials);
+        result = prime * result + outputLength;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (!(obj instanceof PolynomialFunctionRepresentationGF2))
+            return false;
+        PolynomialFunctionRepresentationGF2 other = (PolynomialFunctionRepresentationGF2) obj;
+        if (outputLength != other.outputLength)
+            return false;
+        if (inputLength != other.inputLength)
+            return false;
+        Map<Monomial,BitVector> thisMap = mapViewFromMonomialsAndContributions(monomials, contributions);
+        Map<Monomial,BitVector> objMap = mapViewFromMonomialsAndContributions(other.monomials, other.contributions);
+        
+        if( !Sets.symmetricDifference( thisMap.keySet() , objMap.keySet() ).isEmpty() ) {
+            return false;
+        }
+      
+        for( Entry<Monomial,BitVector> entry : thisMap.entrySet() ) {
+            BitVector thisContribution = entry.getValue();
+            BitVector otherContribution = objMap.get( entry.getKey() );
+            if( otherContribution == null && thisContribution!=null ) {
+                return false;
+            }
+            if( !otherContribution.equals( thisContribution ) ) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
     public static class Builder {
         protected Map<Monomial, BitVector> monomials = Maps.newHashMap();
         protected final int inputLength;
@@ -116,5 +164,13 @@ public class PolynomialFunctionRepresentationGF2 {
     
     public static Builder builder( int inputLength, int outputLength  ) {
         return new Builder( inputLength , outputLength );
+    }
+    
+    public static Map<Monomial, BitVector> mapViewFromMonomialsAndContributions( Monomial[] monomials, BitVector[] contributions ) {
+        Map<Monomial, BitVector> result = Maps.newHashMapWithExpectedSize( monomials.length );
+        for( int i = 0 ; i < monomials.length ; ++i  ) {
+            result.put( monomials[ i ].clone() , contributions[ i ].copy() );
+        }
+        return result;
     }
 }

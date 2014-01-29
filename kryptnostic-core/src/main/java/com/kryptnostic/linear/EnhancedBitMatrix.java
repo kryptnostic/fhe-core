@@ -2,6 +2,8 @@ package com.kryptnostic.linear;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
@@ -9,6 +11,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.kryptnostic.multivariate.MultivariateUtils;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
@@ -18,7 +21,8 @@ import cern.colt.bitvector.BitVector;
 
 public class EnhancedBitMatrix {
     //TODO: Replace with BouncyCastle RNG
-    private static final Random r = new Random( System.currentTimeMillis() ); 
+    //TODO: Re-enable seeding
+    private static final Random r = new Random( 0 );//System.currentTimeMillis() ); 
     protected final List<BitVector> rows;
     
     protected EnhancedBitMatrix() { 
@@ -202,12 +206,21 @@ public class EnhancedBitMatrix {
     public PolynomialFunctionGF2 multiply( PolynomialFunctionGF2 f ) {
         Monomial[] monomials = f.getMonomials();
         BitVector[] contributions = f.getContributions();
-        Monomial[] newMonomials = new Monomial[ monomials.length ];
-        BitVector[] newContributions = new BitVector[ monomials.length ];
-        
+        Map<Monomial, BitVector> results = Maps.newHashMap();
         for( int i = 0 ; i < monomials.length ; ++i ) {
-            newMonomials[i] = monomials[i].clone();
-            newContributions[i] = this.multiply( contributions[i] );
+            BitVector newContrib = this.multiply( contributions[i] );
+            if( newContrib.cardinality() != 0 ) {
+                results.put( monomials[i].clone() , newContrib );
+            }
+        }
+        
+        Monomial[] newMonomials = new Monomial[ results.size() ];
+        BitVector[] newContributions = new BitVector[ results.size() ];
+        int index = 0;
+        for( Entry<Monomial,BitVector> result : results.entrySet() ) {
+            newMonomials[ index ] = result.getKey();   
+            newContributions[ index ] = result.getValue();
+            ++index;
         }
         
         PolynomialFunctionGF2 result = new PolynomialFunctionGF2( 

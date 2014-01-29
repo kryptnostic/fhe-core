@@ -16,8 +16,9 @@ import cern.colt.bitvector.BitVector;
 public class PublicKey {
     private static final Logger logger = LoggerFactory.getLogger( PublicKey.class );
     //TODO: Replace with bouncy castle or real number generator.
-    private static final Random r = new Random();
+    private static final Random r = new Random( 0 );
     private final PolynomialFunctionGF2 encrypter;
+    private final PolynomialFunctionGF2 m, R,F,FofR, mFoR, E1mFoR;
     private final PaddingStrategy paddingStrategy;
     private final int longsPerBlock;
     public PublicKey( PrivateKey privateKey ) {
@@ -27,17 +28,18 @@ public class PublicKey {
         this.paddingStrategy = paddingStrategy;
         int inputLen =  privateKey.getE1().cols();
         int outputLen = privateKey.getE1().rows();
-        PolynomialFunctionGF2 m = PolynomialFunctionGF2.truncatedIdentity( inputLen , outputLen );
+        m = PolynomialFunctionGF2.truncatedIdentity( inputLen , outputLen );
         logger.debug( "m: {} -> {}" , inputLen , outputLen );
-        PolynomialFunctionGF2 R = PolynomialFunctionGF2.randomFunction( outputLen , inputLen );
-        PolynomialFunctionGF2 F = PolynomialFunctionGF2.randomFunction( inputLen  , inputLen );
-        PolynomialFunctionGF2 FofR = F.compose( R );
+        R = PolynomialFunctionGF2.randomFunction( outputLen , inputLen );
+        F = PolynomialFunctionGF2.randomFunction( inputLen  , inputLen );
+        FofR = F.compose( R );
         
         /*
          * E(m) = E1(m + F( R(m,r)) ) + E2(R(m,r))
          */
-        
-        encrypter = privateKey.getE1().multiply( m.add( FofR ) ).add( privateKey.getE2().multiply( R ) );
+        mFoR =  m.add( FofR );
+        E1mFoR = privateKey.getE1().multiply( mFoR );
+        encrypter = E1mFoR.add( privateKey.getE2().multiply( R ) );
         logger.debug("Required input length in bits: {}" , encrypter.getInputLength() );
         // 8 bits per byte, 8 bytes per long.
         longsPerBlock = encrypter.getInputLength() /  128;
@@ -63,7 +65,7 @@ public class PublicKey {
             }
             
             for( int i = longsPerBlock; i < blockLen ; ++i ) {
-               lpt[i] = r.nextLong();
+               lpt[i] = 0L;//r.nextLong();
             }
             
             long[] ciphertext = encrypt( lpt );
@@ -81,7 +83,31 @@ public class PublicKey {
         Preconditions.checkArgument( (plaintext.length<<3) == ( encrypter.getInputLength() >>> 3 ) , "Cannot directly encrypt block of incorrect length." );
         
         BitVector result = encrypter.evaluate( new BitVector( plaintext , encrypter.getInputLength() ) );
+        for( long l : result.elements() ) {
+            logger.debug("Wrote the following ciphertext long: {}" , l );
+        }
         return result.elements();
     }
     
+    public PolynomialFunctionGF2 getEncrypter() {
+        return encrypter;
+    }
+    public PolynomialFunctionGF2 getR() {
+        return R;
+    }
+    public PolynomialFunctionGF2 getF() {
+        return F;
+    }
+    public PolynomialFunctionGF2 getFofR() {
+        return FofR;
+    }
+    public PolynomialFunctionGF2 getM() {
+        return m;
+    }
+    public PolynomialFunctionGF2 getE1mFoR() {
+        return E1mFoR;
+    }
+    public PolynomialFunctionGF2 getmFoR() {
+        return mFoR;
+    }
 }
