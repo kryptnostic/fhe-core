@@ -1,7 +1,6 @@
 package com.kryptnostic.crypto;
 
 import java.nio.ByteBuffer;
-import java.nio.LongBuffer;
 import java.security.InvalidParameterException;
 
 import org.slf4j.Logger;
@@ -22,11 +21,14 @@ public class PrivateKey {
     private final EnhancedBitMatrix E1;
     private final EnhancedBitMatrix E2;
     private final PolynomialFunctionGF2 F;
+    private final PolynomialFunctionGF2 decryptor;
+    private final int longsPerBlock;
     
     /**
      * Construct a private key instance that can be used for decrypting data encrypted with the public key.
      * @param cipherTextBlockLength Length of the ciphertext output block, should be multiples of 64 bits 
      * @param plainTextBlockLength Length of the ciphertext output block, should be multiples of 64 bits
+     * @throws SingularMatrixException 
      */
     public PrivateKey( int cipherTextBlockLength , int plainTextBlockLength ) {
         boolean initialized = false;
@@ -48,8 +50,8 @@ public class PrivateKey {
                 initialized = true;
                 
                 logger.info("E1GEN: {} x {}" , e1gen.rows(), e1gen.cols() );
-                logger.info("E2GEN: {} x {}" , e1gen.rows(), e1gen.cols() );
-                logger.info("DGEN: {} x {}" , e1gen.rows(), e1gen.cols() );
+                logger.info("E2GEN: {} x {}" , e2gen.rows(), e2gen.cols() );
+                logger.info("DGEN: {} x {}" , dgen.rows(), dgen.cols() );
             } catch (SingularMatrixException e1) {
                 continue;
             }
@@ -62,8 +64,14 @@ public class PrivateKey {
         D = dgen;
         E1 = e1gen;
         E2 = e2gen;
-        
-        F = PolynomialFunctionGF2.randomFunction( cipherTextBlockLength , plainTextBlockLength );
+        F = PolynomialFunctionGF2.randomFunction( plainTextBlockLength , plainTextBlockLength );
+        try {
+            decryptor = buildDecryptor();
+        } catch (SingularMatrixException e) {
+            logger.error("Unable to generate decryptor function due to a singular matrix exception during generation process.");
+            throw new InvalidParameterException("Unable to generate decryptor function for private key.");
+        }
+        longsPerBlock = cipherTextBlockLength >>> 6;
     }
     
     public EnhancedBitMatrix getD() {
@@ -83,31 +91,55 @@ public class PrivateKey {
     }
 
     public byte[] decrypt( byte[] ciphertext ) throws SingularMatrixException {
-        /*
-         * DX = R( m , r )
-         * Inv( E1 ) X = m +F( R( m , r ) ) + Inv( E1 ) E2 R(m, r) 
-         * Inv( E1 ) X + Inv( E1 ) E2 D X = m + F( R( m , r ) )
-         * Inv( E1 ) X + Inv( E1 ) E2 D X + F( DX ) = m
-         * Inv( E1 ) ( I + E2 D ) X + F( DX ) = m    
-         */
-        EnhancedBitMatrix id = EnhancedBitMatrix.identity( E2.rows() );
-        BitVector X  = fromCipherText( ciphertext );
-        BitVector plaintextVector = E1.leftGeneralizedInverse().multiply( id.add( E2.multiply( D ) ).multiply( X ) );
-        plaintextVector.xor( F.evaluate( D.multiply( X ) ) );;
-        return toPlaintext( plaintextVector );
+        ByteBuffer buffer = ByteBuffer.wrap( ciphertext );
+        ByteBuffer decryptedBytes = ByteBuffer.allocate( ciphertext.length >>> 1);
+        while( buffer.hasRemaining() ) {
+            /*
+             * DX = R( m , r )
+             * Inv( E1 ) X = m +F( R( m , r ) ) + Inv( E1 ) E2 R(m, r) 
+             * Inv( E1 ) X + Inv( E1 ) E2 D X = m + F( R( m , r ) )
+             * Inv( E1 ) X + Inv( E1 ) E2 D X + F( DX ) = m
+             * Inv( E1 ) ( I + E2 D ) X + F( DX ) = m    
+             */
+//            EnhancedBitMatrix id = EnhancedBitMatrix.identity( E2.rows() );
+            BitVector X  = fromBuffer( buffer , longsPerBlock );
+//            BitVector plaintextVector = E1.leftGeneralizedInverse().multiply( id.add( E2.multiply( D ) ).multiply( X ) );
+//            plaintextVector.xor( F.evaluate( D.multiply( X ) ) );
+            BitVector plaintextVector = decryptor.evaluate( X );
+            toBuffer( decryptedBytes , plaintextVector );
+        }
+        return decryptedBytes.array();
     }
     
-    protected static byte[] toPlaintext( BitVector plaintextVector ) {
-        ByteBuffer buf = ByteBuffer.allocate( plaintextVector.size() >>> 3 );
-        for( long l : plaintextVector.elements() ) {
-            buf.putLong( l );
+    public PolynomialFunctionGF2 getDecryptor() {
+        return decryptor;
+    }
+    
+    public PolynomialFunctionGF2 buildDecryptor() throws SingularMatrixException {
+        EnhancedBitMatrix id = EnhancedBitMatrix.identity( E2.rows() );
+        PolynomialFunctionGF2 X = PolynomialFunctionGF2.identity( E1.rows() );
+        PolynomialFunctionGF2 DX = D.multiply( X );
+//        return E1.leftGeneralizedInverse().multiply( X.add( E2.multiply( DX ) ) ).add( F.compose( DX ) );
+        return E1.leftGeneralizedInverse().multiply( id.add( E2.multiply( D ) ).multiply( X ) ).add( F.compose( DX ) );
+    }
+    
+    protected static void toBuffer( ByteBuffer output , BitVector plaintextVector ) {
+        long[] plaintextLongs = plaintextVector.elements();
+        for( long l : plaintextLongs ) {
+            output.putLong( l );
         }
-        return buf.array();
     }
-    protected static BitVector fromCipherText( byte[] ciphertext ) {
-        LongBuffer lBuf = LongBuffer.allocate( ciphertext.length /8 ).put( ByteBuffer.wrap( ciphertext ).asLongBuffer() );
-        return new BitVector( lBuf.array() , ciphertext.length << 3 );
+    
+    protected static BitVector fromBuffer( ByteBuffer buffer , int longsPerBlock ) {
+        long [] cipherLongs = new long[ longsPerBlock ];
+        for( int i = 0 ; i < longsPerBlock ; ++i ) {
+            cipherLongs[i] = buffer.getLong();
+            logger.debug("Read the following ciphertext: {}", cipherLongs[i]);
+        }
+        
+        return new BitVector( cipherLongs , longsPerBlock << 6 );
     }
+    
 //    public abstract byte[] encryptObject( Object object );   
 //    public abstract Object decryptObject( Object object ,  Class<?> clazz );
 }

@@ -68,7 +68,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  
     }
     
     public PolynomialFunctionGF2 add( PolynomialFunctionGF2 rhs ) {
-        Map<Monomial,BitVector> monomialContributionsMap = mapFromMonomialsAndContributions(monomials, contributions);
+        Map<Monomial,BitVector> monomialContributionsMap = mapCopyFromMonomialsAndContributions(monomials, contributions);
         
         for( int i = 0 ; i < rhs.monomials.length ; ++i  ) {
             Monomial m = rhs.monomials[ i ];
@@ -321,10 +321,10 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  
         return result;
     }
     
-    public static Map<Monomial, BitVector> mapFromMonomialsAndContributions( Monomial[] monomials, BitVector[] contributions ) {
+    public static Map<Monomial, BitVector> mapCopyFromMonomialsAndContributions( Monomial[] monomials, BitVector[] contributions ) {
         Map<Monomial, BitVector> result = Maps.newHashMapWithExpectedSize( monomials.length );
         for( int i = 0 ; i < monomials.length ; ++i  ) {
-            result.put( monomials[ i ] , contributions[ i ] );
+            result.put( monomials[ i ].clone() , contributions[ i ].copy() );
         }
         return result;
     }
@@ -361,9 +361,9 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  
     
     public static PolynomialFunctionGF2 randomFunction( int inputLen , int outputLen ) {
         PolynomialFunctionGF2.Builder builder = PolynomialFunctionGF2.builder( inputLen , outputLen );
-        for( int i = 0 ; i < 1024 ; ++i ) {
+        for( int i = 0 ; i < 16 ; ++i ) {
             BitVector contribution = MultivariateUtils.randomVector( outputLen );
-            builder.setMonomialContribution( Monomial.randomMonomial( inputLen , 4 ) , contribution);
+            builder.setMonomialContribution( Monomial.randomMonomial( inputLen , 3 ) , contribution);
         }
         
         return builder.build();
