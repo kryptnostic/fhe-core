@@ -18,11 +18,11 @@ public class PublicKey {
     //TODO: Replace with bouncy castle or real number generator.
     private static final Random r = new Random( 0 );
     private final PolynomialFunctionGF2 encrypter;
-    private final PolynomialFunctionGF2 m, R,F,FofR, mFoR, E1mFoR;
+    private final PolynomialFunctionGF2 m , R;
     private final PaddingStrategy paddingStrategy;
     private final int longsPerBlock;
     public PublicKey( PrivateKey privateKey ) {
-        this( privateKey, new ZeroPaddingStrategy() );
+        this( privateKey, new ZeroPaddingStrategy( privateKey.getE1().rows() >>> 4 ) );
     }
     public PublicKey( PrivateKey privateKey , PaddingStrategy paddingStrategy ) {
         this.paddingStrategy = paddingStrategy;
@@ -31,18 +31,29 @@ public class PublicKey {
         m = PolynomialFunctionGF2.truncatedIdentity( inputLen , outputLen );
         logger.debug( "m: {} -> {}" , inputLen , outputLen );
         R = PolynomialFunctionGF2.randomFunction( outputLen , inputLen );
-        F = PolynomialFunctionGF2.randomFunction( inputLen  , inputLen );
-        FofR = F.compose( R );
         
         /*
          * E(m) = E1(m + F( R(m,r)) ) + E2(R(m,r))
          */
-        mFoR =  m.add( FofR );
-        E1mFoR = privateKey.getE1().multiply( mFoR );
-        encrypter = E1mFoR.add( privateKey.getE2().multiply( R ) );
+        
+        encrypter = privateKey.getE1()
+                        .multiply( m.add( privateKey.getF().compose( R ) ) )
+                        .add( privateKey.getE2().multiply( R ) );
+                        
         logger.debug("Required input length in bits: {}" , encrypter.getInputLength() );
         // 8 bits per byte, 8 bytes per long.
-        longsPerBlock = encrypter.getInputLength() /  128;
+        longsPerBlock = encrypter.getInputLength() >>> 7;
+    }
+    
+    public Ciphertext encryptIntoEnvelope( byte[] plaintext ) {
+        long[] lengthArray = new long[ longsPerBlock<<1 ];
+        
+        lengthArray[0] = plaintext.length;
+        for( int i = 1 ; i < lengthArray.length ; ++i ) {
+            lengthArray[ i ] = r.nextLong();
+        }
+        
+        return new Ciphertext( encrypt( plaintext ) , encrypt( lengthArray ) );
     }
     
     public byte[] encrypt( byte[] plaintext ) {
@@ -89,25 +100,15 @@ public class PublicKey {
         return result.elements();
     }
     
+    //public abstract byte[] encryptObject( Object object );
+    
     public PolynomialFunctionGF2 getEncrypter() {
         return encrypter;
     }
     public PolynomialFunctionGF2 getR() {
         return R;
     }
-    public PolynomialFunctionGF2 getF() {
-        return F;
-    }
-    public PolynomialFunctionGF2 getFofR() {
-        return FofR;
-    }
     public PolynomialFunctionGF2 getM() {
         return m;
-    }
-    public PolynomialFunctionGF2 getE1mFoR() {
-        return E1mFoR;
-    }
-    public PolynomialFunctionGF2 getmFoR() {
-        return mFoR;
     }
 }

@@ -84,6 +84,8 @@ public class EnhancedBitMatrix {
     
     //TODO: Add unit test
     public EnhancedBitMatrix add( EnhancedBitMatrix rhs ) {
+        Preconditions.checkArgument( rows()==rhs.rows() , "Matrices being added must have the same number of rows.");
+        Preconditions.checkArgument( cols()==rhs.cols() , "Matrices being added must have the same number of columns.");
         EnhancedBitMatrix result = new EnhancedBitMatrix ( rows );
         for( int row = 0 ; row < result.rows() ; ++row ) {
             result.rows.get( row ).xor( rhs.rows.get( row ) );
