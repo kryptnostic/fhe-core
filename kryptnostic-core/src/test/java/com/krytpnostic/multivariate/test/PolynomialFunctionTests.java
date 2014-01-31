@@ -158,6 +158,5 @@ public class PolynomialFunctionTests {
            logger.info("Composed result: {}" , composedResult );
            Assert.assertEquals( outerResult , composedResult );
        }
-       
    }
 }

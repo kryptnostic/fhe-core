@@ -1,5 +1,6 @@
 package com.kryptnostic.multivariate;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -241,6 +242,10 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  
         
     }
     
+    public PolynomialFunctionGF2 extend( int length ) {
+        return null;
+    }
+    
     public PolynomialFunctionGF2 clone() {
         Monomial[] newMonomials = new Monomial[ monomials.length ];
         BitVector[] newContributions = new BitVector[ monomials.length ];
@@ -400,6 +405,52 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  
         }
         
         return new PolynomialFunctionGF2( inputLength , outputLength , monomials , contributions);
+    }
+    
+    public static PolynomialFunctionGF2 XOR( int inputLength ) {
+        int outputLength = inputLength >>> 1;
+        Monomial[] monomials = new Monomial[ inputLength ];
+        BitVector[] contributions = new BitVector[ inputLength ];
+        
+        for( int i = 0 ; i < outputLength ; ++i ) {
+            int offsetIndex = i + outputLength;
+            monomials[ i ] = Monomial.linearMonomial( inputLength , i);
+            monomials[ offsetIndex ] = Monomial.linearMonomial( inputLength , offsetIndex );
+            BitVector contribution = new BitVector( outputLength );
+            contribution.set( i );
+            contributions[ i ] = contribution;
+            contributions[ offsetIndex ] = contribution.copy(); //In theory everything else makes a copy so we could cheat here and save memory.
+        }
+        
+        return new PolynomialFunctionGF2( inputLength , outputLength , monomials, contributions );
+    }
+    
+    public static PolynomialFunctionGF2 prepareForLhsOfBinaryOp( PolynomialFunctionGF2 lhs ) {
+        Monomial[] monomials = new Monomial[ lhs.monomials.length ];
+        BitVector[] contributions = new BitVector[ lhs.contributions.length ];
+        for( int i = 0 ; i < lhs.monomials.length ; ++i ) {
+            long[] elements = monomials[i].elements();
+            monomials[i] = new Monomial( Arrays.copyOf( elements , elements.length << 1 ), lhs.getInputLength() << 1 );
+            contributions[i] = contributions[i].copy();
+        }
+        
+        return new PolynomialFunctionGF2( monomials[0].size() , contributions.length , monomials, contributions );
+    }
+    
+    public static PolynomialFunctionGF2 prepareForRhsOfBinaryOp( PolynomialFunctionGF2 rhs ) {
+        Monomial[] monomials = new Monomial[ rhs.monomials.length ];
+        BitVector[] contributions = new BitVector[ rhs.contributions.length ];
+        for( int i = 0 ; i < rhs.monomials.length ; ++i ) {
+            long[] elements = monomials[i].elements();
+            long[] newElements = new long[ elements.length << 1 ];
+            for( int j = 0 ; j < elements.length ; ++j ) {
+                newElements[ j ] = elements[ j ];
+            }
+            monomials[i] = new Monomial( newElements , rhs.getInputLength() << 1 );
+            contributions[i] = contributions[i].copy();
+        }
+        
+        return new PolynomialFunctionGF2( monomials[0].size() , contributions.length , monomials, contributions );
     }
     
 }
