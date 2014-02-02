@@ -117,4 +117,4 @@ This code isn't production ready. As we're moving very quickly to get this out s
 More Information
 ----------------
 
-Our original proof of concept implementations were vectorized and highly optimized class, but since they were written in C/C++  we were faced with the choice of implementing JNI interfaces for our existing code base or porting it to Java. 
+http://blog.kryptnostic.com/
