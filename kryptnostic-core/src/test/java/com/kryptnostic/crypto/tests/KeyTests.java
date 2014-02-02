@@ -26,16 +26,13 @@ public class KeyTests {
         logger.info("Finished generating key pair. Starting assumption tests...");
 
         PolynomialFunctionGF2 e = pubKey.getEncrypter();
-        PolynomialFunctionGF2 shouldBeR = privKey.getD().multiply( e );
         PolynomialFunctionGF2 DX = privKey.getD().multiply( e ); 
         PolynomialFunctionGF2 FofR = privKey.getF().compose( DX );
         EnhancedBitMatrix L = privKey.getE2().getLeftNullifyingMatrix();
         L = L.multiply( privKey.getE1() ).inverse().multiply( L );  //Normalize
         PolynomialFunctionGF2 mFofR = L.multiply( e );
         
-        Assert.assertEquals( DX , pubKey.getR() );
         Assert.assertEquals( mFofR.add( FofR ) , pubKey.getM() );
-        Assert.assertEquals( shouldBeR , pubKey.getR() );
     }
     
     @Test 

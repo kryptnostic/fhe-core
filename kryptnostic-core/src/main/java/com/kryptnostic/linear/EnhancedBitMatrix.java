@@ -337,6 +337,17 @@ public class EnhancedBitMatrix {
         return true;
     }
     
+    public static EnhancedBitMatrix identityExpander(int  identityRows , int randomRows ) {
+        EnhancedBitMatrix m = new EnhancedBitMatrix( randomRows , identityRows );
+        for( int i = 0 ; i < identityRows ; ++i ) {
+            m.rows.get( i ).set( i );
+        }
+//        for( int i = identityRows ; i < randomRows ; ++i ) {
+//            m.rows.get( i ).xor( BitUtils.randomBitVector( identityRows ) );
+//        }
+        return m;
+    }
+    
     public static boolean determinant( EnhancedBitMatrix m ) throws NonSquareMatrixException {
         if( m.cols() != m.rows() ) {
             throw new NonSquareMatrixException("Cannot compute the determinant of non-square matrix with dimensions " + m.rows() +" x " + m.cols() );
@@ -452,6 +463,5 @@ public class EnhancedBitMatrix {
             super( message );
         }
     }
-
     
 }

@@ -13,12 +13,16 @@ import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 
 import cern.colt.bitvector.BitVector;
 
+/**
+ * Public key class used for encryption. 
+ * @author Matthew Tamayo-Rios
+ */
 public class PublicKey {
     private static final Logger logger = LoggerFactory.getLogger( PublicKey.class );
     //TODO: Replace with bouncy castle or real number generator.
     private static final Random r = new Random( 0 );
     private final PolynomialFunctionGF2 encrypter;
-    private final PolynomialFunctionGF2 m , R;
+    private final PolynomialFunctionGF2 m;
     private final PaddingStrategy paddingStrategy;
     private final int longsPerBlock;
     public PublicKey( PrivateKey privateKey ) {
@@ -30,16 +34,12 @@ public class PublicKey {
         int outputLen = privateKey.getE1().rows();
         m = PolynomialFunctionGF2.truncatedIdentity( inputLen , outputLen );
         logger.debug( "m: {} -> {}" , inputLen , outputLen );
-        R = PolynomialFunctionGF2.randomFunction( outputLen , inputLen );
         
         /*
          * E(m) = E1(m + F( R(m,r)) ) + E2(R(m,r))
          */
         
-        encrypter = privateKey.getE1()
-                        .multiply( m.add( privateKey.getF().compose( R ) ) )
-                        .add( privateKey.getE2().multiply( R ) );
-                        
+        encrypter = privateKey.encrypt( m ); 
         logger.debug("Required input length in bits: {}" , encrypter.getInputLength() );
         // 8 bits per byte, 8 bytes per long.
         longsPerBlock = encrypter.getInputLength() >>> 7;
@@ -105,9 +105,7 @@ public class PublicKey {
     public PolynomialFunctionGF2 getEncrypter() {
         return encrypter;
     }
-    public PolynomialFunctionGF2 getR() {
-        return R;
-    }
+
     public PolynomialFunctionGF2 getM() {
         return m;
     }
