@@ -243,7 +243,17 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  
     }
     
     public PolynomialFunctionGF2 extend( int length ) {
-        return null;
+        //TODO: Add re-entrant read/write lock for updating contributions.
+        Monomial[] newMonomials = new Monomial[ monomials.length ];
+        BitVector[] newContributions = new BitVector[ monomials.length ];
+        
+        for( int i = 0 ; i < contributions.length ; ++i ) {
+            BitVector current = contributions[ i ];
+            newMonomials[ i ] = monomials[ i ].clone();
+            newContributions[ i ] = new BitVector( Arrays.copyOf( current.elements() , current.elements().length << 1 ) , current.size() << 1 );
+        }
+        
+        return new PolynomialFunctionGF2(length, length, newMonomials, newContributions);
     }
     
     public PolynomialFunctionGF2 clone() {
@@ -407,22 +417,22 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  
         return new PolynomialFunctionGF2( inputLength , outputLength , monomials , contributions);
     }
     
-    public static PolynomialFunctionGF2 XOR( int inputLength ) {
-        int outputLength = inputLength >>> 1;
-        Monomial[] monomials = new Monomial[ inputLength ];
-        BitVector[] contributions = new BitVector[ inputLength ];
+    public static PolynomialFunctionGF2 XOR( int xorLength ) {
+        int inputLength = xorLength >>> 1;
+        Monomial[] monomials = new Monomial[ xorLength ];
+        BitVector[] contributions = new BitVector[ xorLength ];
         
-        for( int i = 0 ; i < outputLength ; ++i ) {
-            int offsetIndex = i + outputLength;
-            monomials[ i ] = Monomial.linearMonomial( inputLength , i);
-            monomials[ offsetIndex ] = Monomial.linearMonomial( inputLength , offsetIndex );
-            BitVector contribution = new BitVector( outputLength );
+        for( int i = 0 ; i < inputLength ; ++i ) {
+            int offsetIndex = i + inputLength;
+            monomials[ i ] = Monomial.linearMonomial( xorLength , i);
+            monomials[ offsetIndex ] = Monomial.linearMonomial( xorLength , offsetIndex );
+            BitVector contribution = new BitVector( xorLength );
             contribution.set( i );
             contributions[ i ] = contribution;
             contributions[ offsetIndex ] = contribution.copy(); //In theory everything else makes a copy so we could cheat here and save memory.
         }
         
-        return new PolynomialFunctionGF2( inputLength , outputLength , monomials, contributions );
+        return new PolynomialFunctionGF2( xorLength , xorLength , monomials, contributions );
     }
     
     public static PolynomialFunctionGF2 prepareForLhsOfBinaryOp( PolynomialFunctionGF2 lhs ) {

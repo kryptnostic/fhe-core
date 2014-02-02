@@ -15,6 +15,10 @@ import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 
 import cern.colt.bitvector.BitVector;
 
+/**
+ * Private key class for decrypting data.
+ * @author Matthew Tamayo-Rios
+ */
 public class PrivateKey {
     private static final Logger logger = LoggerFactory.getLogger( PrivateKey.class );
     private static ObjectMapper mapper = new ObjectMapper();
@@ -80,6 +84,20 @@ public class PrivateKey {
             throw new InvalidParameterException("Unable to generate decryptor function for private key.");
         }
         longsPerBlock = cipherTextBlockLength >>> 6;
+    }
+    
+    public PolynomialFunctionGF2 encrypt( PolynomialFunctionGF2 plaintextFunction ) {
+        int plaintextLen =  E1.cols();
+        int ciphertextLen = E1.rows();
+        PolynomialFunctionGF2 R = PolynomialFunctionGF2.randomFunction( ciphertextLen , plaintextLen );
+        
+        return E1
+                .multiply( plaintextFunction.add( F.compose( R ) ) )
+                .add( E2.multiply( R ) );
+    }
+    
+    public PolynomialFunctionGF2 computeHomomorphicFunction( PolynomialFunctionGF2 f ) {
+        return encrypt( f.compose( decryptor ) );
     }
     
     public EnhancedBitMatrix getD() {
