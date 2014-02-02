@@ -5,7 +5,8 @@ import java.util.Random;
 import cern.colt.bitvector.BitVector;
 
 public class BitUtils {
-    private static final Random r = new Random( System.currentTimeMillis() );
+    //TODO:Re-enable seeding.
+    private static final Random r = new Random( 0 );//System.currentTimeMillis() );
     
     public static long parity( long l ) {
         l ^= l>>32;

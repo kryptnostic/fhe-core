@@ -1,16 +1,28 @@
 package com.kryptnostic.linear;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.Set;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.kryptnostic.multivariate.MultivariateUtils;
+import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.gf2.Monomial;
 
 import cern.colt.bitvector.BitVector;
 
 public class EnhancedBitMatrix {
+    //TODO: Replace with BouncyCastle RNG
+    //TODO: Re-enable seeding
+    private static final Random r = new Random( 0 );//System.currentTimeMillis() ); 
     protected final List<BitVector> rows;
     
     protected EnhancedBitMatrix() { 
@@ -70,6 +82,17 @@ public class EnhancedBitMatrix {
         return true;
     }
     
+    //TODO: Add unit test
+    public EnhancedBitMatrix add( EnhancedBitMatrix rhs ) {
+        Preconditions.checkArgument( rows()==rhs.rows() , "Matrices being added must have the same number of rows.");
+        Preconditions.checkArgument( cols()==rhs.cols() , "Matrices being added must have the same number of columns.");
+        EnhancedBitMatrix result = new EnhancedBitMatrix ( rows );
+        for( int row = 0 ; row < result.rows() ; ++row ) {
+            result.rows.get( row ).xor( rhs.rows.get( row ) );
+        }
+        return result;
+    }
+    
     public EnhancedBitMatrix inverse() throws SingularMatrixException {
         EnhancedBitMatrix workingSet = new EnhancedBitMatrix( this );
         EnhancedBitMatrix inverse = identity( rows.size() ) ;
@@ -121,9 +144,21 @@ public class EnhancedBitMatrix {
     }
     
     public EnhancedBitMatrix getLeftNullifyingMatrix() {
-        //TODO: Implement this
-        return null;
+        EnhancedBitMatrix nmat = tranpose().getNullspaceBasis().tranpose();
+        Set<Integer> rowsToKeep = Sets.newHashSet();
+        int rowCountToKeep = cols();
+        while( rowsToKeep.size() != rowCountToKeep ) {
+            rowsToKeep.add(r.nextInt( rowCountToKeep ) );
+        }
         
+        BitVector[] newRows = new BitVector[ rowCountToKeep ];
+
+        int index = 0;
+        for( int rowToKeep : rowsToKeep ) {
+            newRows[index++] = nmat.rows.get( rowToKeep );
+        }
+        
+        return new EnhancedBitMatrix( Arrays.asList( newRows ) );
     }
     
     public EnhancedBitMatrix tranpose() {
@@ -169,7 +204,36 @@ public class EnhancedBitMatrix {
         
         return new EnhancedBitMatrix( resultRows );
     }
+    
+    public PolynomialFunctionGF2 multiply( PolynomialFunctionGF2 f ) {
+        Monomial[] monomials = f.getMonomials();
+        BitVector[] contributions = f.getContributions();
+        Map<Monomial, BitVector> results = Maps.newHashMap();
+        for( int i = 0 ; i < monomials.length ; ++i ) {
+            BitVector newContrib = this.multiply( contributions[i] );
+            if( newContrib.cardinality() != 0 ) {
+                results.put( monomials[i].clone() , newContrib );
+            }
+        }
         
+        Monomial[] newMonomials = new Monomial[ results.size() ];
+        BitVector[] newContributions = new BitVector[ results.size() ];
+        int index = 0;
+        for( Entry<Monomial,BitVector> result : results.entrySet() ) {
+            newMonomials[ index ] = result.getKey();   
+            newContributions[ index ] = result.getValue();
+            ++index;
+        }
+        
+        PolynomialFunctionGF2 result = new PolynomialFunctionGF2( 
+                f.getInputLength(), 
+                this.rows(), 
+                newMonomials, 
+                newContributions );
+        
+        return result;
+    }
+    
     public static EnhancedBitMatrix identity( int size ) {
         EnhancedBitMatrix identityMatrix = new EnhancedBitMatrix( size , size );
         for( int i = 0 ; i < size ; ++i ) {
@@ -232,7 +296,7 @@ public class EnhancedBitMatrix {
         }
         
         if( !invertible ) {
-            throw new SingularMatrixException( "Unable to compute the left generalized inverse, since no invertible extension was found." );
+            throw new SingularMatrixException( "Unable to compute the right generalized inverse, since no invertible extension was found." );
         }
         
         return invertibleExtension.multiply( inverse ); 
@@ -262,6 +326,28 @@ public class EnhancedBitMatrix {
         return inverse.multiply( invertibleExtension ); 
     }
     
+    //TODO: Add unit test
+    public boolean isIdentity() {
+        for( int i = 0 ; i < rows() ; ++i ) {
+            BitVector row = rows.get( i );
+            if( !row.get( i ) && (row.cardinality()==1) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    public static EnhancedBitMatrix identityExpander(int  identityRows , int randomRows ) {
+        EnhancedBitMatrix m = new EnhancedBitMatrix( randomRows , identityRows );
+        for( int i = 0 ; i < identityRows ; ++i ) {
+            m.rows.get( i ).set( i );
+        }
+//        for( int i = identityRows ; i < randomRows ; ++i ) {
+//            m.rows.get( i ).xor( BitUtils.randomBitVector( identityRows ) );
+//        }
+        return m;
+    }
+    
     public static boolean determinant( EnhancedBitMatrix m ) throws NonSquareMatrixException {
         if( m.cols() != m.rows() ) {
             throw new NonSquareMatrixException("Cannot compute the determinant of non-square matrix with dimensions " + m.rows() +" x " + m.cols() );
@@ -284,7 +370,7 @@ public class EnhancedBitMatrix {
     public static void transpose( List<BitVector> rows , int cols ) {
         List<BitVector> newRows = Lists.newArrayListWithCapacity( cols );
         for( int i = 0 ; i < cols ; ++i ) {
-            newRows.add( new BitVector( cols ) );
+            newRows.add( new BitVector( rows.size() ) );
         }
         
         for( int i = 0 ; i < rows.size() ; ++i ) {
@@ -377,4 +463,5 @@ public class EnhancedBitMatrix {
             super( message );
         }
     }
+    
 }

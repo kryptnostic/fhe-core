@@ -14,7 +14,8 @@ import cern.colt.bitvector.BitVector;
 public class Monomial extends BitVector {
     private static final long serialVersionUID = -8751413919025034976L;
     private static final MonomialOrderHomogeneityPredicate linearHomogeneityPredicate = new MonomialOrderHomogeneityPredicate( 1 );
-    
+    //TODO:Re-enable random seeding.
+    private static final Random r = new Random( 0 );//System.currentTimeMillis() );
     public Monomial( int size ) {
         super( size );
     }
@@ -89,7 +90,7 @@ public class Monomial extends BitVector {
     }
     
     public static Monomial randomMonomial( int size , int maxOrder ) {
-        Random r = new Random( System.currentTimeMillis() );
+        
         int order = r.nextInt( maxOrder - 1 ) + 1;
         Monomial monomial = new Monomial( size );
         

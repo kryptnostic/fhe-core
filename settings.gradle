@@ -1,4 +1,3 @@
 rootProject.name='kryptnostic'
 include 'kryptnostic-api'
 include 'kryptnostic-core'
-include 'kryptnostic-service'
