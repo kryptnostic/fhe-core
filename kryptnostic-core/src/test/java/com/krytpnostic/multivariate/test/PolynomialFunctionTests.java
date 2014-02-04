@@ -1,6 +1,7 @@
 package com.krytpnostic.multivariate.test;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import org.junit.Test;
@@ -14,6 +15,7 @@ import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.MultivariateUtils;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.Monomial;
+import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 import junit.framework.Assert;
@@ -21,7 +23,7 @@ import junit.framework.Assert;
 
 public class PolynomialFunctionTests {
     private static final Logger logger = LoggerFactory.getLogger( PolynomialFunctionTests.class );
-    
+    private static final Random r = new Random(0);
     @Test
     public void builderTest() {
         PolynomialFunctionGF2.Builder builder = PolynomialFunctionGF2.builder( 256 , 256 );
@@ -31,7 +33,7 @@ public class PolynomialFunctionTests {
         }
         
         PolynomialFunctionGF2 f = builder.build();
-        BitVector result = f.evaluate( MultivariateUtils.randomVector( 256 ) );
+        BitVector result = f.apply( MultivariateUtils.randomVector( 256 ) );
         logger.info( "Result: {}" , result );
         Assert.assertEquals( result.size() ,  256 );
     }
@@ -45,7 +47,7 @@ public class PolynomialFunctionTests {
         }
         
         PolynomialFunctionGF2 f = builder.build();
-        BitVector result = f.evaluate( MultivariateUtils.randomVector( 256 ) );
+        BitVector result = f.apply( MultivariateUtils.randomVector( 256 ) );
         logger.info( "Result: {}" , result );
         Assert.assertEquals( result.size() ,  256 );
     }
@@ -55,7 +57,7 @@ public class PolynomialFunctionTests {
        PolynomialFunctionGF2 f = PolynomialFunctionGF2.identity( 256 );
        BitVector input = BitUtils.randomBitVector( 256 );
        
-       Assert.assertEquals( input , f.evaluate( input ) );
+       Assert.assertEquals( input , f.apply( input ) );
    }
    
    @Test
@@ -103,9 +105,9 @@ public class PolynomialFunctionTests {
        PolynomialFunctionGF2 lhs = PolynomialFunctionGF2.randomFunction(256, 256);
        PolynomialFunctionGF2 rhs = PolynomialFunctionGF2.randomFunction(256, 256);
        BitVector val = BitUtils.randomBitVector( 256 ) ;
-       BitVector expected = lhs.evaluate( val );
-       expected.xor( rhs.evaluate( val ) );
-       Assert.assertEquals( expected, lhs.add( rhs ).evaluate( val ) );
+       BitVector expected = lhs.apply( val );
+       expected.xor( rhs.apply( val ) );
+       Assert.assertEquals( expected, lhs.xor( rhs ).apply( val ) );
    }
    
    @Test
@@ -113,9 +115,9 @@ public class PolynomialFunctionTests {
        PolynomialFunctionGF2 lhs = PolynomialFunctionGF2.randomFunction(256, 256);
        PolynomialFunctionGF2 rhs = PolynomialFunctionGF2.randomFunction(256, 256);
        BitVector val = BitUtils.randomBitVector( 256 ) ;
-       BitVector expected = lhs.evaluate( val );
-       expected.and( rhs.evaluate( val ) );
-       Assert.assertEquals( expected, lhs.product( rhs ).evaluate( val ) );
+       BitVector expected = lhs.apply( val );
+       expected.and( rhs.apply( val ) );
+       Assert.assertEquals( expected, lhs.and( rhs ).apply( val ) );
    }
    
    @Test 
@@ -145,18 +147,39 @@ public class PolynomialFunctionTests {
    public void composeTest() {
        PolynomialFunctionGF2 outer = PolynomialFunctionGF2.randomFunction(256, 256);
        PolynomialFunctionGF2 inner = PolynomialFunctionGF2.randomFunction(256, 256);
-       PolynomialFunctionGF2 composed = outer.compose( inner );
+       SimplePolynomialFunction composed = outer.compose( inner );
        
        for( int i = 0 ; i < 25 ; ++i ) {
            BitVector randomInput = BitUtils.randomBitVector( 256 );
-           BitVector innerResult = inner.evaluate( randomInput );
-           BitVector outerResult = outer.evaluate( innerResult );
-           BitVector composedResult = composed.evaluate( randomInput );
+           BitVector innerResult = inner.apply( randomInput );
+           BitVector outerResult = outer.apply( innerResult );
+           BitVector composedResult = composed.apply( randomInput );
            logger.info("Random input: {}" , randomInput );
            logger.info("Inner result: {}" , innerResult );
            logger.info("Outer result: {}" , outerResult );
            logger.info("Composed result: {}" , composedResult );
            Assert.assertEquals( outerResult , composedResult );
        }
+   }
+   
+   @Test
+   public void testConcatenateInputsAndOutputs() {
+       SimplePolynomialFunction lhs = PolynomialFunctionGF2.randomFunction( 128 , 128 );
+       SimplePolynomialFunction rhs = PolynomialFunctionGF2.randomFunction( 128 , 128 );
+       
+       SimplePolynomialFunction concatenated = PolynomialFunctionGF2.concatenateInputsAndOutputs( lhs , rhs);
+       long[] src = new long[] { r.nextLong() , r.nextLong() , r.nextLong() , r.nextLong() };
+       BitVector input = new BitVector( src , 256 );
+       BitVector lhsInput = new BitVector( new long[] { src[0] , src[1] } , 128 );
+       BitVector rhsInput = new BitVector( new long[] { src[2] , src[3] } , 128 );
+       
+       BitVector concatenatedResult = concatenated.apply( input );
+       BitVector lhsResult = lhs.apply( lhsInput );
+       BitVector rhsResult = rhs.apply( rhsInput );
+       
+       Assert.assertEquals( lhsResult.elements()[0] , concatenatedResult.elements()[0] );
+       Assert.assertEquals( lhsResult.elements()[1] , concatenatedResult.elements()[1] );
+       Assert.assertEquals( rhsResult.elements()[0] , concatenatedResult.elements()[2] );
+       Assert.assertEquals( rhsResult.elements()[1] , concatenatedResult.elements()[3] );
    }
 }

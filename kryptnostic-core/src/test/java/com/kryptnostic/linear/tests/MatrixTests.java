@@ -9,6 +9,7 @@ import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 import junit.framework.Assert;
@@ -192,17 +193,17 @@ public class MatrixTests {
         BitVector v2 = BitUtils.randomBitVector( 256 );
         BitVector v3 = BitUtils.randomBitVector( 256 );
         //Multiply vectorial polynomial function by matrix
-        PolynomialFunctionGF2 r1 = m1.multiply( f );
-        PolynomialFunctionGF2 r2 = m2.multiply( f );
-        PolynomialFunctionGF2 r3 = m3.multiply( f );
+        SimplePolynomialFunction r1 = m1.multiply( f );
+        SimplePolynomialFunction r2 = m2.multiply( f );
+        SimplePolynomialFunction r3 = m3.multiply( f );
         //Compute expected values
-        BitVector ev1 = m1.multiply( f.evaluate( v1 ) );
-        BitVector ev2 = m2.multiply( f.evaluate( v2 ) );
-        BitVector ev3 = m3.multiply( f.evaluate( v3 ) );
+        BitVector ev1 = m1.multiply( f.apply( v1 ) );
+        BitVector ev2 = m2.multiply( f.apply( v2 ) );
+        BitVector ev3 = m3.multiply( f.apply( v3 ) );
         //Compute actual values
-        BitVector av1 = r1.evaluate( v1 );
-        BitVector av2 = r2.evaluate( v2 );
-        BitVector av3 = r3.evaluate( v3 );
+        BitVector av1 = r1.apply( v1 );
+        BitVector av2 = r2.apply( v2 );
+        BitVector av3 = r3.apply( v3 );
         
         logger.info( "Expected output for v1: {}" , ev1 );
         logger.info( "Actual output for v1: {}" , av1 );

@@ -10,7 +10,7 @@ import com.kryptnostic.crypto.PrivateKey;
 import com.kryptnostic.crypto.PublicKey;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
-import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import junit.framework.Assert;
 
@@ -25,14 +25,14 @@ public class KeyTests {
         PublicKey pubKey = new PublicKey( privKey );
         logger.info("Finished generating key pair. Starting assumption tests...");
 
-        PolynomialFunctionGF2 e = pubKey.getEncrypter();
-        PolynomialFunctionGF2 DX = privKey.getD().multiply( e ); 
-        PolynomialFunctionGF2 FofR = privKey.getF().compose( DX );
+        SimplePolynomialFunction e = pubKey.getEncrypter();
+        SimplePolynomialFunction DX = privKey.getD().multiply( e ); 
+        SimplePolynomialFunction FofR = privKey.getF().compose( DX );
         EnhancedBitMatrix L = privKey.getE2().getLeftNullifyingMatrix();
         L = L.multiply( privKey.getE1() ).inverse().multiply( L );  //Normalize
-        PolynomialFunctionGF2 mFofR = L.multiply( e );
+        SimplePolynomialFunction mFofR = L.multiply( e );
         
-        Assert.assertEquals( mFofR.add( FofR ) , pubKey.getM() );
+        Assert.assertEquals( mFofR.xor( FofR ) , pubKey.getM() );
     }
     
     @Test 

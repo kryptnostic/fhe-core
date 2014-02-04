@@ -62,6 +62,16 @@ public class Monomial extends BitVector {
         return result;
     }
     
+    public Monomial inplaceAnd( Monomial monomial ) {
+        this.and( monomial );
+        return this;
+    }
+    
+    public Monomial inplaceProd( Monomial monomial ) {
+        this.or( monomial );
+        return this;
+    }
+    
     public Set<Monomial> subsets( int order ) {
         int len = size();
         Set<Monomial> subsets = Sets.newHashSet( Monomial.constantMonomial( len ) );

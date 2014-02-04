@@ -10,6 +10,7 @@ import com.google.common.base.Preconditions;
 import com.kryptnostic.crypto.padding.PaddingStrategy;
 import com.kryptnostic.crypto.padding.ZeroPaddingStrategy;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 
@@ -21,7 +22,7 @@ public class PublicKey {
     private static final Logger logger = LoggerFactory.getLogger( PublicKey.class );
     //TODO: Replace with bouncy castle or real number generator.
     private static final Random r = new Random( 0 );
-    private final PolynomialFunctionGF2 encrypter;
+    private final SimplePolynomialFunction encrypter;
     private final PolynomialFunctionGF2 m;
     private final PaddingStrategy paddingStrategy;
     private final int longsPerBlock;
@@ -93,7 +94,7 @@ public class PublicKey {
         logger.debug( "Observed plaintext block length: {}" , plaintext.length * 8 * 8 );
         Preconditions.checkArgument( (plaintext.length<<3) == ( encrypter.getInputLength() >>> 3 ) , "Cannot directly encrypt block of incorrect length." );
         
-        BitVector result = encrypter.evaluate( new BitVector( plaintext , encrypter.getInputLength() ) );
+        BitVector result = encrypter.apply( new BitVector( plaintext , encrypter.getInputLength() ) );
         for( long l : result.elements() ) {
             logger.debug("Wrote the following ciphertext long: {}" , l );
         }
@@ -102,7 +103,7 @@ public class PublicKey {
     
     //public abstract byte[] encryptObject( Object object );
     
-    public PolynomialFunctionGF2 getEncrypter() {
+    public SimplePolynomialFunction getEncrypter() {
         return encrypter;
     }
 

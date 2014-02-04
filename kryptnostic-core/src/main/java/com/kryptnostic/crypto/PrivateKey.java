@@ -12,6 +12,7 @@ import com.google.common.base.Preconditions;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 
@@ -27,7 +28,7 @@ public class PrivateKey {
     private final EnhancedBitMatrix E1;
     private final EnhancedBitMatrix E2;
     private final PolynomialFunctionGF2 F;
-    private final PolynomialFunctionGF2 decryptor;
+    private final SimplePolynomialFunction decryptor;
     private final int longsPerBlock;
     
     /**
@@ -86,17 +87,17 @@ public class PrivateKey {
         longsPerBlock = cipherTextBlockLength >>> 6;
     }
     
-    public PolynomialFunctionGF2 encrypt( PolynomialFunctionGF2 plaintextFunction ) {
+    public SimplePolynomialFunction encrypt( SimplePolynomialFunction plaintextFunction ) {
         int plaintextLen =  E1.cols();
         int ciphertextLen = E1.rows();
         PolynomialFunctionGF2 R = PolynomialFunctionGF2.randomFunction( ciphertextLen , plaintextLen );
         
         return E1
-                .multiply( plaintextFunction.add( F.compose( R ) ) )
-                .add( E2.multiply( R ) );
+                .multiply( plaintextFunction.xor( F.compose( R ) ) )
+                .xor( E2.multiply( R ) );
     }
     
-    public PolynomialFunctionGF2 computeHomomorphicFunction( PolynomialFunctionGF2 f ) {
+    public SimplePolynomialFunction computeHomomorphicFunction( SimplePolynomialFunction f ) {
         return encrypt( f.compose( decryptor ) );
     }
     
@@ -125,17 +126,17 @@ public class PrivateKey {
         ByteBuffer decryptedBytes = ByteBuffer.allocate( ciphertext.length >>> 1);
         while( buffer.hasRemaining() ) {
             BitVector X  = fromBuffer( buffer , longsPerBlock );
-            BitVector plaintextVector = decryptor.evaluate( X );
+            BitVector plaintextVector = decryptor.apply( X );
             toBuffer( decryptedBytes , plaintextVector );
         }
         return decryptedBytes.array();
     }
     
-    public PolynomialFunctionGF2 getDecryptor() {
+    public SimplePolynomialFunction getDecryptor() {
         return decryptor;
     }
     
-    public PolynomialFunctionGF2 buildDecryptor() throws SingularMatrixException {
+    public SimplePolynomialFunction buildDecryptor() throws SingularMatrixException {
         /*
          * DX = R( m , r )
          * Inv( E1 ) X = m +F( R( m , r ) ) + Inv( E1 ) E2 R(m, r) 
@@ -147,7 +148,7 @@ public class PrivateKey {
         return E1.leftGeneralizedInverse()
                 .multiply( EnhancedBitMatrix.identity( E2.rows() ).add( E2.multiply( D ) ) )
                 .multiply( X )
-                .add( F.compose( D.multiply( X ) ) );
+                .xor( F.compose( D.multiply( X ) ) );
     }
     
     protected static void toBuffer( ByteBuffer output , BitVector plaintextVector ) {
@@ -173,7 +174,7 @@ public class PrivateKey {
          */
         return Arrays.copyOf( 
                 decrypt( ciphertext.getContents() ) , 
-                (int) decryptor.evaluate( new BitVector( ciphertext.getLength() , longsPerBlock << 6 ) ).elements()[0] );
+                (int) decryptor.apply( new BitVector( ciphertext.getLength() , longsPerBlock << 6 ) ).elements()[0] );
     }
        
 //    public abstract Object decryptObject( Object object ,  Class<?> clazz );

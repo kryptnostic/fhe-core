@@ -75,7 +75,7 @@ When you encrypt enveloped data it also encrypted the length of the data along w
 
 ###Homomorphic Operations
 
-In order to do homomorphic operations you first have to represent the desired function a vector function over GF(2). A simple example we have include is for homomorphic xor.
+In order to do homomorphic operations you first have to represent the desired function a vector function over GF(2). A simple example we have included is for homomorphic xor.
 
 	PolynomialFunctionGF2 xor = PolynomialFunctionGF2.XOR( 64 );
     PolynomialFunctionGF2 hXor = privateKey.encrypt( xor.compose( privKey.getDecry) );

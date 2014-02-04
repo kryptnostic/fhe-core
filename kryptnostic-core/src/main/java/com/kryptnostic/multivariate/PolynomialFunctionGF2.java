@@ -18,6 +18,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunctionRepresentationGF2;
+import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 
@@ -25,7 +26,7 @@ import cern.colt.bitvector.BitVector;
  * This class is used for operating on and evaluating vector polynomial functions over GF(2)
  * @author Matthew Tamayo-Rios
  */
-public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  {
+public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 implements SimplePolynomialFunction {
     private static final Predicate<BitVector> notNilContributionPredicate = new Predicate<BitVector>() {
         @Override
         public boolean apply(BitVector v) {
@@ -68,42 +69,54 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  
         return new Builder(inputLength, outputLength);
     }
     
-    public PolynomialFunctionGF2 add( PolynomialFunctionGF2 rhs ) {
-        Map<Monomial,BitVector> monomialContributionsMap = mapCopyFromMonomialsAndContributions(monomials, contributions);
+    public int getOutputLength() { 
+        return outputLength;
+    }
+    
+    public SimplePolynomialFunction xor( SimplePolynomialFunction rhs ) {
+        Preconditions.checkArgument( inputLength == rhs.getInputLength() , "Function being added must have the same input length." );
+        Preconditions.checkArgument( outputLength == rhs.getOutputLength() , "Function being added must have the same output length." );
         
-        for( int i = 0 ; i < rhs.monomials.length ; ++i  ) {
-            Monomial m = rhs.monomials[ i ];
-            BitVector contribution = monomialContributionsMap.get( rhs.monomials[ i ] );
+        Map<Monomial,BitVector> monomialContributionsMap = mapCopyFromMonomialsAndContributions(monomials, contributions);
+        Monomial[] rhsMonomials = rhs.getMonomials();
+        BitVector[] rhsContributions = rhs.getContributions();
+        for( int i = 0 ; i < rhsMonomials.length ; ++i  ) {
+            Monomial m = rhsMonomials[ i ];
+            BitVector contribution = monomialContributionsMap.get( rhsMonomials[ i ] );
             if( contribution == null ){
                 contribution = new BitVector( outputLength ) ;
                 monomialContributionsMap.put( m , contribution );
             }
-            contribution.xor( rhs.contributions[ i ] );
+            contribution.xor( rhsContributions[ i ] );
         }
         
-        removeNilContributions( monomialContributionsMap );
-        Monomial[] newMonomials = new Monomial[ monomialContributionsMap.size() ];
-        BitVector[] newContributions = new BitVector[ monomialContributionsMap.size() ];
-        int index = 0;
-        for( Entry<Monomial,BitVector> entry : monomialContributionsMap.entrySet() ) {
-            BitVector contribution = entry.getValue();
-            if( contribution.cardinality() > 0 ) {
-                newMonomials[ index ] = entry.getKey();
-                newContributions[ index ] = contribution;
-                ++index;
-            }
-        }
+//        removeNilContributions( monomialContributionsMap );
+//        Monomial[] newMonomials = new Monomial[ monomialContributionsMap.size() ];
+//        BitVector[] newContributions = new BitVector[ monomialContributionsMap.size() ];
+//        int index = 0;
+//        for( Entry<Monomial,BitVector> entry : monomialContributionsMap.entrySet() ) {
+//            BitVector contribution = entry.getValue();
+////            if( contribution.cardinality() > 0 ) {
+//                newMonomials[ index ] = entry.getKey();
+//                newContributions[ index ] = contribution;
+//                ++index;
+////            }
+//        }
         
-        return new PolynomialFunctionGF2(inputLength, outputLength, newMonomials, newContributions);
+        return PolynomialFunctionGF2.fromMonomialContributionMap( inputLength , outputLength , monomialContributionsMap );
     }
     
-    public PolynomialFunctionGF2 product( PolynomialFunctionGF2 inner ) {
+    public SimplePolynomialFunction and( SimplePolynomialFunction rhs ) {
+        Preconditions.checkArgument( inputLength == rhs.getInputLength() , "Functions must have the same input length." );
+        Preconditions.checkArgument( outputLength == rhs.getOutputLength() , "Functions must have the same output length." );
         Map<Monomial, BitVector> results = Maps.newHashMap();
+        Monomial[] rhsMonomials = rhs.getMonomials();
+        BitVector[] rhsContributions = rhs.getContributions();
         for( int i = 0 ; i < monomials.length ; ++i ) {
-            for( int j = 0 ;  j < inner.monomials.length; ++j ) {
-                Monomial product = this.monomials[ i ].product( inner.monomials[ j ] );
+            for( int j = 0 ;  j < rhsMonomials.length; ++j ) {
+                Monomial product = this.monomials[ i ].product( rhsMonomials[ j ] );
                 BitVector contribution = this.contributions[ i ].copy();
-                contribution.and( inner.contributions[ j ] );
+                contribution.and( rhsContributions[ j ] );
                 contribution.xor( Objects.firstNonNull( results.get( product ) , new BitVector( outputLength ) ) );
                 results.put( product , contribution );
             }
@@ -122,10 +135,10 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  
             }
         }
         
-        return new PolynomialFunctionGF2( inner.inputLength , outputLength, newMonomials , newContributions);
+        return new PolynomialFunctionGF2( inputLength , outputLength, newMonomials , newContributions);
     }
     
-    public BitVector evaluate( BitVector input ) {
+    public BitVector apply( BitVector input ) {
         BitVector result = new BitVector( outputLength );
         
         for( int i = 0 ; i < monomials.length ; ++i ) {
@@ -138,20 +151,19 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  
         return result;
     }
     
-    /**
-     * Computes the function composition of the current function and another function.
-     * @param inner The function to be used composed as the input to the current function.
-     * @return A new function representing the function composition of this function and inner, 
-     * such that evaluating it on input is equivalent to {@code this.evaluate( inner.evaluate( input ) )}  
-     */
-    public PolynomialFunctionGF2 compose( PolynomialFunctionGF2 inner ) {
+    @Override
+    public BitVector apply( BitVector lhs , BitVector rhs ) {
+        return apply( FunctionUtils.concatenate( lhs , rhs) );
+    }
+   
+    public SimplePolynomialFunction compose( SimplePolynomialFunction inner ) {
         //Verify the functions are composable
         Preconditions.checkArgument( 
-                inputLength == inner.outputLength ,
+                inputLength == inner.getOutputLength() ,
                 "Input length of outer function must match output length of inner function it is being composed with"
                 );
         Set<Monomial> requiredMonomials = Sets.newHashSet( monomials );
-        Map<Monomial, Set<Monomial>> memoizedComputations = initializeMemoMap( inputLength , inner.monomials , inner.contributions );
+        Map<Monomial, Set<Monomial>> memoizedComputations = initializeMemoMap( inputLength , inner.getMonomials() , inner.getContributions() );
         
         /*
          * Figure out most desirable product to compute next and use this to build up all required monomials.
@@ -220,25 +232,32 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  
             
         }
         
-        removeNilContributions( composedFunction );
-        int newSize = composedFunction.keySet().size();
-        Monomial[] backingMonomials = new Monomial[ newSize ];
-        BitVector[] backingContributions = new BitVector[ newSize ];
+        return fromMonomialContributionMap( inner.getInputLength() , outputLength , composedFunction );
+//        removeNilContributions( composedFunction );
+//        int newSize = composedFunction.keySet().size();
+//        Monomial[] backingMonomials = new Monomial[ newSize ];
+//        BitVector[] backingContributions = new BitVector[ newSize ];
+//        
+//        int mIndex = 0;
+//        for( Entry<Monomial, BitVector> entry : composedFunction.entrySet() ) {
+//            backingMonomials[ mIndex ] = entry.getKey();
+//            backingContributions[ mIndex ] = entry.getValue();
+//            ++mIndex;
+//        }
+//        
+//        PolynomialFunctionGF2 composed = new PolynomialFunctionGF2( 
+//                inner.getInputLength(), 
+//                outputLength, 
+//                backingMonomials, 
+//                backingContributions );
+//        
+//        return composed;
         
-        int mIndex = 0;
-        for( Entry<Monomial, BitVector> entry : composedFunction.entrySet() ) {
-            backingMonomials[ mIndex ] = entry.getKey();
-            backingContributions[ mIndex ] = entry.getValue();
-            ++mIndex;
-        }
-        
-        PolynomialFunctionGF2 composed = new PolynomialFunctionGF2( 
-                inner.inputLength, 
-                outputLength, 
-                backingMonomials, 
-                backingContributions );
-        
-        return composed;
+    }
+    
+    @Override
+    public SimplePolynomialFunction compose( SimplePolynomialFunction lhs, SimplePolynomialFunction rhs) {
+        return this.compose( concatenate( lhs , rhs ) );
         
     }
     
@@ -344,6 +363,21 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  
         return result;
     }
     
+    /**
+     * Provides a mutable map view over an array of {@code Monomial}s and corresponding {@code BitVector} contributions.
+     *  
+     * @param monomials The monomials to use as the map key
+     * @param contributions The contributions paired with each monomial. 
+     * @return a {@code HashMap<Monomial,BitVector} with each monomial paired to its contribution. 
+     */
+    public static Map<Monomial, BitVector> mapViewFromMonomialsAndContributions( Monomial[] monomials, BitVector[] contributions ) {
+        Map<Monomial, BitVector> result = Maps.newHashMapWithExpectedSize( monomials.length );
+        for( int i = 0 ; i < monomials.length ; ++i  ) {
+            result.put( monomials[ i ].clone() , contributions[ i ].copy() );
+        }
+        return result;
+    }
+    
     public static void removeNilContributions( Map<Monomial,BitVector> monomialContributionMap ) {
         Set<Monomial> forRemoval = Sets.newHashSet();
         for( Entry<Monomial,BitVector> monomialContribution : monomialContributionMap.entrySet() ) {
@@ -417,24 +451,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  
         return new PolynomialFunctionGF2( inputLength , outputLength , monomials , contributions);
     }
     
-    public static PolynomialFunctionGF2 XOR( int xorLength ) {
-        int inputLength = xorLength >>> 1;
-        Monomial[] monomials = new Monomial[ xorLength ];
-        BitVector[] contributions = new BitVector[ xorLength ];
-        
-        for( int i = 0 ; i < inputLength ; ++i ) {
-            int offsetIndex = i + inputLength;
-            monomials[ i ] = Monomial.linearMonomial( xorLength , i);
-            monomials[ offsetIndex ] = Monomial.linearMonomial( xorLength , offsetIndex );
-            BitVector contribution = new BitVector( xorLength );
-            contribution.set( i );
-            contributions[ i ] = contribution;
-            contributions[ offsetIndex ] = contribution.copy(); //In theory everything else makes a copy so we could cheat here and save memory.
-        }
-        
-        return new PolynomialFunctionGF2( xorLength , xorLength , monomials, contributions );
-    }
-    
     public static PolynomialFunctionGF2 prepareForLhsOfBinaryOp( PolynomialFunctionGF2 lhs ) {
         Monomial[] monomials = new Monomial[ lhs.monomials.length ];
         BitVector[] contributions = new BitVector[ lhs.contributions.length ];
@@ -461,6 +477,99 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2  
         }
         
         return new PolynomialFunctionGF2( monomials[0].size() , contributions.length , monomials, contributions );
+    }
+    
+    public static PolynomialFunctionGF2 concatenate( SimplePolynomialFunction lhs , SimplePolynomialFunction rhs ) {
+        Preconditions.checkArgument( lhs.getInputLength() == rhs.getInputLength() , "Functions being composed must have compatible monomial lengths" );
+        int lhsOutputLength = lhs.getOutputLength();
+        int rhsOutputLength = rhs.getOutputLength();
+        int combinedOutputLength = lhsOutputLength + rhsOutputLength;
+        Map<Monomial, BitVector> lhsMap = 
+                PolynomialFunctionGF2.mapViewFromMonomialsAndContributions( lhs.getMonomials() , lhs.getContributions() );
+        Map<Monomial, BitVector> rhsMap =
+                PolynomialFunctionGF2.mapViewFromMonomialsAndContributions( rhs.getMonomials() , rhs.getContributions() );
+        Map<Monomial, BitVector> monomialContributionMap = Maps.newHashMap();
+        
+        Set<Monomial> monomials = Sets.union( lhsMap.keySet() , rhsMap.keySet() );
+        for( Monomial monomial : monomials ) {
+            BitVector lhsContribution = lhsMap.get( monomial );
+            BitVector rhsContribution = rhsMap.get( monomial );
+            long[] newElements = new long[ combinedOutputLength >>> 3 ];
+            
+            if( lhsContribution != null ) { 
+                for( int i = 0 ; i < newElements.length ; ++i ) {
+                    newElements[ i ] = lhsContribution.elements()[ i ];
+                }
+            }
+            
+            if( rhsContribution != null ) { 
+                for( int i = 0 ; i < rhsOutputLength ; ++i ) {
+                    newElements[ i + lhsOutputLength ] = rhsContribution.elements()[ i ];
+                }
+            }
+            
+            monomialContributionMap.put( monomial , new BitVector( newElements , combinedOutputLength ) );
+        }
+        
+        return PolynomialFunctionGF2
+                    .fromMonomialContributionMap( 
+                            lhs.getInputLength(), 
+                            combinedOutputLength ,  
+                            monomialContributionMap );
+        
+    }
+    
+    public static SimplePolynomialFunction concatenateInputsAndOutputs( SimplePolynomialFunction lhs , SimplePolynomialFunction rhs ) {
+//        Preconditions.checkArgument( lhs.getInputLength() == rhs.getInputLength() , "Functions being composed must have compatible monomial lengths" );
+        int lhsInputLength = lhs.getInputLength();
+        int rhsInputLength = rhs.getInputLength();
+        int lhsOutputLength = lhs.getOutputLength(); 
+        int rhsOutputLength = rhs.getOutputLength();
+        int combinedInputLength = lhsInputLength + rhsInputLength;
+        int combinedOutputLength = lhsOutputLength + rhsOutputLength;
+        Monomial[] lhsMonomials = lhs.getMonomials();
+        Monomial[] rhsMonomials = rhs.getMonomials();
+        BitVector[] lhsContributions = lhs.getContributions();
+        BitVector[] rhsContributions = rhs.getContributions();
+        int lhsElementLength = lhsMonomials[ 0 ].elements().length;
+        int rhsElementLength = rhsMonomials[ 0 ].elements().length;
+        int newMonomialArrayLength = lhsElementLength + rhsElementLength;
+        int newContributionArrayLength = lhsContributions[ 0 ].elements().length + rhsContributions[ 0 ].elements().length;
+        Monomial[] monomials = new Monomial[ lhsMonomials.length + rhsMonomials.length ];
+        BitVector[] contributions = new BitVector[ monomials.length ];
+        
+        for( int i = 0 ; i < lhsMonomials.length ; ++i ) {
+            monomials[ i ] = new Monomial( Arrays.copyOf( lhsMonomials[ i ].elements() , newMonomialArrayLength ) , combinedInputLength );
+            contributions[ i ] = new BitVector( Arrays.copyOf( lhsContributions[ i ].elements() , newContributionArrayLength ) , combinedOutputLength ); 
+        }
+        
+        for( int i = 0 ; i < rhsMonomials.length ; ++i ) {
+            long[] newElements = new long[ newMonomialArrayLength ];
+            long[] newContributionElements = new long[ newContributionArrayLength ];
+            
+            for( int j = lhsElementLength ; j < newMonomialArrayLength ; ++j ) {
+                newElements[ j ] = rhsMonomials[ i ].elements()[ j -lhsElementLength ];
+                newContributionElements [ j ] = rhsContributions[ i ].elements()[ j - lhsElementLength ];
+            }
+            monomials[ i + lhsMonomials.length ] = new Monomial( newElements , combinedInputLength );
+            contributions[ i + lhsContributions.length ] = new BitVector( newContributionElements , combinedOutputLength );
+        }
+        
+        return new PolynomialFunctionGF2( combinedInputLength , combinedOutputLength , monomials , contributions );
+    }
+    
+    
+    public static PolynomialFunctionGF2 fromMonomialContributionMap( int inputLength , int outputLength , Map<Monomial,BitVector> monomialContributionsMap) {
+        Monomial[] newMonomials = new Monomial[ monomialContributionsMap.size() ];
+        BitVector[] newContributions = new BitVector[ monomialContributionsMap.size() ];
+        int index = 0;
+        for( Entry<Monomial,BitVector> entry : monomialContributionsMap.entrySet() ) {
+            BitVector contribution = entry.getValue();
+            newMonomials[ index ] = entry.getKey();
+            newContributions[ index ] = contribution;
+            ++index;
+        }
+        return new PolynomialFunctionGF2( inputLength , outputLength , newMonomials , newContributions );
     }
     
 }
