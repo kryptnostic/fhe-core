@@ -16,6 +16,7 @@ import com.google.common.collect.Sets;
 import com.kryptnostic.multivariate.MultivariateUtils;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.Monomial;
+import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 
@@ -205,7 +206,7 @@ public class EnhancedBitMatrix {
         return new EnhancedBitMatrix( resultRows );
     }
     
-    public PolynomialFunctionGF2 multiply( PolynomialFunctionGF2 f ) {
+    public SimplePolynomialFunction multiply( SimplePolynomialFunction f ) {
         Monomial[] monomials = f.getMonomials();
         BitVector[] contributions = f.getContributions();
         Map<Monomial, BitVector> results = Maps.newHashMap();
