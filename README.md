@@ -153,6 +153,8 @@ Our contributor agreement is currently using the Harmony template. If you'd like
 More Information
 ----------------
 
-http://blog.kryptnostic.com/
-Twitter: @kryptnostic
-E-mail: info@kryptnostic.com
+- http://blog.kryptnostic.com/
+
+- Twitter: @kryptnostic
+
+- E-mail: info@kryptnostic.com
