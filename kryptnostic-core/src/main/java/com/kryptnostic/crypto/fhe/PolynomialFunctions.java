@@ -6,7 +6,7 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 
-public class SpecialPolynomialFunctions {
+public class PolynomialFunctions {
     
     public static SimplePolynomialFunction XOR( int xorLength ) {
         int inputLength = xorLength >>> 1;
@@ -42,5 +42,32 @@ public class SpecialPolynomialFunctions {
         }
         
         return new PolynomialFunctionGF2( andLength , andLength , monomials, contributions );
+    }
+    
+    public static SimplePolynomialFunction LSH( int inputLength , int shiftLength ) {
+        Monomial[] monomials = new Monomial[ inputLength - shiftLength ];
+        BitVector[] contributions = new BitVector[ inputLength - shiftLength ];
+        int upperLimit = inputLength - shiftLength;
+        for( int i = 0 ; i < upperLimit ; ++i ) {
+            monomials[ i ] = Monomial.linearMonomial( inputLength , i );
+            BitVector contribution = new BitVector( inputLength );
+            contribution.set( i + shiftLength );
+            contributions[ i ] = contribution;
+        }
+        return new PolynomialFunctionGF2( inputLength, inputLength , monomials , contributions );
+    }
+    
+    public static SimplePolynomialFunction RSH( int inputLength , int shiftLength ) {
+        Monomial[] monomials = new Monomial[ inputLength - shiftLength ];
+        BitVector[] contributions = new BitVector[ inputLength - shiftLength ];
+        int index;
+        for( int i = shiftLength ; i < inputLength ; ++i ) {
+            index = i - shiftLength;
+            monomials[ index ] = Monomial.linearMonomial( inputLength , i );
+            BitVector contribution = new BitVector( inputLength );
+            contribution.set( index );
+            contributions[ index ] = contribution;
+        }
+        return new PolynomialFunctionGF2( inputLength, inputLength , monomials , contributions );
     }
 }

@@ -1,8 +1,7 @@
 package com.kryptnostic.multivariate;
 
 import com.google.common.base.Preconditions;
-import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
-import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 
@@ -11,11 +10,11 @@ import cern.colt.bitvector.BitVector;
  * with lazy compose and recursive evaluation.
  * @author Matthew Tamayo-Rios
  */
-public class BinaryPolynomialFunction implements CompoundPolynomialFunction {
-    private final SimplePolynomialFunction lhs;
-    private final SimplePolynomialFunction rhs;
-    private final SimplePolynomialFunction op;    
-    public BinaryPolynomialFunction( SimplePolynomialFunction lhs , SimplePolynomialFunction op , SimplePolynomialFunction rhs ) {
+public class BinaryPolynomialFunction implements PolynomialFunction {
+    private final PolynomialFunction lhs;
+    private final PolynomialFunction rhs;
+    private final PolynomialFunction op;    
+    public BinaryPolynomialFunction( PolynomialFunction lhs , PolynomialFunction op , PolynomialFunction rhs ) {
         Preconditions.checkArgument( 
                 ( lhs.getOutputLength() + rhs.getOutputLength() )  == op.getInputLength() , 
                 "Output of functions being combined must be compatibe with operation.");

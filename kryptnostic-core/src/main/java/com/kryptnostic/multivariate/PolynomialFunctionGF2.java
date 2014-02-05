@@ -232,27 +232,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             
         }
         
-        return fromMonomialContributionMap( inner.getInputLength() , outputLength , composedFunction );
-//        removeNilContributions( composedFunction );
-//        int newSize = composedFunction.keySet().size();
-//        Monomial[] backingMonomials = new Monomial[ newSize ];
-//        BitVector[] backingContributions = new BitVector[ newSize ];
-//        
-//        int mIndex = 0;
-//        for( Entry<Monomial, BitVector> entry : composedFunction.entrySet() ) {
-//            backingMonomials[ mIndex ] = entry.getKey();
-//            backingContributions[ mIndex ] = entry.getValue();
-//            ++mIndex;
-//        }
-//        
-//        PolynomialFunctionGF2 composed = new PolynomialFunctionGF2( 
-//                inner.getInputLength(), 
-//                outputLength, 
-//                backingMonomials, 
-//                backingContributions );
-//        
-//        return composed;
-        
+        return fromMonomialContributionMap( inner.getInputLength() , outputLength , composedFunction );  
     }
     
     @Override

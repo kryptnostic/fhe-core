@@ -4,28 +4,22 @@ import java.util.Random;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.kryptnostic.crypto.PrivateKey;
-import com.kryptnostic.crypto.PublicKey;
-import com.kryptnostic.crypto.fhe.SpecialPolynomialFunctions;
+import com.kryptnostic.crypto.fhe.PolynomialFunctions;
 import com.kryptnostic.linear.BitUtils;
-import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 
-/**
- * Tests for special polynomial function provided as building blocks for more complex functions.
- * @author Matthew Tamayo-Rios
- */
-public class SpecialPolynomialFunctionsTests {
-    private static final Random r = new Random( System.currentTimeMillis() );
-    private static final PrivateKey privKey = new PrivateKey( 128 , 64 );
-    private static final PublicKey pubKey = new PublicKey( privKey );
+public class BasicOperatorTests {
+    private static Logger logger = LoggerFactory.getLogger( BasicOperatorTests.class );
+    private static final Random r = new Random( 0 );
     
     @Test
     public void testXor() {
-        SimplePolynomialFunction xor = SpecialPolynomialFunctions.XOR( 256 );
+        SimplePolynomialFunction xor = PolynomialFunctions.XOR( 256 );
         Assert.assertEquals( 256 , xor.getInputLength() );
         Assert.assertEquals( 256 , xor.getContributions()[0].size() );
         long[] values = new long[ 4 ];
@@ -47,7 +41,7 @@ public class SpecialPolynomialFunctionsTests {
     
     @Test
     public void testAnd() {
-        SimplePolynomialFunction and = SpecialPolynomialFunctions.AND( 256 );
+        SimplePolynomialFunction and = PolynomialFunctions.AND( 256 );
         Assert.assertEquals( 256 , and.getInputLength() );
         Assert.assertEquals( 256 , and.getContributions()[0].size() );
 
@@ -68,23 +62,29 @@ public class SpecialPolynomialFunctionsTests {
         Assert.assertArrayEquals( expected , result.elements() );
     }
     
+    @Test
+    public void testLSH() {
+        SimplePolynomialFunction lsh = PolynomialFunctions.LSH( 128 , 23 );
+        BitVector v = BitUtils.randomBitVector( 128 );
+        BitVector result = lsh.apply( v );
+        logger.info("Original vector: {}" , v );
+        logger.info("Vector left shifted {} times: {}" , 23 , result );
+        long v0 = v.elements()[0] << 23;
+        long v1 = ( v.elements()[1] << 23 ) | ( v.elements()[0] >>> 41 ); 
+        Assert.assertEquals( v0 , result.elements()[0] );
+        Assert.assertEquals( v1 , result.elements()[1] );
+    }
     
-    
-    @Test 
-    public void testHomomorphicXor() {
-        SimplePolynomialFunction xor = SpecialPolynomialFunctions.XOR( 64 );
-        SimplePolynomialFunction homomorphicXor = privKey.computeHomomorphicFunction( xor );
-        
-        BitVector v = BitUtils.randomBitVector( 64 );
-        BitVector vConcatR = new BitVector( new long[] { 
-                v.elements()[ 0 ] ,
-                r.nextLong() } ,  
-                128 );
-        
-        BitVector cv = pubKey.getEncrypter().apply( vConcatR );
-        BitVector hResult = privKey.getDecryptor().apply( homomorphicXor.apply( cv ) );
-        BitVector result = xor.apply( v );
-        
-        Assert.assertEquals( hResult, result );
+    @Test
+    public void testRSH() {
+        SimplePolynomialFunction rsh = PolynomialFunctions.RSH( 128 , 23 );
+        BitVector v = BitUtils.randomBitVector( 128 );
+        BitVector result = rsh.apply( v );
+        logger.info("Original vector: {}" , v );
+        logger.info("Vector right shifted {} times: {}" , 23 , result );
+        long v0 = ( v.elements()[0] >>> 23 ) | ( v.elements()[1] << 41 );
+        long v1 = ( v.elements()[1] >>> 23 ) ; 
+        Assert.assertEquals( v0 , result.elements()[0] );
+        Assert.assertEquals( v1 , result.elements()[1] );
     }
 }
