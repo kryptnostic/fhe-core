@@ -1,7 +1,7 @@
 package com.kryptnostic.multivariate;
 
 import com.google.common.base.Preconditions;
-import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
+import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
@@ -11,7 +11,7 @@ import cern.colt.bitvector.BitVector;
  * with lazy compose and recursive evaluation.
  * @author Matthew Tamayo-Rios
  */
-public class PolynomialFunctionJoiner implements CompoundPolynomialFunction {
+public class PolynomialFunctionJoiner implements PolynomialFunction {
     private final SimplePolynomialFunction lhs;
     private final SimplePolynomialFunction rhs;
     private final SimplePolynomialFunction op;    
@@ -29,8 +29,7 @@ public class PolynomialFunctionJoiner implements CompoundPolynomialFunction {
 
     @Override
     public BitVector apply( BitVector lhs, BitVector rhs ) {
-        BitVector input = FunctionUtils.concatenate( lhs , rhs );
-        return op.apply( this.lhs.apply( lhs ) , this.rhs.apply( rhs ) ); 
+        return apply( FunctionUtils.concatenate( lhs , rhs ) );
     }
     
     @Override
@@ -40,7 +39,7 @@ public class PolynomialFunctionJoiner implements CompoundPolynomialFunction {
 
     @Override
     public int getInputLength() {
-        return lhs.getInputLength() ;
+        return lhs.getInputLength();
     }
 
     @Override

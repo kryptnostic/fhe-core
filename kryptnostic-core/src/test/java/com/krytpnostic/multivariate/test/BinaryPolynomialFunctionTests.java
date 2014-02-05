@@ -12,8 +12,8 @@ import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
-import junit.framework.Assert;
 import cern.colt.bitvector.BitVector;
+import junit.framework.Assert;
 
 public class BinaryPolynomialFunctionTests {
     private static final Logger logger = LoggerFactory.getLogger( BinaryPolynomialFunctionTests.class );

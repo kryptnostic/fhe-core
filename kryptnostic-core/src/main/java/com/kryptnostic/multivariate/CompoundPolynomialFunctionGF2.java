@@ -1,5 +1,6 @@
 package com.kryptnostic.multivariate;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -7,102 +8,101 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
-import com.kryptnostic.multivariate.gf2.Monomial;
-import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 
 public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction {
     
-    private final LinkedList<SimplePolynomialFunction> functions;
-    private final int inputLength;
-    private final int outputLength;
+    private final LinkedList<PolynomialFunction> functions;
     
-    public CompoundPolynomialFunctionGF2( int inputLength , int outputLength ) {
-        this( ImmutableList.<SimplePolynomialFunction>of() , inputLength , outputLength );
+    public CompoundPolynomialFunctionGF2() {
+        this( ImmutableList.<PolynomialFunction>of() );
     }
     
-    public CompoundPolynomialFunctionGF2( List<SimplePolynomialFunction> functions , int inputLength , int outputLength ) {
+    public CompoundPolynomialFunctionGF2( List<PolynomialFunction> functions ) {
         this.functions = Lists.newLinkedList( functions );
-        Preconditions.checkArgument( this.functions.getLast().getOutputLength() == outputLength , "Specified output length does not match actual output length.");
-        Preconditions.checkArgument( this.functions.getFirst().getInputLength() == inputLength , "Specified output length does not match actual output length.");
-        this.inputLength = inputLength;
-        this.outputLength = outputLength;
     }
     
-    public SimplePolynomialFunction compose( CompoundPolynomialFunctionGF2 inner ) {
+    public CompoundPolynomialFunction compose( CompoundPolynomialFunction inner ) {
         validateForCompose( inner );
-        CompoundPolynomialFunctionGF2 newCPF = new CompoundPolynomialFunctionGF2( inner.inputLength , outputLength );
+        CompoundPolynomialFunctionGF2 newCPF = new CompoundPolynomialFunctionGF2();
         
-        newCPF.functions.addAll( inner.functions );
+        newCPF.functions.addAll( inner.getFunctions() );
         newCPF.functions.addAll( functions );
         
         return newCPF;
     }
     
     @Override
-    public SimplePolynomialFunction compose( SimplePolynomialFunction inner ) {
+    public CompoundPolynomialFunction compose( PolynomialFunction inner ) {
         validateForCompose( inner );
-        if( inner.getClass().equals( CompoundPolynomialFunctionGF2.class ) ) {
-            return compose( (CompoundPolynomialFunctionGF2) inner );
-        } else {
-            CompoundPolynomialFunctionGF2 newCPF = new CompoundPolynomialFunctionGF2( this.functions , inner.getInputLength() , outputLength );
-            newCPF.functions.addFirst( inner );
-            return newCPF;
-        }
+        CompoundPolynomialFunctionGF2 cpf = copy();
+        cpf.functions.addFirst( inner );
+        return cpf;
     }
-
+    
     @Override
-    public SimplePolynomialFunction xor( SimplePolynomialFunction input ) {
-        
-        return null;
-    }
-
-    @Override
-    public SimplePolynomialFunction and(SimplePolynomialFunction input) {
-        // TODO Auto-generated method stub
-        return null;
+    public CompoundPolynomialFunctionGF2 copy() {
+        CompoundPolynomialFunctionGF2 cpf = new CompoundPolynomialFunctionGF2();
+        cpf.functions.addAll( this.functions );
+        return cpf;
     }
 
     @Override
     public BitVector apply(BitVector input) {
         BitVector result = input;
         
-        for( SimplePolynomialFunction f : functions ) {
+        for( PolynomialFunction f : functions ) {
             result = f.apply( result );
         }
         
         return result;
     }
-
+    
+    @Override
+    public BitVector apply(BitVector lhs, BitVector rhs) {
+        Preconditions.checkArgument( 
+                ( lhs.size() + rhs.size() ) == getInputLength() , 
+                "Vectors provided for evaluation must have the same total length as the function expects as input."); 
+        return apply( FunctionUtils.concatenate( lhs , rhs ) );
+    }
+    
     @Override
     public int getInputLength() {
-        // TODO Auto-generated method stub
-        return 0;
+        if( functions.isEmpty() ) {
+            return 0;
+        }
+        return functions.getFirst().getInputLength();
     }
 
     @Override
     public int getOutputLength() {
-        // TODO Auto-generated method stub
-        return 0;
+        if( functions.isEmpty() ) {
+            return 0;
+        }
+        return functions.getLast().getOutputLength();
+    }
+
+    public void validateForCompose( PolynomialFunction inner ) {
+        if( getInputLength() != 0 ) { 
+            Preconditions.checkArgument( 
+                    getInputLength() == inner.getOutputLength() ,
+                    "Input length of outer function must match output length of inner function it is being composed with"
+                    );
+        }
+    }
+
+    public static CompoundPolynomialFunctionGF2 fromFunctions( PolynomialFunction ... functions ) {
+        if( functions.length == 0 ) { 
+            return new CompoundPolynomialFunctionGF2();
+        } else {
+            return new CompoundPolynomialFunctionGF2( Arrays.asList( functions ) );
+        }
     }
 
     @Override
-    public Monomial[] getMonomials() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public BitVector[] getContributions() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-    
-    public void validateForCompose( SimplePolynomialFunction inner ) {
-        Preconditions.checkArgument( 
-                inputLength == inner.getOutputLength() ,
-                "Input length of outer function must match output length of inner function it is being composed with"
-                );
+    public List<PolynomialFunction> getFunctions() {
+        return functions;
     }
 }
