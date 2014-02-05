@@ -47,7 +47,7 @@ public class HomomorphicFunctionsTests {
     public void testHomomorphicAnd() {
         SimplePolynomialFunction and = PolynomialFunctions.AND( 64 );
         long start = System.currentTimeMillis();
-        SimplePolynomialFunction homomorphicXor = privKey.computeHomomorphicFunction( and );
+        SimplePolynomialFunction homomorphicAnd = privKey.computeHomomorphicFunction( and );
         long stop = System.currentTimeMillis();
         logger.info( "Homomorphic AND generation took {} ms" , stop - start );
         
@@ -59,7 +59,7 @@ public class HomomorphicFunctionsTests {
         
         BitVector cv = pubKey.getEncrypter().apply( vConcatR );
         start = System.currentTimeMillis();
-        BitVector hResult = privKey.getDecryptor().apply( homomorphicXor.apply( cv ) );
+        BitVector hResult = privKey.getDecryptor().apply( homomorphicAnd.apply( cv ) );
         stop = System.currentTimeMillis();
         logger.info( "Homomorphic AND evaluation took {} ms" , stop - start );
         BitVector result = and.apply( v );
