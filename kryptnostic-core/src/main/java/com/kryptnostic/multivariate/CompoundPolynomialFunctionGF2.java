@@ -1,6 +1,7 @@
 package com.kryptnostic.multivariate;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -103,6 +104,6 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
 
     @Override
     public List<PolynomialFunction> getFunctions() {
-        return functions;
+        return Collections.unmodifiableList( functions );
     }
 }

@@ -17,4 +17,5 @@ public interface SimplePolynomialFunction extends PolynomialFunction {
     
     public abstract Monomial[] getMonomials();
     public abstract BitVector[] getContributions();
+    public abstract int getTotalMonomialCount();
 }

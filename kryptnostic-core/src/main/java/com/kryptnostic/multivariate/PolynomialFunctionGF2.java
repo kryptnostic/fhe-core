@@ -156,7 +156,8 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     public BitVector apply( BitVector lhs , BitVector rhs ) {
         return apply( FunctionUtils.concatenate( lhs , rhs) );
     }
-   
+    
+    @Override
     public SimplePolynomialFunction compose( SimplePolynomialFunction inner ) {
         //Verify the functions are composable
         Preconditions.checkArgument( 
@@ -271,7 +272,15 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                 newMonomials, 
                 newContributions );
     }
-
+    
+    @Override
+    public int getTotalMonomialCount() {
+        int count = 0;
+        for( int i = 0 ; i < monomials.length ; ++i ) {
+            count += contributions[ i ].cardinality();
+        }
+        return count;
+    }
     public static Map<Monomial, Set<Monomial>> initializeMemoMap( int outerInputLength , Monomial[] monomials , BitVector[] contributions ) {
         Map<Monomial, Set<Monomial>> memoizedComputations = Maps.newHashMap();
         for( int i = 0 ; i < outerInputLength ; ++i ) {

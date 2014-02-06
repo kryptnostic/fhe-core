@@ -28,7 +28,11 @@ public class HomomorphicFunctionsTests {
     @Test 
     public void testHomomorphicXor() {
         SimplePolynomialFunction xor = PolynomialFunctions.XOR( 64 );
+        long start = System.currentTimeMillis();
         SimplePolynomialFunction homomorphicXor = privKey.computeHomomorphicFunction( xor );
+        long stop = System.currentTimeMillis();
+        logger.info( "Homomorphic XOR generation took {} ms" , stop - start );
+        logger.info( "Homomorphic XOR has {} monomials" , homomorphicXor.getTotalMonomialCount() );
         
         BitVector v = BitUtils.randomVector( 64 );
         BitVector vConcatR = new BitVector( new long[] { 
@@ -37,7 +41,10 @@ public class HomomorphicFunctionsTests {
                 128 );
         
         BitVector cv = pubKey.getEncrypter().apply( vConcatR );
+        start = System.currentTimeMillis();
         BitVector hResult = privKey.getDecryptor().apply( homomorphicXor.apply( cv ) );
+        stop = System.currentTimeMillis();
+        logger.info( "Homomorphic XOR evaluation took {} ms" , stop - start );
         BitVector result = xor.apply( v );
         
         Assert.assertEquals( hResult, result );
@@ -50,6 +57,7 @@ public class HomomorphicFunctionsTests {
         SimplePolynomialFunction homomorphicAnd = privKey.computeHomomorphicFunction( and );
         long stop = System.currentTimeMillis();
         logger.info( "Homomorphic AND generation took {} ms" , stop - start );
+        logger.info( "Homomorphic AND has {} monomials" , homomorphicAnd.getTotalMonomialCount() );
         
         BitVector v = BitUtils.randomVector( 64 );
         BitVector vConcatR = new BitVector( new long[] { 

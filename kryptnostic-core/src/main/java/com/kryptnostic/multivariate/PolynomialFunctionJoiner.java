@@ -2,7 +2,6 @@ package com.kryptnostic.multivariate;
 
 import com.google.common.base.Preconditions;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
-import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 
@@ -12,10 +11,10 @@ import cern.colt.bitvector.BitVector;
  * @author Matthew Tamayo-Rios
  */
 public class PolynomialFunctionJoiner implements PolynomialFunction {
-    private final SimplePolynomialFunction lhs;
-    private final SimplePolynomialFunction rhs;
-    private final SimplePolynomialFunction op;    
-    public PolynomialFunctionJoiner( SimplePolynomialFunction lhs , SimplePolynomialFunction op , SimplePolynomialFunction rhs ) {
+    private final PolynomialFunction lhs;
+    private final PolynomialFunction rhs;
+    private final PolynomialFunction op;    
+    public PolynomialFunctionJoiner( PolynomialFunction lhs , PolynomialFunction op , PolynomialFunction rhs ) {
         Preconditions.checkArgument( 
                 ( lhs.getOutputLength() + rhs.getOutputLength() )  == op.getInputLength() , 
                 "Output of functions being combined must be compatibe with operation.");

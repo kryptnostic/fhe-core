@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.kryptnostic.crypto.fhe.PolynomialFunctions;
 import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
@@ -86,5 +87,16 @@ public class BasicOperatorTests {
         long v1 = ( v.elements()[1] >>> 23 ) ; 
         Assert.assertEquals( v0 , result.elements()[0] );
         Assert.assertEquals( v1 , result.elements()[1] );
+    }
+    
+    @Test
+    public void testADDER() {
+        long start = System.currentTimeMillis();
+        PolynomialFunction adder = PolynomialFunctions.ADDER( 128 );
+        long stop = System.currentTimeMillis();
+        logger.info("Adder generation took {} ms" , stop - start );
+        BitVector v = BitUtils.randomVector( 128 );
+        BitVector result = adder.apply( v );
+        Assert.assertEquals( v.elements()[ 0 ] + v.elements()[1] , result.elements()[0] );
     }
 }

@@ -1,7 +1,11 @@
 package com.kryptnostic.crypto.fhe;
 
+import com.kryptnostic.multivariate.CompoundPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.PolynomialFunctionJoiner;
+import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
+import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
@@ -69,5 +73,26 @@ public class PolynomialFunctions {
             contributions[ index ] = contribution;
         }
         return new PolynomialFunctionGF2( inputLength, inputLength , monomials , contributions );
+    }
+    
+    public static SimplePolynomialFunction HALF_ADDER( SimplePolynomialFunction xor , SimplePolynomialFunction and , SimplePolynomialFunction lsh ) {
+        return xor.xor( lsh.compose( and ) );
+    }
+    
+    public static PolynomialFunction ADDER( int length ) {
+        return ADDER( length , XOR( length ) , AND( length ) , LSH( length , 1 ) );
+    }
+    
+    //TODO: Finish adder generation.
+    public static PolynomialFunction ADDER( int length , SimplePolynomialFunction xor , SimplePolynomialFunction and , SimplePolynomialFunction lsh ) {
+        CompoundPolynomialFunction cpf = new CompoundPolynomialFunctionGF2();
+        
+        /*
+         * Actually building out the algebraic representation of an adder is prohibitively expensive.
+         */
+        PolynomialFunction currentCarry = CompoundPolynomialFunctionGF2.fromFunctions( and , lsh ); 
+        PolynomialFunction applyCarry = new PolynomialFunctionJoiner( xor , xor , currentCarry );
+        
+        return applyCarry;
     }
 }
