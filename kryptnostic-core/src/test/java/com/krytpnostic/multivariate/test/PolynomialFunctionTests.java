@@ -12,7 +12,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.kryptnostic.linear.BitUtils;
-import com.kryptnostic.multivariate.MultivariateUtils;
+import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -28,12 +28,12 @@ public class PolynomialFunctionTests {
     public void builderTest() {
         PolynomialFunctionGF2.Builder builder = PolynomialFunctionGF2.builder( 256 , 256 );
         for( int i = 0 ; i < 1024 ; ++i ) {
-            BitVector contribution = MultivariateUtils.randomVector( 256 );
+            BitVector contribution = BitUtils.randomVector( 256 );
             builder.setMonomialContribution( Monomial.randomMonomial( 256 , 4 ) , contribution);
         }
         
         PolynomialFunctionGF2 f = builder.build();
-        BitVector result = f.apply( MultivariateUtils.randomVector( 256 ) );
+        BitVector result = f.apply( BitUtils.randomVector( 256 ) );
         logger.info( "Result: {}" , result );
         Assert.assertEquals( result.size() ,  256 );
     }
@@ -42,12 +42,12 @@ public class PolynomialFunctionTests {
     public void evaluationTest() {
         PolynomialFunctionGF2.Builder builder = PolynomialFunctionGF2.builder( 256 , 256 );
         for( int i = 0 ; i < 1024 ; ++i ) {
-            BitVector contribution = MultivariateUtils.randomVector( 256 );
+            BitVector contribution = BitUtils.randomVector( 256 );
             builder.setMonomialContribution( Monomial.randomMonomial( 256 , 4 ) , contribution);
         }
         
         PolynomialFunctionGF2 f = builder.build();
-        BitVector result = f.apply( MultivariateUtils.randomVector( 256 ) );
+        BitVector result = f.apply( BitUtils.randomVector( 256 ) );
         logger.info( "Result: {}" , result );
         Assert.assertEquals( result.size() ,  256 );
     }
@@ -55,7 +55,7 @@ public class PolynomialFunctionTests {
    @Test
    public void identityTest() {
        PolynomialFunctionGF2 f = PolynomialFunctionGF2.identity( 256 );
-       BitVector input = BitUtils.randomBitVector( 256 );
+       BitVector input = BitUtils.randomVector( 256 );
        
        Assert.assertEquals( input , f.apply( input ) );
    }
@@ -66,7 +66,7 @@ public class PolynomialFunctionTests {
        Set<BitVector> cset = Sets.newHashSet();
        while( mset.size() < 256 ) {
            if( mset.add( Monomial.randomMonomial( 256 , 4 ) ) ) {
-               cset.add(MultivariateUtils.randomVector( 256 ));
+               cset.add(BitUtils.randomVector( 256 ));
            }
        }
        List<Monomial> monomials = Lists.newArrayList( mset );
@@ -104,7 +104,7 @@ public class PolynomialFunctionTests {
    public void addTest() {
        PolynomialFunctionGF2 lhs = PolynomialFunctionGF2.randomFunction(256, 256);
        PolynomialFunctionGF2 rhs = PolynomialFunctionGF2.randomFunction(256, 256);
-       BitVector val = BitUtils.randomBitVector( 256 ) ;
+       BitVector val = BitUtils.randomVector( 256 ) ;
        BitVector expected = lhs.apply( val );
        expected.xor( rhs.apply( val ) );
        Assert.assertEquals( expected, lhs.xor( rhs ).apply( val ) );
@@ -114,7 +114,7 @@ public class PolynomialFunctionTests {
    public void productTest() {
        PolynomialFunctionGF2 lhs = PolynomialFunctionGF2.randomFunction(256, 256);
        PolynomialFunctionGF2 rhs = PolynomialFunctionGF2.randomFunction(256, 256);
-       BitVector val = BitUtils.randomBitVector( 256 ) ;
+       BitVector val = BitUtils.randomVector( 256 ) ;
        BitVector expected = lhs.apply( val );
        expected.and( rhs.apply( val ) );
        Assert.assertEquals( expected, lhs.and( rhs ).apply( val ) );
@@ -129,10 +129,10 @@ public class PolynomialFunctionTests {
          new Monomial( 256 ).chainSet( 0 ).chainSet(1).chainSet(4) ,
        };
        BitVector[] contributions = new BitVector[] {
-               BitUtils.randomBitVector( 256 ) ,
-               BitUtils.randomBitVector( 256 ) ,
-               BitUtils.randomBitVector( 256 ) ,
-               BitUtils.randomBitVector( 256 )
+               BitUtils.randomVector( 256 ) ,
+               BitUtils.randomVector( 256 ) ,
+               BitUtils.randomVector( 256 ) ,
+               BitUtils.randomVector( 256 )
        };
        
        
@@ -150,7 +150,7 @@ public class PolynomialFunctionTests {
        SimplePolynomialFunction composed = outer.compose( inner );
        
        for( int i = 0 ; i < 25 ; ++i ) {
-           BitVector randomInput = BitUtils.randomBitVector( 256 );
+           BitVector randomInput = BitUtils.randomVector( 256 );
            BitVector innerResult = inner.apply( randomInput );
            BitVector outerResult = outer.apply( innerResult );
            BitVector composedResult = composed.apply( randomInput );
@@ -182,4 +182,15 @@ public class PolynomialFunctionTests {
        Assert.assertEquals( rhsResult.elements()[0] , concatenatedResult.elements()[2] );
        Assert.assertEquals( rhsResult.elements()[1] , concatenatedResult.elements()[3] );
    }
+   
+   @Test
+   public void testToFromString() {
+       SimplePolynomialFunction f = PolynomialFunctionGF2.randomFunction( 256 , 128 );
+       String fString = f.toString();
+       logger.info( "f = {}" , fString );
+       
+       SimplePolynomialFunction fPrime = FunctionUtils.fromString( 256 , fString );
+       Assert.assertEquals( f , fPrime );
+   }
+
 }

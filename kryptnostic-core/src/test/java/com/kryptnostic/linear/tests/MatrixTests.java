@@ -189,9 +189,9 @@ public class MatrixTests {
         EnhancedBitMatrix m2 = EnhancedBitMatrix.randomMatrix( 512 , 256 );
         EnhancedBitMatrix m3 = EnhancedBitMatrix.randomMatrix( 128 , 256 );
         //Generate test vectors
-        BitVector v1 = BitUtils.randomBitVector( 256 );
-        BitVector v2 = BitUtils.randomBitVector( 256 );
-        BitVector v3 = BitUtils.randomBitVector( 256 );
+        BitVector v1 = BitUtils.randomVector( 256 );
+        BitVector v2 = BitUtils.randomVector( 256 );
+        BitVector v3 = BitUtils.randomVector( 256 );
         //Multiply vectorial polynomial function by matrix
         SimplePolynomialFunction r1 = m1.multiply( f );
         SimplePolynomialFunction r2 = m2.multiply( f );

@@ -22,7 +22,7 @@ public class CompoundPolynomialFunctionTests {
         Assert.assertEquals( 128 , cpf.getInputLength() );
         Assert.assertEquals( 64 , cpf.getOutputLength() );
         
-        BitVector v = BitUtils.randomBitVector( cpf.getInputLength() );
+        BitVector v = BitUtils.randomVector( cpf.getInputLength() );
         
         Assert.assertEquals( h.apply( g.apply( f.apply( v ) ) ) ,  cpf.apply( v ) );
     }
@@ -41,7 +41,7 @@ public class CompoundPolynomialFunctionTests {
         Assert.assertEquals( 128 , cpf.getInputLength() );
         Assert.assertEquals( 64 , cpf.getOutputLength() );
         
-        BitVector v = BitUtils.randomBitVector( cpf.getInputLength() );
+        BitVector v = BitUtils.randomVector( cpf.getInputLength() );
         
         Assert.assertEquals( h.apply( g.apply( f.apply( v ) ) ) ,  cpf.apply( v ) );
     }

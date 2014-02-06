@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.kryptnostic.multivariate.MultivariateUtils;
 
 import cern.colt.bitvector.BitVector;
 
@@ -27,7 +28,6 @@ public class PolynomialFunctionRepresentationGF2 {
 
     protected final int inputLength;
     protected final int outputLength;
-    
     protected final Monomial[] monomials;
     protected final BitVector[] contributions;
     
@@ -67,8 +67,8 @@ public class PolynomialFunctionRepresentationGF2 {
             return false;
         if (inputLength != other.inputLength)
             return false;
-        Map<Monomial,BitVector> thisMap = mapViewFromMonomialsAndContributions(monomials, contributions);
-        Map<Monomial,BitVector> objMap = mapViewFromMonomialsAndContributions(other.monomials, other.contributions);
+        Map<Monomial,BitVector> thisMap = MultivariateUtils.mapViewFromMonomialsAndContributions(monomials, contributions);
+        Map<Monomial,BitVector> objMap = MultivariateUtils.mapViewFromMonomialsAndContributions(other.monomials, other.contributions);
         
         if( !Sets.symmetricDifference( thisMap.keySet() , objMap.keySet() ).isEmpty() ) {
             return false;
@@ -161,15 +161,39 @@ public class PolynomialFunctionRepresentationGF2 {
         return contributions;
     }
     
+    @Override
+    public String toString() {
+        StringBuilder rep = new StringBuilder();
+        for( int row = 0 ; row < outputLength ; ++row ) {
+            boolean first = true;
+            for( int i = 0 ; i < monomials.length ; ++i ) {
+                if( contributions[ i ].get( row ) ) {
+                    if( !first ) {
+                        rep.append( " + ");
+                    } else {
+                        first = false;
+                    }
+                    rep.append( monomials[ i ].toStringMonomial() );
+                }
+            }
+            rep.append("\n");
+        }
+        
+        return rep.toString();
+    }
+    
+    public static PolynomialFunctionRepresentationGF2 randomFunction( int inputLen , int outputLen ) {
+        PolynomialFunctionRepresentationGF2.Builder builder = PolynomialFunctionRepresentationGF2.builder( inputLen , outputLen );
+        for( int i = 0 ; i < 16 ; ++i ) {
+            BitVector contribution = MultivariateUtils.randomVector( outputLen );
+            builder.setMonomialContribution( Monomial.randomMonomial( inputLen , 3 ) , contribution);
+        }
+        
+        return builder.build();
+    }
+    
     public static Builder builder( int inputLength, int outputLength  ) {
         return new Builder( inputLength , outputLength );
     }
     
-    public static Map<Monomial, BitVector> mapViewFromMonomialsAndContributions( Monomial[] monomials, BitVector[] contributions ) {
-        Map<Monomial, BitVector> result = Maps.newHashMapWithExpectedSize( monomials.length );
-        for( int i = 0 ; i < monomials.length ; ++i  ) {
-            result.put( monomials[ i ].clone() , contributions[ i ].copy() );
-        }
-        return result;
-    }
 }

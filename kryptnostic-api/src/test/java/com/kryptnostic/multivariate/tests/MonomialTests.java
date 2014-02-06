@@ -62,4 +62,17 @@ public class MonomialTests {
         Assert.assertEquals( false ,  m.hasFactor( new Monomial( 139 ).chainSet( 0 ).chainSet( 65 ).chainSet( 5 ) ) );
         Assert.assertEquals( false ,  m.hasFactor( new Monomial( 139 ).chainSet( 1 ).chainSet( 3 ).chainSet( 5 ) ) );
     }
+    
+    @Test
+    public void testToFromString() {
+        Monomial m = new Monomial( 65 );
+        m.chainSet( 0 ).chainSet( 2 ).chainSet( 25 );
+        String monomialString = m.toStringMonomial();
+        
+        Assert.assertEquals( "x1*x3*x26", monomialString );
+        Monomial m2 = Monomial.fromString( 65 , monomialString );
+        Assert.assertEquals( m , m2 );
+    }
+    
+    
 }

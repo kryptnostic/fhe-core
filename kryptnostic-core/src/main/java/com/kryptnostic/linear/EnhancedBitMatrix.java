@@ -13,7 +13,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.kryptnostic.multivariate.MultivariateUtils;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -225,14 +224,18 @@ public class EnhancedBitMatrix {
             newContributions[ index ] = result.getValue();
             ++index;
         }
-        
-        PolynomialFunctionGF2 result = new PolynomialFunctionGF2( 
-                f.getInputLength(), 
-                this.rows(), 
-                newMonomials, 
-                newContributions );
-        
-        return result;
+        ;
+        return PolynomialFunctionGF2.fromMonomialContributionMap(
+                f.getInputLength() , 
+                rows() , 
+                PolynomialFunctionGF2.mapViewFromMonomialsAndContributions(newMonomials, newContributions) );
+//        PolynomialFunctionGF2 result = new PolynomialFunctionGF2( 
+//                f.getInputLength(), 
+//                this.rows(), 
+//                newMonomials, 
+//                newContributions );
+//        
+//        return result;
     }
     
     public static EnhancedBitMatrix identity( int size ) {
@@ -436,7 +439,7 @@ public class EnhancedBitMatrix {
     public static EnhancedBitMatrix randomSqrMatrix( int size ) { 
         List<BitVector> rows = Lists.newArrayListWithExpectedSize( size );
         for( int i = 0 ; i < size ; ++i ) {
-            rows.add( MultivariateUtils.randomVector( size ) );
+            rows.add( BitUtils.randomVector( size ) );
         }
         return new EnhancedBitMatrix( rows );
     }
@@ -444,7 +447,7 @@ public class EnhancedBitMatrix {
     public static EnhancedBitMatrix randomMatrix( int numRows , int numCols ) {
         List<BitVector> rows = Lists.newArrayListWithExpectedSize( numRows );
         for( int i = 0 ; i < numRows ; ++i ) {
-            rows.add( MultivariateUtils.randomVector( numCols ) );
+            rows.add( BitUtils.randomVector( numCols ) );
         }
         return new EnhancedBitMatrix( rows );
     }

@@ -16,6 +16,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunctionRepresentationGF2;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -270,7 +271,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                 newMonomials, 
                 newContributions );
     }
-    
+
     public static Map<Monomial, Set<Monomial>> initializeMemoMap( int outerInputLength , Monomial[] monomials , BitVector[] contributions ) {
         Map<Monomial, Set<Monomial>> memoizedComputations = Maps.newHashMap();
         for( int i = 0 ; i < outerInputLength ; ++i ) {
@@ -391,7 +392,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     public static PolynomialFunctionGF2 randomFunction( int inputLen , int outputLen ) {
         PolynomialFunctionGF2.Builder builder = PolynomialFunctionGF2.builder( inputLen , outputLen );
         for( int i = 0 ; i < 16 ; ++i ) {
-            BitVector contribution = MultivariateUtils.randomVector( outputLen );
+            BitVector contribution = BitUtils.randomVector( outputLen );
             builder.setMonomialContribution( Monomial.randomMonomial( inputLen , 3 ) , contribution);
         }
         
@@ -540,6 +541,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     
     
     public static PolynomialFunctionGF2 fromMonomialContributionMap( int inputLength , int outputLength , Map<Monomial,BitVector> monomialContributionsMap) {
+        removeNilContributions(monomialContributionsMap);
         Monomial[] newMonomials = new Monomial[ monomialContributionsMap.size() ];
         BitVector[] newContributions = new BitVector[ monomialContributionsMap.size() ];
         int index = 0;

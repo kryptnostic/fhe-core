@@ -23,7 +23,7 @@ public class PublicKey {
     //TODO: Replace with bouncy castle or real number generator.
     private static final Random r = new Random( 0 );
     private final SimplePolynomialFunction encrypter;
-    private final PolynomialFunctionGF2 m;
+    private final SimplePolynomialFunction m;
     private final PaddingStrategy paddingStrategy;
     private final int longsPerBlock;
     public PublicKey( PrivateKey privateKey ) {
@@ -107,7 +107,7 @@ public class PublicKey {
         return encrypter;
     }
 
-    public PolynomialFunctionGF2 getM() {
+    public SimplePolynomialFunction getM() {
         return m;
     }
 }

@@ -65,7 +65,7 @@ public class BasicOperatorTests {
     @Test
     public void testLSH() {
         SimplePolynomialFunction lsh = PolynomialFunctions.LSH( 128 , 23 );
-        BitVector v = BitUtils.randomBitVector( 128 );
+        BitVector v = BitUtils.randomVector( 128 );
         BitVector result = lsh.apply( v );
         logger.info("Original vector: {}" , v );
         logger.info("Vector left shifted {} times: {}" , 23 , result );
@@ -78,7 +78,7 @@ public class BasicOperatorTests {
     @Test
     public void testRSH() {
         SimplePolynomialFunction rsh = PolynomialFunctions.RSH( 128 , 23 );
-        BitVector v = BitUtils.randomBitVector( 128 );
+        BitVector v = BitUtils.randomVector( 128 );
         BitVector result = rsh.apply( v );
         logger.info("Original vector: {}" , v );
         logger.info("Vector right shifted {} times: {}" , 23 , result );

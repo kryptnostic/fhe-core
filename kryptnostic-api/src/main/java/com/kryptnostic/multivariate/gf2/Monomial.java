@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Set;
 
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 import com.kryptnostic.multivariate.predicates.MonomialOrderHomogeneityPredicate;
 
@@ -128,5 +130,43 @@ public class Monomial extends BitVector {
     
     public static MonomialOrderHomogeneityPredicate getLinearHomogeneityPredicate() { 
         return linearHomogeneityPredicate;
+    }
+
+    public String toStringMonomial() {
+        return toStringMonomial( "x" );
+    }
+    
+    public String toStringMonomial( String var ) {
+        StringBuilder rep = new StringBuilder();
+        boolean first = true;
+        for( int i = 0 ; i < size() ; ++i ) {
+            if( get( i ) ) {
+                if( !first ) {
+                    rep.append("*");
+                } else {
+                    first = false;
+                }
+                rep
+                    .append( var )
+                    .append( i + 1 );
+            }
+        }
+        
+        return rep.toString();
+    }
+    
+    public static Monomial fromString( int size , String monomialString ) {
+        Iterable<String> components = 
+                Splitter
+                    .on( CharMatcher.anyOf("*x") )
+                    .trimResults()
+                    .omitEmptyStrings()
+                    .split( monomialString );
+        Monomial m = new Monomial( size );
+        for( String component : components ) {
+            m.set( Integer.parseInt( component ) - 1 );
+        }
+        
+        return m;
     }
 }

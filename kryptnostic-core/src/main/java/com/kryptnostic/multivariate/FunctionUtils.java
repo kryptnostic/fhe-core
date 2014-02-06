@@ -1,6 +1,13 @@
 package com.kryptnostic.multivariate;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import com.google.common.base.Splitter;
+import com.google.common.collect.Maps;
+import com.kryptnostic.multivariate.gf2.Monomial;
+import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 
@@ -25,5 +32,45 @@ public class FunctionUtils {
             concatenated.elements()[ i + lhs.elements().length ] = rhs.elements()[ i ];
         }
         return concatenated;
+    }
+    
+    public static Map<Monomial, BitVector> mapViewFromMonomialsAndContributions( Monomial[] monomials, BitVector[] contributions ) {
+        Map<Monomial, BitVector> result = Maps.newHashMapWithExpectedSize( monomials.length );
+        for( int i = 0 ; i < monomials.length ; ++i  ) {
+            result.put( monomials[ i ] , contributions[ i ] );
+        }
+        return result;
+    }
+    
+    public static SimplePolynomialFunction fromString( int monomialSize , String polynomialString ) {
+        List<String> lines = 
+                Splitter
+                    .on( "\n" )
+                    .omitEmptyStrings()
+                    .trimResults()
+                    .splitToList( polynomialString );
+        int row = 0;
+        Map<Monomial, BitVector> monomialContributionsMap = Maps.newHashMap();
+        for( String line : lines ) {
+            Iterable<String> monomials = 
+                    Splitter
+                    .on( "+" )
+                    .trimResults()
+                    .omitEmptyStrings()
+                    .split( line );
+            
+            for( String monomialString : monomials ) {
+                Monomial m = Monomial.fromString( monomialSize , monomialString );
+                BitVector contribution = monomialContributionsMap.get( m );
+                if( contribution == null ) {
+                    contribution = new BitVector( lines.size() );
+                    monomialContributionsMap.put( m , contribution );
+                } 
+                contribution.set( row );
+            }
+            ++row;
+        }
+        
+        return PolynomialFunctionGF2.fromMonomialContributionMap( monomialSize , lines.size() , monomialContributionsMap );
     }
 }

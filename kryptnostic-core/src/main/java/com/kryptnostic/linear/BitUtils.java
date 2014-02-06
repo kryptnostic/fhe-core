@@ -2,6 +2,8 @@ package com.kryptnostic.linear;
 
 import java.util.Random;
 
+import com.kryptnostic.multivariate.MultivariateUtils;
+
 import cern.colt.bitvector.BitVector;
 
 public class BitUtils {
@@ -28,15 +30,8 @@ public class BitUtils {
         return -1;
     }
     
-    public static BitVector randomBitVector( int length ) {
-        //TODO: Optimize this
-        BitVector v = new BitVector( length );
-        for( int i = 0 ; i < length ; ++i ) {
-            if( r.nextBoolean() ) {
-                v.set( i );
-            }
-        }
-        return v;
+
+    public static BitVector randomVector( int length ) {
+        return MultivariateUtils.randomVector(length);
     }
-    
  }

@@ -30,7 +30,7 @@ public class HomomorphicFunctionsTests {
         SimplePolynomialFunction xor = PolynomialFunctions.XOR( 64 );
         SimplePolynomialFunction homomorphicXor = privKey.computeHomomorphicFunction( xor );
         
-        BitVector v = BitUtils.randomBitVector( 64 );
+        BitVector v = BitUtils.randomVector( 64 );
         BitVector vConcatR = new BitVector( new long[] { 
                 v.elements()[ 0 ] ,
                 r.nextLong() } ,  
@@ -51,7 +51,7 @@ public class HomomorphicFunctionsTests {
         long stop = System.currentTimeMillis();
         logger.info( "Homomorphic AND generation took {} ms" , stop - start );
         
-        BitVector v = BitUtils.randomBitVector( 64 );
+        BitVector v = BitUtils.randomVector( 64 );
         BitVector vConcatR = new BitVector( new long[] { 
                 v.elements()[ 0 ] ,
                 r.nextLong() } ,  

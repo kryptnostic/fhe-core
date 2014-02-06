@@ -29,8 +29,8 @@ public class BinaryPolynomialFunctionTests {
                                             op ,
                                             g );
                                              
-        BitVector lhs = BitUtils.randomBitVector( 128 );
-        BitVector rhs = BitUtils.randomBitVector( 128 );
+        BitVector lhs = BitUtils.randomVector( 128 );
+        BitVector rhs = BitUtils.randomVector( 128 );
         BitVector input = FunctionUtils.concatenate(lhs, rhs);
         
         BitVector lhsResult = f.apply( lhs );
