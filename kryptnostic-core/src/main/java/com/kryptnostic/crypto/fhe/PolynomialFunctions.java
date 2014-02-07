@@ -30,6 +30,25 @@ public class PolynomialFunctions {
         return new PolynomialFunctionGF2( xorLength , xorLength , monomials, contributions );
     }
     
+    public static SimplePolynomialFunction BINARY_XOR( int xorLength ) {
+        int inputLength = xorLength << 1;
+        Monomial[] monomials = new Monomial[ inputLength ];
+        BitVector[] contributions = new BitVector[ inputLength ];
+        
+        for( int i = 0 ; i < xorLength ; ++i ) {
+            int offsetIndex = i + xorLength;
+            monomials[ i ] = Monomial.linearMonomial( inputLength , i);
+            monomials[ offsetIndex ] = Monomial.linearMonomial( inputLength , offsetIndex );
+            BitVector contribution = new BitVector( xorLength );
+            contribution.set( i );
+            contributions[ i ] = contribution;
+            //TODO: In theory everything else makes a copy so we could cheat here and save memory.
+            contributions[ offsetIndex ] = contribution.copy(); 
+        }
+        
+        return new PolynomialFunctionGF2( inputLength , xorLength , monomials, contributions );
+    }
+    
     public static SimplePolynomialFunction AND( int andLength ) {
         int inputLength = andLength >>> 1;
         Monomial[] monomials = new Monomial[ inputLength ];
@@ -48,6 +67,24 @@ public class PolynomialFunctions {
         return new PolynomialFunctionGF2( andLength , andLength , monomials, contributions );
     }
     
+    public static SimplePolynomialFunction BINARY_AND( int andLength ) {
+        int inputLength = andLength << 1;
+        Monomial[] monomials = new Monomial[ andLength ];
+        BitVector[] contributions = new BitVector[ andLength ];
+        
+        for( int i = 0 ; i < andLength ; ++i ) {
+            int offsetIndex = i + andLength;
+            monomials[ i ] = Monomial
+                                .linearMonomial( inputLength , i)
+                                .inplaceProd( Monomial.linearMonomial( inputLength , offsetIndex ) );
+            BitVector contribution = new BitVector( andLength );
+            contribution.set( i );
+            contributions[ i ] = contribution;
+        }
+        
+        return new PolynomialFunctionGF2( inputLength , andLength , monomials, contributions );
+    }
+    
     public static SimplePolynomialFunction LSH( int inputLength , int shiftLength ) {
         Monomial[] monomials = new Monomial[ inputLength - shiftLength ];
         BitVector[] contributions = new BitVector[ inputLength - shiftLength ];
@@ -58,6 +95,22 @@ public class PolynomialFunctions {
             contribution.set( i + shiftLength );
             contributions[ i ] = contribution;
         }
+        return new PolynomialFunctionGF2( inputLength, inputLength , monomials , contributions );
+    }
+    
+    public static SimplePolynomialFunction NEG( int inputLength ) {
+        Monomial[] monomials = new Monomial[ inputLength + 1];
+        BitVector[] contributions = new BitVector[ inputLength + 1];
+        for( int i = 0 ; i < ( monomials.length - 1) ; ++i ) {
+            monomials[ i ] = Monomial.linearMonomial( inputLength , i );
+            BitVector contribution = new BitVector( inputLength );
+            contribution.set( i );
+            contributions[ i ] = contribution;
+        }
+        
+        monomials[ inputLength ] = new Monomial( inputLength );
+        contributions[ inputLength ] = new BitVector( inputLength );
+        contributions[ inputLength ].not();
         return new PolynomialFunctionGF2( inputLength, inputLength , monomials , contributions );
     }
     
@@ -89,6 +142,13 @@ public class PolynomialFunctions {
         
         /*
          * Actually building out the algebraic representation of an adder is prohibitively expensive.
+         * Initialization:
+         * carry = x&y;
+         * current = x + y
+         * 
+         * next_carry = ( current & carry ) << 1
+         * current ^= carry
+         * carry = next_carry
          */
         PolynomialFunction currentCarry = CompoundPolynomialFunctionGF2.fromFunctions( and , lsh ); 
         PolynomialFunction applyCarry = new PolynomialFunctionJoiner( xor , xor , currentCarry );

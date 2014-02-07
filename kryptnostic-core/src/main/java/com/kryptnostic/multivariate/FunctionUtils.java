@@ -34,6 +34,13 @@ public class FunctionUtils {
         return concatenated;
     }
     
+    /**
+     * Provides a mutable map view over an array of {@code Monomial}s and corresponding {@code BitVector} contributions.
+     *  
+     * @param monomials The monomials to use as the map key
+     * @param contributions The contributions paired with each monomial. 
+     * @return a {@code HashMap<Monomial,BitVector} with each monomial paired to its contribution. 
+     */
     public static Map<Monomial, BitVector> mapViewFromMonomialsAndContributions( Monomial[] monomials, BitVector[] contributions ) {
         Map<Monomial, BitVector> result = Maps.newHashMapWithExpectedSize( monomials.length );
         for( int i = 0 ; i < monomials.length ; ++i  ) {

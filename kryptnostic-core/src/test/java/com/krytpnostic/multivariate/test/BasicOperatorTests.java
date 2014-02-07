@@ -41,6 +41,27 @@ public class BasicOperatorTests {
     }
     
     @Test
+    public void testBinaryXor() {
+        SimplePolynomialFunction xor = PolynomialFunctions.BINARY_XOR( 128 );
+        Assert.assertEquals( 256 , xor.getInputLength() );
+        Assert.assertEquals( 128 , xor.getContributions()[0].size() );
+        
+        long[] values = new long[ 4 ];
+        
+        for( int i = 0 ; i < values.length ; ++i ){ 
+            values[ i ] = r.nextLong();
+        }
+        
+        long[] expected = new long[] { 
+                            values[0]^values[2] ,
+                            values[1]^values[3] };
+        
+        BitVector result = xor.apply( new BitVector( values , 256 ) );
+        Assert.assertEquals( 128 , result.size() );
+        Assert.assertArrayEquals( expected , result.elements() );
+    }
+    
+    @Test
     public void testAnd() {
         SimplePolynomialFunction and = PolynomialFunctions.AND( 256 );
         Assert.assertEquals( 256 , and.getInputLength() );
@@ -61,6 +82,37 @@ public class BasicOperatorTests {
         BitVector result = and.apply( new BitVector( values , 256 ) );
         Assert.assertEquals( 256 , result.size() );
         Assert.assertArrayEquals( expected , result.elements() );
+    }
+    
+    @Test
+    public void testBinaryAnd() {
+        SimplePolynomialFunction and = PolynomialFunctions.BINARY_AND( 128 );
+        Assert.assertEquals( 256 , and.getInputLength() );
+        Assert.assertEquals( 128 , and.getContributions()[0].size() );
+
+        long[] values = new long[ 4 ];
+        
+        for( int i = 0 ; i < values.length ; ++i ){ 
+            values[ i ] = r.nextLong();
+        }
+        
+        long[] expected = new long[] { 
+                            values[0]&values[2] ,
+                            values[1]&values[3] };
+        
+        BitVector result = and.apply( new BitVector( values , 256 ) );
+        Assert.assertEquals( 128 , result.size() );
+        Assert.assertArrayEquals( expected , result.elements() );
+    }
+    
+    @Test
+    public void testNEG() {
+        SimplePolynomialFunction neg = PolynomialFunctions.NEG( 128 );
+        BitVector v = BitUtils.randomVector( 128 );
+        BitVector result = neg.apply( v );
+        BitVector expected = v.copy();
+        expected.not();
+        Assert.assertEquals( expected , result );
     }
     
     @Test

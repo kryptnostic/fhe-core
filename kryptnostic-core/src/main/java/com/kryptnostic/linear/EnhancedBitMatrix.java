@@ -13,6 +13,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -228,14 +229,7 @@ public class EnhancedBitMatrix {
         return PolynomialFunctionGF2.fromMonomialContributionMap(
                 f.getInputLength() , 
                 rows() , 
-                PolynomialFunctionGF2.mapViewFromMonomialsAndContributions(newMonomials, newContributions) );
-//        PolynomialFunctionGF2 result = new PolynomialFunctionGF2( 
-//                f.getInputLength(), 
-//                this.rows(), 
-//                newMonomials, 
-//                newContributions );
-//        
-//        return result;
+                FunctionUtils.mapViewFromMonomialsAndContributions(newMonomials, newContributions) );
     }
     
     public static EnhancedBitMatrix identity( int size ) {
