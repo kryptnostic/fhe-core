@@ -2,7 +2,6 @@ package com.kryptnostic.crypto.fhe;
 
 import com.kryptnostic.multivariate.CompoundPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
-import com.kryptnostic.multivariate.PolynomialFunctionJoiner;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
@@ -128,31 +127,36 @@ public class PolynomialFunctions {
         return new PolynomialFunctionGF2( inputLength, inputLength , monomials , contributions );
     }
     
-    public static SimplePolynomialFunction HALF_ADDER( SimplePolynomialFunction xor , SimplePolynomialFunction and , SimplePolynomialFunction lsh ) {
-        return xor.xor( lsh.compose( and ) );
+    public static SimplePolynomialFunction HALF_ADDER( int length ) {
+        return PolynomialFunctionGF2.concatenate(
+                PolynomialFunctions.BINARY_XOR( length ) ,
+                PolynomialFunctions
+                    .LSH( length , 1 )
+                    .compose( PolynomialFunctions.BINARY_AND( length ) ) 
+                 ); 
     }
     
     public static PolynomialFunction ADDER( int length ) {
-        return ADDER( length , XOR( length ) , AND( length ) , LSH( length , 1 ) );
+        return ADDER( length , BINARY_XOR( length ) , LSH( length , 1 ).compose( BINARY_AND( length ) )  );
     }
     
     //TODO: Finish adder generation.
-    public static PolynomialFunction ADDER( int length , SimplePolynomialFunction xor , SimplePolynomialFunction and , SimplePolynomialFunction lsh ) {
+    public static PolynomialFunction ADDER( int length , SimplePolynomialFunction xor , SimplePolynomialFunction carry ) {
         CompoundPolynomialFunction cpf = new CompoundPolynomialFunctionGF2();
         
         /*
          * Actually building out the algebraic representation of an adder is prohibitively expensive.
          * Initialization:
-         * carry = x&y;
-         * current = x + y
-         * 
-         * next_carry = ( current & carry ) << 1
-         * current ^= carry
-         * carry = next_carry
+         * carry = ( x & y ) << 1; 256 -> 128
+         * current = x + y; 256 -> 128
          */
-        PolynomialFunction currentCarry = CompoundPolynomialFunctionGF2.fromFunctions( and , lsh ); 
-        PolynomialFunction applyCarry = new PolynomialFunctionJoiner( xor , xor , currentCarry );
         
-        return applyCarry;
+        SimplePolynomialFunction halfAdder = PolynomialFunctionGF2.concatenate( xor , carry );
+        
+        for( int i = 0 ; i < length - 1 ; ++i ) {
+            cpf.prefix( halfAdder );
+        }
+        cpf.suffix( xor );
+        return cpf;
     }
 }

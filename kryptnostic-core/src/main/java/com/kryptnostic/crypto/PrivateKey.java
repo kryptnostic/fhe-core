@@ -7,10 +7,10 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
+import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
@@ -22,7 +22,7 @@ import cern.colt.bitvector.BitVector;
  */
 public class PrivateKey {
     private static final Logger logger = LoggerFactory.getLogger( PrivateKey.class );
-    private static ObjectMapper mapper = new ObjectMapper();
+//    private static ObjectMapper mapper = new ObjectMapper();
     private final EnhancedBitMatrix D;
 //    private final EnhancedBitMatrix L;
     private final EnhancedBitMatrix E1;
@@ -40,7 +40,7 @@ public class PrivateKey {
     public PrivateKey( int cipherTextBlockLength , int plainTextBlockLength ) {
         boolean initialized = false;
         int rounds = 100000;
-        EnhancedBitMatrix e2gen = null ,dgen = null , e1gen = null , lgen = null;
+        EnhancedBitMatrix e2gen = null ,dgen = null , e1gen = null;// , lgen = null;
         while( !initialized && ( (--rounds)!=0 ) ) {
             
             /*
@@ -86,6 +86,17 @@ public class PrivateKey {
         }
         longsPerBlock = cipherTextBlockLength >>> 6;
     }
+
+    public SimplePolynomialFunction encryptBinary( SimplePolynomialFunction plaintextFunction ) {
+        int plaintextLen =  E1.cols();
+        PolynomialFunctionGF2 R = PolynomialFunctionGF2.randomFunction( plaintextFunction.getInputLength() , plaintextLen );
+        SimplePolynomialFunction lhsR = F.compose( R );
+        
+        return E1
+                .multiply( plaintextFunction.xor( lhsR ) )
+                .xor( E2.multiply( R ) );
+    }
+    
     
     public SimplePolynomialFunction encrypt( SimplePolynomialFunction plaintextFunction ) {
         int plaintextLen =  E1.cols();
@@ -99,6 +110,10 @@ public class PrivateKey {
     
     public SimplePolynomialFunction computeHomomorphicFunction( SimplePolynomialFunction f ) {
         return encrypt( f.compose( decryptor ) );
+    }
+    
+    public SimplePolynomialFunction computeBinaryHomomorphicFunction( SimplePolynomialFunction f ) {
+        return encryptBinary( f.compose( FunctionUtils.concatenateInputsAndOutputs( decryptor, decryptor ) ) );
     }
     
     public EnhancedBitMatrix getD() {
@@ -120,7 +135,12 @@ public class PrivateKey {
     public PolynomialFunctionGF2 getF() {
         return F;
     }
-
+    
+    public EnhancedBitMatrix randomizedL() throws SingularMatrixException {
+        EnhancedBitMatrix randomL = Preconditions.checkNotNull( E2 , "E2 must not be null." ).getLeftNullifyingMatrix();
+        return  randomL.multiply( Preconditions.checkNotNull( E1 , "E1 must not be null.") ).inverse().multiply( randomL );  //Normalize
+    }
+    
     public byte[] decrypt( byte[] ciphertext ) {
         ByteBuffer buffer = ByteBuffer.wrap( ciphertext );
         ByteBuffer decryptedBytes = ByteBuffer.allocate( ciphertext.length >>> 1);
@@ -151,6 +171,15 @@ public class PrivateKey {
                 .xor( F.compose( D.multiply( X ) ) );
     }
     
+    public byte[] decryptFromEnvelope(Ciphertext ciphertext) {
+        /*
+         * Decrypt using the message length to discard unneeded bytes.
+         */
+        return Arrays.copyOf( 
+                decrypt( ciphertext.getContents() ) , 
+                (int) decryptor.apply( new BitVector( ciphertext.getLength() , longsPerBlock << 6 ) ).elements()[0] );
+    }
+    
     protected static void toBuffer( ByteBuffer output , BitVector plaintextVector ) {
         long[] plaintextLongs = plaintextVector.elements();
         for( long l : plaintextLongs ) {
@@ -167,15 +196,5 @@ public class PrivateKey {
         
         return new BitVector( cipherLongs , longsPerBlock << 6 );
     }
-
-    public byte[] decryptFromEnvelope(Ciphertext ciphertext) {
-        /*
-         * Decrypt using the message length to discard unneeded bytes.
-         */
-        return Arrays.copyOf( 
-                decrypt( ciphertext.getContents() ) , 
-                (int) decryptor.apply( new BitVector( ciphertext.getLength() , longsPerBlock << 6 ) ).elements()[0] );
-    }
-       
 //    public abstract Object decryptObject( Object object ,  Class<?> clazz );
 }

@@ -167,7 +167,7 @@ public class PolynomialFunctionTests {
        SimplePolynomialFunction lhs = PolynomialFunctionGF2.randomFunction( 128 , 128 );
        SimplePolynomialFunction rhs = PolynomialFunctionGF2.randomFunction( 128 , 128 );
        
-       SimplePolynomialFunction concatenated = PolynomialFunctionGF2.concatenateInputsAndOutputs( lhs , rhs);
+       SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs( lhs , rhs);
        long[] src = new long[] { r.nextLong() , r.nextLong() , r.nextLong() , r.nextLong() };
        BitVector input = new BitVector( src , 256 );
        BitVector lhsInput = new BitVector( new long[] { src[0] , src[1] } , 128 );

@@ -80,4 +80,46 @@ public class FunctionUtils {
         
         return PolynomialFunctionGF2.fromMonomialContributionMap( monomialSize , lines.size() , monomialContributionsMap );
     }
+    
+    public static SimplePolynomialFunction concatenateInputsAndOutputs( SimplePolynomialFunction lhs , SimplePolynomialFunction rhs ) {
+        int lhsInputLength = lhs.getInputLength();
+        int rhsInputLength = rhs.getInputLength();
+        int lhsOutputLength = lhs.getOutputLength(); 
+        int rhsOutputLength = rhs.getOutputLength();
+        int combinedInputLength = lhsInputLength + rhsInputLength;
+        int combinedOutputLength = lhsOutputLength + rhsOutputLength;
+        Monomial[] lhsMonomials = lhs.getMonomials();
+        Monomial[] rhsMonomials = rhs.getMonomials();
+        BitVector[] lhsContributions = lhs.getContributions();
+        BitVector[] rhsContributions = rhs.getContributions();
+        int lhsElementLength = lhsMonomials[ 0 ].elements().length;
+        int rhsElementLength = rhsMonomials[ 0 ].elements().length;
+        int lhsContributionLength = lhsContributions[ 0 ].elements().length;
+        int rhsContributionLength = rhsContributions[ 0 ].elements().length;
+        int newMonomialArrayLength = lhsElementLength + rhsElementLength;
+        int newContributionArrayLength = lhsContributionLength + rhsContributionLength;
+        Monomial[] monomials = new Monomial[ lhsMonomials.length + rhsMonomials.length ];
+        BitVector[] contributions = new BitVector[ monomials.length ];
+        
+        for( int i = 0 ; i < lhsMonomials.length ; ++i ) {
+            monomials[ i ] = new Monomial( Arrays.copyOf( lhsMonomials[ i ].elements() , newMonomialArrayLength ) , combinedInputLength );
+            contributions[ i ] = new BitVector( Arrays.copyOf( lhsContributions[ i ].elements() , newContributionArrayLength ) , combinedOutputLength ); 
+        }
+        
+        for( int i = 0 ; i < rhsMonomials.length ; ++i ) {
+            long[] newElements = new long[ newMonomialArrayLength ];
+            long[] newContributionElements = new long[ newMonomialArrayLength ];
+            
+            for( int j = lhsElementLength ; j < newMonomialArrayLength ; ++j ) {
+                newElements[ j ] = rhsMonomials[ i ].elements()[ j - lhsElementLength ];
+                for( int k = lhsContributionLength ; k < newContributionArrayLength ; ++k ) {
+                    newContributionElements[ k ] = rhsContributions[ i ].elements()[ k - rhsContributionLength ];
+                }
+            }
+            monomials[ i + lhsMonomials.length ] = new Monomial( newElements , combinedInputLength );
+            contributions[ i + lhsContributions.length ] = new BitVector( newContributionElements , combinedOutputLength );
+        }
+        
+        return new PolynomialFunctionGF2( combinedInputLength , combinedOutputLength , monomials , contributions );
+    }
 }

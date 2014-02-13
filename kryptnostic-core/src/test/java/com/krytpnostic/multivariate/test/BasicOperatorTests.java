@@ -1,5 +1,6 @@
 package com.krytpnostic.multivariate.test;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import org.junit.Assert;
@@ -57,8 +58,11 @@ public class BasicOperatorTests {
                             values[1]^values[3] };
         
         BitVector result = xor.apply( new BitVector( values , 256 ) );
+        BitVector result2 = xor.apply( new BitVector( Arrays.copyOfRange( values , 0, 2 ) , 128 ) , new BitVector( Arrays.copyOfRange( values , 2 , 4 ) , 128 ) );
         Assert.assertEquals( 128 , result.size() );
+        Assert.assertEquals( 128 , result2.size() );
         Assert.assertArrayEquals( expected , result.elements() );
+        Assert.assertArrayEquals( expected , result2.elements() );
     }
     
     @Test
@@ -101,8 +105,11 @@ public class BasicOperatorTests {
                             values[1]&values[3] };
         
         BitVector result = and.apply( new BitVector( values , 256 ) );
+        BitVector result2 = and.apply( new BitVector( Arrays.copyOfRange( values , 0, 2 ) , 128 ) , new BitVector( Arrays.copyOfRange( values , 2 , 4 ) , 128 ) );
         Assert.assertEquals( 128 , result.size() );
+        Assert.assertEquals( 128 , result2.size() );
         Assert.assertArrayEquals( expected , result.elements() );
+        Assert.assertArrayEquals( expected , result2.elements() );
     }
     
     @Test
@@ -144,11 +151,23 @@ public class BasicOperatorTests {
     @Test
     public void testADDER() {
         long start = System.currentTimeMillis();
-        PolynomialFunction adder = PolynomialFunctions.ADDER( 128 );
+        PolynomialFunction adder = PolynomialFunctions.ADDER( 64 );
         long stop = System.currentTimeMillis();
         logger.info("Adder generation took {} ms" , stop - start );
-        BitVector v = BitUtils.randomVector( 128 );
-        BitVector result = adder.apply( v );
-        Assert.assertEquals( v.elements()[ 0 ] + v.elements()[1] , result.elements()[0] );
+        start = System.currentTimeMillis();
+        for( int i = 0 ; i < 100 ; ++i ) {
+            BitVector u = BitUtils.randomVector( 64 );
+            BitVector v = BitUtils.randomVector( 64 );
+
+            logger.info("Adder input length: {}", adder.getInputLength() );
+            BitVector result = adder.apply( u , v );
+
+            logger.info("Expected: {} + {} = {}" , u.elements()[0] , v.elements()[ 0 ] , u.elements()[0] + v.elements()[ 0 ] );
+            logger.info("Observed: {} + {} = {}" , u.elements()[0] , v.elements()[ 0 ] , result.elements()[ 0 ] );
+            Assert.assertEquals( u.elements()[ 0 ] + v.elements()[0] , result.elements()[0] );
+        }
+        stop = System.currentTimeMillis();
+        logger.info( "Average time to evaluate adder: {} ms" , ( stop - start ) / 100.0D  );
+        
     }
 }

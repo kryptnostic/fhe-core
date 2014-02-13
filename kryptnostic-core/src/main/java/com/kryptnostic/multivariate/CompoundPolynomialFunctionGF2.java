@@ -31,7 +31,6 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
         
         newCPF.functions.addAll( inner.getFunctions() );
         newCPF.functions.addAll( functions );
-        
         return newCPF;
     }
     
@@ -43,6 +42,20 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
         return cpf;
     }
     
+    @Override
+    public CompoundPolynomialFunction prefix( PolynomialFunction inner ) {
+        validateForCompose( inner );
+        functions.addFirst( inner );
+        return this;
+    }
+    @Override
+    public CompoundPolynomialFunction suffix(PolynomialFunction inner) {
+       Preconditions.checkArgument( 
+               getOutputLength() == inner.getInputLength() , 
+               "Function being appeneded must have the same length." ); 
+       functions.addLast( inner );
+       return this;
+    }
     @Override
     public CompoundPolynomialFunctionGF2 copy() {
         CompoundPolynomialFunctionGF2 cpf = new CompoundPolynomialFunctionGF2();
