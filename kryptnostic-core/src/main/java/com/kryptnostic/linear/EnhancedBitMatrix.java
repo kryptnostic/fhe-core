@@ -7,6 +7,9 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
@@ -23,7 +26,8 @@ import cern.colt.bitvector.BitVector;
 public class EnhancedBitMatrix {
     //TODO: Replace with BouncyCastle RNG
     //TODO: Re-enable seeding
-    private static final Random r = new Random( 0 );//System.currentTimeMillis() ); 
+    private static final Random r = new Random( 0 );//System.currentTimeMillis() );
+    private static final Logger logger = LoggerFactory.getLogger( EnhancedBitMatrix.class );
     protected final List<BitVector> rows;
     
     protected EnhancedBitMatrix() { 
@@ -444,6 +448,20 @@ public class EnhancedBitMatrix {
             rows.add( BitUtils.randomVector( numCols ) );
         }
         return new EnhancedBitMatrix( rows );
+    }
+    
+    public static EnhancedBitMatrix randomInvertibleMatrix( int rows ) {
+        EnhancedBitMatrix result = null;
+        
+        try {
+            while( result == null || !determinant( result ) ) {
+                result = randomMatrix( rows, rows );
+            }
+        } catch (NonSquareMatrixException e) {
+            logger.error("This shouldn't be possible." , e );
+        }
+        
+        return result;
     }
 
     public static class SingularMatrixException extends Exception {

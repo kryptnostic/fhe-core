@@ -1,4 +1,4 @@
-package com.krytpnostic.multivariate.test;
+package com.kryptnostic.multivariate.test;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -8,8 +8,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kryptnostic.crypto.fhe.PolynomialFunctions;
 import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 

@@ -1,5 +1,6 @@
 package com.kryptnostic.linear;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import com.kryptnostic.multivariate.MultivariateUtils;
@@ -30,8 +31,11 @@ public class BitUtils {
         return -1;
     }
     
-
     public static BitVector randomVector( int length ) {
         return MultivariateUtils.randomVector(length);
+    }
+    
+    public static BitVector subVector( BitVector v , int from , int to ) {
+        return new BitVector( Arrays.copyOfRange( v.elements() , from , to ) , (to - from) << 6 ); 
     }
  }

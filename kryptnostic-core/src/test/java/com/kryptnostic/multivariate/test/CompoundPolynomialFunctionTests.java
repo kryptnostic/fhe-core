@@ -1,4 +1,4 @@
-package com.krytpnostic.multivariate.test;
+package com.kryptnostic.multivariate.test;
 
 import org.junit.Test;
 

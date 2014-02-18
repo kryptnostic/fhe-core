@@ -1,4 +1,4 @@
-package com.krytpnostic.multivariate.test;
+package com.kryptnostic.multivariate.test;
 
 import java.util.Random;
 
@@ -10,10 +10,8 @@ import org.slf4j.LoggerFactory;
 import com.kryptnostic.crypto.PrivateKey;
 import com.kryptnostic.crypto.PublicKey;
 import com.kryptnostic.crypto.fhe.HomomorphicFunctions;
-import com.kryptnostic.crypto.fhe.PolynomialFunctions;
 import com.kryptnostic.linear.BitUtils;
-import com.kryptnostic.multivariate.FunctionUtils;
-import com.kryptnostic.multivariate.gf2.PolynomialFunction;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
@@ -25,61 +23,68 @@ import cern.colt.bitvector.BitVector;
 public class HomomorphicFunctionsTests {
     private static final Logger logger = LoggerFactory.getLogger( HomomorphicFunctionsTests.class );
     private static final Random r = new Random( System.currentTimeMillis() );
-    private static final PrivateKey privateKey = new PrivateKey( 128 , 64 );
+    private static final int CIPHERTEXT_LENGTH = 128;
+    private static final int PLAINTEXT_LENGTH = 64;
+    private static final PrivateKey privateKey = new PrivateKey( CIPHERTEXT_LENGTH , PLAINTEXT_LENGTH );
     private static final PublicKey pubKey = new PublicKey( privateKey );
+    
+    @Test
+    public void testKeyStats() {
+        logger.info( "Decryption monomials: {} " , privateKey.getDecryptor().getMonomials().length );
+        logger.info( "Encryption monomials: {} " , pubKey.getEncrypter().getMonomials().length );
+        logger.info( "Encrypter: {}" , pubKey.getEncrypter() );
+    }
     
     @Test 
     public void testHomomorphicXor() {
-        SimplePolynomialFunction xor = PolynomialFunctions.XOR( 64 );
+        SimplePolynomialFunction xor = PolynomialFunctions.XOR( PLAINTEXT_LENGTH );
         long start = System.currentTimeMillis();
         SimplePolynomialFunction homomorphicXor = privateKey.computeHomomorphicFunction( xor );
         long stop = System.currentTimeMillis();
         logger.info( "Homomorphic XOR generation took {} ms" , stop - start );
-        logger.info( "Homomorphic XOR has {} monomials" , homomorphicXor.getTotalMonomialCount() );
+        logger.info( "Homomorphic XOR has {} monomials" , homomorphicXor.getMonomials().length );
         
-        BitVector v = BitUtils.randomVector( 64 );
-        BitVector vConcatR = new BitVector( new long[] { 
-                v.elements()[ 0 ] ,
-                r.nextLong() } ,  
-                128 );
+        BitVector v = BitUtils.randomVector( CIPHERTEXT_LENGTH );
+        BitVector plaintext = BitUtils.subVector( v , 0 , PLAINTEXT_LENGTH >>> 6 );
         
-        BitVector cv = pubKey.getEncrypter().apply( vConcatR );
+        BitVector cv = pubKey.getEncrypter().apply( v );
         start = System.currentTimeMillis();
         BitVector hResult = homomorphicXor.apply( cv ); 
         stop = System.currentTimeMillis();
         hResult = privateKey.getDecryptor().apply( hResult );
         logger.info( "Homomorphic XOR evaluation took {} ms" , stop - start );
-        BitVector result = xor.apply( v );
+        BitVector result = xor.apply( plaintext );
         
         Assert.assertEquals( hResult, result );
     }
-    /*
+    
     @Test 
     public void testHomomorphicAnd() {
-        SimplePolynomialFunction and = PolynomialFunctions.AND( 64 );
+        SimplePolynomialFunction and = PolynomialFunctions.AND( PLAINTEXT_LENGTH );
         long start = System.currentTimeMillis();
-        SimplePolynomialFunction homomorphicAnd = privateKey.computeHomomorphicFunction( and );
+        SimplePolynomialFunction homomorphicAnd = HomomorphicFunctions.DirectHomomorphicAnd(privateKey); //privateKey.computeHomomorphicFunction( and );
         long stop = System.currentTimeMillis();
         logger.info( "Homomorphic AND generation took {} ms" , stop - start );
-        logger.info( "Homomorphic AND has {} monomials" , homomorphicAnd.getTotalMonomialCount() );
+        logger.info( "Homomorphic AND has {} monomials" , homomorphicAnd.getMonomials().length );
+        logger.info( "Homomorphic AND input length: {}" , homomorphicAnd.getInputLength() );
         
-        BitVector v = BitUtils.randomVector( 64 );
-        BitVector vConcatR = new BitVector( new long[] { 
-                v.elements()[ 0 ] ,
-                r.nextLong() } ,  
-                128 );
+        BitVector v1 = BitUtils.randomVector( CIPHERTEXT_LENGTH );
+        BitVector v2 = BitUtils.randomVector( CIPHERTEXT_LENGTH );
+        BitVector plaintext1 = BitUtils.subVector( v1 , 0 , PLAINTEXT_LENGTH >>> 6 );
+        BitVector plaintext2 = BitUtils.subVector( v2 , 0 , PLAINTEXT_LENGTH >>> 6 );
         
-        BitVector cv = pubKey.getEncrypter().apply( vConcatR );
+        BitVector cv1 = pubKey.getEncrypter().apply( v1 );
+        BitVector cv2 = pubKey.getEncrypter().apply( v2 );
         start = System.currentTimeMillis();
-        BitVector hResult = homomorphicAnd.apply( cv );
+        BitVector hResult = homomorphicAnd.apply( cv1 , cv2 );
         stop = System.currentTimeMillis();
         hResult = privateKey.getDecryptor().apply( hResult );
         logger.info( "Homomorphic AND evaluation took {} ms" , stop - start );
-        BitVector result = and.apply( v );
+        BitVector result = and.apply( plaintext1 , plaintext2 );
         
         Assert.assertEquals( hResult, result );
     }
-    */
+    
     /*
     @Test
     public void testHomomorphicAdder() {
@@ -117,6 +122,7 @@ public class HomomorphicFunctionsTests {
         Assert.assertEquals( hResult, result );
     }
     */
+    /*
     @Test
     public void testHomomorphicHalfAdder() {
         long start, stop;
@@ -147,4 +153,5 @@ public class HomomorphicFunctionsTests {
         
         Assert.assertEquals( hResult, result );
     }
+    */
 }

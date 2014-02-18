@@ -38,6 +38,9 @@ public class PrivateKey {
      * @throws SingularMatrixException 
      */
     public PrivateKey( int cipherTextBlockLength , int plainTextBlockLength ) {
+        Preconditions.checkArgument( 
+                cipherTextBlockLength > plainTextBlockLength , 
+                "Ciphertext block length must be greater than plaintext block length." );
         boolean initialized = false;
         int rounds = 100000;
         EnhancedBitMatrix e2gen = null ,dgen = null , e1gen = null;// , lgen = null;
