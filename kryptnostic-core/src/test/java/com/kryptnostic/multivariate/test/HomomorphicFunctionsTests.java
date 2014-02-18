@@ -60,7 +60,7 @@ public class HomomorphicFunctionsTests {
     
     @Test 
     public void testHomomorphicAnd() {
-        SimplePolynomialFunction and = PolynomialFunctions.AND( PLAINTEXT_LENGTH );
+        SimplePolynomialFunction and = PolynomialFunctions.BINARY_AND( PLAINTEXT_LENGTH );
         long start = System.currentTimeMillis();
         SimplePolynomialFunction homomorphicAnd = HomomorphicFunctions.DirectHomomorphicAnd(privateKey); //privateKey.computeHomomorphicFunction( and );
         long stop = System.currentTimeMillis();

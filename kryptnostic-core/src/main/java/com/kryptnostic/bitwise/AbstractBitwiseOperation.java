@@ -7,13 +7,6 @@ import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import cern.colt.bitvector.BitVector;
 
 public abstract class AbstractBitwiseOperation implements PolynomialFunction {
-    public static enum OPERATION {
-        AND ,
-        OR ,
-        XOR ,
-        NOT
-    }
-    
     private final int length; 
     
     public AbstractBitwiseOperation( int length ) {
