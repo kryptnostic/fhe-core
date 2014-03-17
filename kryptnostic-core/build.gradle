@@ -37,6 +37,7 @@ repositories {
 
 }
 
+
 ext.jackson_version='2.3.0'
 ext.hazelcastVersion='3.1.5'
 
@@ -57,6 +58,7 @@ dependencies {
      * Awesome reporting-- defaults to Graphite
      * TODO: Integrate Ryan's Spring integration 
      */
+
     compile 'com.codahale.metrics:metrics-core:3.0.2'
     compile 'com.codahale.metrics:metrics-graphite:3.0.2'
 
@@ -64,6 +66,7 @@ dependencies {
      * GUAVA 
      * EventBus, FluentIterables, ListenableFutures and more
      */
+
     compile 'com.google.guava:guava:15.0'
 
     /*
@@ -121,6 +124,7 @@ dependencies {
      * HAZELCAST - DISTRIBUTED DATA GRID
      * Transparent http clustering, distributed java.util collections
      */
+
     compile "com.hazelcast:hazelcast:${hazelcastVersion}"
     compile "com.hazelcast:hazelcast-client:${hazelcastVersion}"
     compile "com.hazelcast:hazelcast-wm:${hazelcastVersion}"
@@ -130,6 +134,7 @@ dependencies {
     /*
      * TESTING
      */
+
     testCompile 'junit:junit:4.11'
 }
 
@@ -137,7 +142,7 @@ dependencies {
 eclipse {
     ext.downloadSources = true
     ext.downloadJavadoc = true
-    
+
     ext.sourceCompatibility=JavaVersion.VERSION_1_7
     ext.targetCompatibility=JavaVersion.VERSION_1_7
 }

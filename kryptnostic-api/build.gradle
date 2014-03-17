@@ -52,7 +52,6 @@ repositories {
   maven {
         url "https://oss.sonatype.org/content/repositories/snapshots"
   }
-
 }
 
 ext.hazelcastVersion='3.1.5'
@@ -75,6 +74,7 @@ dependencies {
      * Awesome reporting-- defaults to Graphite
      * TODO: Integrate Ryan's Spring integration 
      */
+
     compile 'com.codahale.metrics:metrics-core:3.0.2'
     compile 'com.codahale.metrics:metrics-graphite:3.0.2'
     
@@ -139,10 +139,11 @@ dependencies {
      * HAZELCAST - DISTRIBUTED DATA GRID
      * Transparent http clustering, distributed java.util collections
      */
+
     compile "com.hazelcast:hazelcast:${hazelcastVersion}"
     compile "com.hazelcast:hazelcast-client:${hazelcastVersion}"
     compile "com.hazelcast:hazelcast-wm:${hazelcastVersion}"
- 
+
     /*
      * TESTING
      */
