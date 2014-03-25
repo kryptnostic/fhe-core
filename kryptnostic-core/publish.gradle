@@ -1,19 +1,89 @@
+apply plugin: "signing"
+
+if( !project.hasProperty( 'user' ) ) {
+    project.user = ''
+}
+
+if( !project.hasProperty( 'password') ) {
+    project.password = ''
+}
+
+
+configurations {
+    pom
+}
+
+ext {
+    snapshotUrl = "https://oss.sonatype.org/content/repositories/snapshots"
+    releaseUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+    localUrl = "file:/${project.projectDir}/artifacts"
+}
+
+ext.repoUrl = snapshotUrl
+
+ext."signing.keyId" = 'FDEB5A45'
+ext."signing.secretKeyRingFile" = '/Users/mtamayorios/.gnupg/secring.gpg'
+ext."signing.password" = 'id'
+
+signing {
+    sign configurations.archives
+}
+
+signing {
+    sign configurations.pom
+}
+
+
 publishing {
+    repositories {
+        maven { 
+            url repoUrl
+            credentials {
+                username = project.user   
+                password = project.password
+            }
+        }
+    }
+
     publications {
-        myPublication(MavenPublication) {
-            // telling gradle to publish project's jar archive (2)
+        mavenJava(MavenPublication) {
             from components.java
-            // telling gradle to publish README file (2)
+            version '0.1.0-SNAPSHOT'
             artifact ('README.md') {
                 classifier = 'README'
                 extension  = 'md'
             }
-        }
-    }
-    // telling gradle to publish artifact to local directory (3)
-    repositories {
-        maven {
-            url "file:/${project.projectDir}/artifacts"
+
+            artifact javadocJar
+            artifact sourceJar
+
+            pom.withXml {
+                asNode().children().last() + {
+                    resolveStrategy = Closure.DELEGATE_FIRST
+                    name 'fhe-core'
+                    description 'Light weight Java web framework'
+                    url 'https://www.github.com/kryptnostic/fhe-core'
+                    scm {
+                        url 'https://www.github.com/kryptnostic/fhe-core'
+                        connection 'https://www.github.com/kryptnostic/fhe-core'
+                        developerConnection 'https://www.github.com/kryptnostic/fhe-core'
+                    }
+                    licenses {
+                        license {
+                            name 'Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License'
+                            url 'https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode'
+                            distribution 'repo'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id 'geekbeast'
+                            name 'Matthew Tamayo-Rios'
+                            email 'matthew@kryptnostic.com'
+                        }
+                    }
+                }
+            }
         }
     }
 }
