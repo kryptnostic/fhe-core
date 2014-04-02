@@ -17,7 +17,7 @@ public class Monomial extends BitVector {
     private static final long serialVersionUID = -8751413919025034976L;
     private static final MonomialOrderHomogeneityPredicate linearHomogeneityPredicate = new MonomialOrderHomogeneityPredicate( 1 );
     //TODO:Re-enable random seeding.
-    private static final Random r = new Random( 0 );//System.currentTimeMillis() );
+    private static final Random r = new Random( 0 );
     public Monomial( int size ) {
         super( size );
     }

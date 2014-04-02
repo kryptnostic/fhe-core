@@ -16,7 +16,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunctionRepresentationGF2;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -379,49 +378,11 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         return result;
     }
     
-    public static PolynomialFunctionGF2 randomFunction( int inputLen , int outputLen ) {
-        PolynomialFunctionGF2.Builder builder = PolynomialFunctionGF2.builder( inputLen , outputLen );
-        for( int i = 0 ; i < 16 ; ++i ) {
-            BitVector contribution = BitUtils.randomVector( outputLen );
-            builder.setMonomialContribution( Monomial.randomMonomial( inputLen , 3 ) , contribution);
-        }
-        
-        return builder.build();
-    }
-    
     public static PolynomialFunctionGF2 identity( int monomialCount ) {
         Monomial[] monomials = new Monomial[ monomialCount ];
         BitVector[] contributions = new BitVector[ monomialCount ];
         
         for( int i = 0 ; i < monomialCount ; ++i ) {
-            monomials[i] = Monomial.linearMonomial( monomialCount , i);
-            BitVector contribution = new BitVector( monomialCount );
-            contribution.set( i );
-            contributions[i] = contribution;
-        }
-        
-        return new PolynomialFunctionGF2( monomialCount , monomialCount , monomials , contributions);
-    }
-    
-    public static PolynomialFunctionGF2 upperBinaryIdentity( int monomialCount ) {
-        Monomial[] monomials = new Monomial[ monomialCount >>> 1 ];
-        BitVector[] contributions = new BitVector[ monomialCount >>> 1 ];
-        
-        for( int i = monomialCount>>>1 ; i < monomialCount ; ++i ) {
-            monomials[i] = Monomial.linearMonomial( monomialCount , i);
-            BitVector contribution = new BitVector( monomialCount );
-            contribution.set( i );
-            contributions[i] = contribution;
-        }
-        
-        return new PolynomialFunctionGF2( monomialCount , monomialCount , monomials , contributions);
-    }
-    
-    public static PolynomialFunctionGF2 lowerBinaryIdentity( int monomialCount ) {
-        int maxIndex = monomialCount >>> 1;
-        Monomial[] monomials = new Monomial[ maxIndex ];
-        BitVector[] contributions = new BitVector[ maxIndex ];
-        for( int i = 0 ; i < maxIndex ; ++i ) {
             monomials[i] = Monomial.linearMonomial( monomialCount , i);
             BitVector contribution = new BitVector( monomialCount );
             contribution.set( i );

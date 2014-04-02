@@ -14,6 +14,7 @@ import com.google.common.collect.Sets;
 import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
@@ -102,8 +103,8 @@ public class PolynomialFunctionTests {
    
    @Test 
    public void addTest() {
-       PolynomialFunctionGF2 lhs = PolynomialFunctionGF2.randomFunction(256, 256);
-       PolynomialFunctionGF2 rhs = PolynomialFunctionGF2.randomFunction(256, 256);
+       SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction(256, 256);
+       SimplePolynomialFunction rhs = PolynomialFunctions.randomFunction(256, 256);
        BitVector val = BitUtils.randomVector( 256 ) ;
        BitVector expected = lhs.apply( val );
        expected.xor( rhs.apply( val ) );
@@ -112,8 +113,8 @@ public class PolynomialFunctionTests {
    
    @Test
    public void productTest() {
-       PolynomialFunctionGF2 lhs = PolynomialFunctionGF2.randomFunction(256, 256);
-       PolynomialFunctionGF2 rhs = PolynomialFunctionGF2.randomFunction(256, 256);
+       SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction(256, 256);
+       SimplePolynomialFunction rhs = PolynomialFunctions.randomFunction(256, 256);
        BitVector val = BitUtils.randomVector( 256 ) ;
        BitVector expected = lhs.apply( val );
        expected.and( rhs.apply( val ) );
@@ -145,8 +146,8 @@ public class PolynomialFunctionTests {
    
    @Test
    public void composeTest() {
-       PolynomialFunctionGF2 outer = PolynomialFunctionGF2.randomFunction(256, 256);
-       PolynomialFunctionGF2 inner = PolynomialFunctionGF2.randomFunction(256, 256);
+       SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(256, 256);
+       SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(256, 256);
        SimplePolynomialFunction composed = outer.compose( inner );
        
        for( int i = 0 ; i < 25 ; ++i ) {
@@ -164,8 +165,8 @@ public class PolynomialFunctionTests {
    
    @Test
    public void testConcatenateInputsAndOutputs() {
-       SimplePolynomialFunction lhs = PolynomialFunctionGF2.randomFunction( 128 , 128 );
-       SimplePolynomialFunction rhs = PolynomialFunctionGF2.randomFunction( 128 , 128 );
+       SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction( 128 , 128 );
+       SimplePolynomialFunction rhs = PolynomialFunctions.randomFunction( 128 , 128 );
        
        SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs( lhs , rhs);
        long[] src = new long[] { r.nextLong() , r.nextLong() , r.nextLong() , r.nextLong() };
@@ -185,7 +186,7 @@ public class PolynomialFunctionTests {
    
    @Test
    public void testToFromString() {
-       SimplePolynomialFunction f = PolynomialFunctionGF2.randomFunction( 256 , 128 );
+       SimplePolynomialFunction f = PolynomialFunctions.randomFunction( 256 , 128 );
        String fString = f.toString();
        logger.info( "f = {}" , fString );
        

@@ -1,5 +1,10 @@
 package com.kryptnostic.multivariate;
 
+import java.util.Map;
+import java.util.Set;
+
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
@@ -7,7 +12,12 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 
-public class PolynomialFunctions {
+/**
+ * Utility and factory methods for PolynomialFunctions.
+ * @author Matthew Tamayo-Rios
+ */
+public final class PolynomialFunctions {
+    private PolynomialFunctions(){}
     
     public static SimplePolynomialFunction XOR( int xorLength ) {
         int inputLength = xorLength >>> 1;
@@ -156,5 +166,96 @@ public class PolynomialFunctions {
         }
         cpf.suffix( xor );
         return cpf;
+    }
+
+
+    /**
+     * Static factory method for building identity functions that extract the upper half of the input.
+     * These are useful when dealing with functions that operate on two ciphertext inputs of equal length.
+     * 
+     * For example computing the XOR of two 64 bit ciphertexts, where the inputs are concatenated.  
+     * f(x,y) = x+y = lowerBinaryIdentity( 128 ).xor( upperBinaryIdentity( 128 ).
+     * 
+     * @param monomialOrder The number of inputs bits for the SimplePolynomialFunction.
+     * @return A SimplePolynomialFunction that passes through only the lower half of its input bits.
+     */
+    public static SimplePolynomialFunction upperBinaryIdentity( int monomialOrder ) {
+        int baseIndex = monomialOrder >>> 1;
+        Monomial[] monomials = new Monomial[ baseIndex ];
+        BitVector[] contributions = new BitVector[ baseIndex ];
+        
+        for( int i = baseIndex ; i < monomialOrder ; ++i ) {
+            int adjustedIndex = i - baseIndex;
+            monomials[ adjustedIndex ] = Monomial.linearMonomial( monomialOrder , i );
+            BitVector contribution = new BitVector( monomialOrder );
+            contribution.set( i );
+            contributions[ adjustedIndex ] = contribution;
+        }
+        
+        return new PolynomialFunctionGF2( monomialOrder , monomialOrder , monomials , contributions);
+    }
+
+    /**
+     * Static factory method for building identity functions that extract the lower half of the input.
+     * These are useful when dealing with functions that operate on two ciphertext inputs of equal length.
+     * 
+     * For example computing the XOR of two 64 bit ciphertexts, where the inputs are concatenated.  
+     * f(x,y) = x+y = lowerBinaryIdentity( 128 ).xor( upperBinaryIdentity( 128 ).
+     * 
+     * @param monomialOrder The number of inputs bits for the SimplePolynomialFunction.
+     * @return A SimplePolynomialFunction that passes through only the lower half of its input bits.
+     */
+    public static SimplePolynomialFunction lowerBinaryIdentity( int monomialOrder ) {
+        int maxIndex = monomialOrder >>> 1;
+        Monomial[] monomials = new Monomial[ maxIndex ];
+        BitVector[] contributions = new BitVector[ maxIndex ];
+        for( int i = 0 ; i < maxIndex ; ++i ) {
+            monomials[i] = Monomial.linearMonomial( monomialOrder , i);
+            BitVector contribution = new BitVector( monomialOrder );
+            contribution.set( i );
+            contributions[i] = contribution;
+        }
+        
+        return new PolynomialFunctionGF2( monomialOrder , monomialOrder , monomials , contributions);
+    }
+
+    /**
+     * Generates random polynomial functions containing a maximum of 16 terms 
+     * of max order 3.
+     * @param inputLen The number of input bits to the polynomial function.
+     * @param outputLen The number of output bits to the polynomial function.
+     * @return a random polynomial function over GF(2)
+     */
+    public static SimplePolynomialFunction randomFunction( int inputLen , int outputLen ) {
+        return randomFunction( inputLen , outputLen , 16 , 3 );
+    }
+    
+    /**
+     * Generates random polynomial functions.
+     * @param inputLength Number of input bits to the polynomial function.
+     * @param outputLength Number of output bits to the polynomial function.
+     * @param numTerms 
+     * @param maxOrder
+     * @return a random polynomial function over GF(2)
+     */
+    public static SimplePolynomialFunction randomFunction( int inputLength , int outputLength , int numTerms , int maxOrder ) {
+        Map<Monomial, BitVector> contributionMap = Maps.newHashMap();
+        for( int i = 0 ; i < outputLength ; ++i ) {
+            Set<Monomial> monomials = Sets.newHashSet();
+            while( monomials.size() < numTerms ) {
+                Monomial monomial = Monomial.randomMonomial( inputLength , maxOrder );
+                if( monomials.add( monomial ) ) {
+                    BitVector contribution = contributionMap.get( monomial );
+                    if( contribution == null ) {
+                        contribution = new BitVector( outputLength );
+                        contributionMap.put( monomial , contribution );
+                    }
+                    contribution.set( i );
+                }
+            }
+            
+        }
+        
+        return PolynomialFunctionGF2.fromMonomialContributionMap( inputLength, outputLength, contributionMap );
     }
 }

@@ -13,6 +13,14 @@ import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 
+/**
+ * Basic implementation of CompoundPolynomialFunction over GF2, consisting of a linked list of functions.
+ * The input to the function is fed to first function in the list with the overall output of a compound 
+ * function being determined by traversing the linked list from the beginning and evaluating each function
+ * on the output of the previous function. The output of the last function is the output of evaluating the 
+ * function. 
+ * @author Matthew Tamayo-Rios
+ */
 public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction {
     
     private final LinkedList<PolynomialFunction> functions;

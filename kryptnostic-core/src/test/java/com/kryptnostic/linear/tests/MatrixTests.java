@@ -9,6 +9,7 @@ import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
@@ -183,7 +184,7 @@ public class MatrixTests {
     @Test
     public void testPolynomialFunctionMultiply() {
         //Generate test function 
-        PolynomialFunctionGF2 f = PolynomialFunctionGF2.randomFunction(256, 256);
+        SimplePolynomialFunction f = PolynomialFunctions.randomFunction(256, 256);
         //Generate test matrices
         EnhancedBitMatrix m1 = EnhancedBitMatrix.randomMatrix( 256 , 256 );
         EnhancedBitMatrix m2 = EnhancedBitMatrix.randomMatrix( 512 , 256 );

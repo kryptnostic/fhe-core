@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.BinaryPolynomialFunction;
 import com.kryptnostic.multivariate.FunctionUtils;
-import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
@@ -21,9 +21,9 @@ public class BinaryPolynomialFunctionTests {
     
     @Test
     public void testConstructionAndEvaluation() {
-        SimplePolynomialFunction f = PolynomialFunctionGF2.randomFunction( 128 , 128 );
-        SimplePolynomialFunction op = PolynomialFunctionGF2.randomFunction( 256 , 128 );
-        SimplePolynomialFunction g = PolynomialFunctionGF2.randomFunction( 128 , 128 );
+        SimplePolynomialFunction f = PolynomialFunctions.randomFunction( 128 , 128 );
+        SimplePolynomialFunction op = PolynomialFunctions.randomFunction( 256 , 128 );
+        SimplePolynomialFunction g = PolynomialFunctions.randomFunction( 128 , 128 );
         BinaryPolynomialFunction h = new BinaryPolynomialFunction( 
                                             f ,
                                             op ,

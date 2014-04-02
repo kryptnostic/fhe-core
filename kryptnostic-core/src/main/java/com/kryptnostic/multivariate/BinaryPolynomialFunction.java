@@ -57,6 +57,4 @@ public class BinaryPolynomialFunction implements PolynomialFunction {
     public int getOutputLength() {
         return op.getOutputLength();
     }
-    
-    
 }

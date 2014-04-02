@@ -89,24 +89,24 @@ public class HomomorphicFunctions {
         return privateKey.encryptBinary( XY );
     }
     
-    public static PolynomialFunction EfficientAnd( int length , PrivateKey privateKey ) throws SingularMatrixException {
-        int plaintextLength = privateKey.getE1().cols() ,
-            ciphertextLength = privateKey.getE2().rows();
-        EnhancedBitMatrix L  = privateKey.randomizedL() ,
-                          E1 = privateKey.getE1() ,
-                          E2 = privateKey.getE2() ,
+    public static PolynomialFunction EfficientAnd( PrivateKey privateKey ) throws SingularMatrixException {
+        EnhancedBitMatrix L  = privateKey.randomizedL(),
+                          E1 = privateKey.getE1(),
+                          E2 = privateKey.getE2(),
                           D  = privateKey.getD();
+        int plaintextLength = E1.cols(),
+            ciphertextLength = E1.rows();
         
-        SimplePolynomialFunction X = PolynomialFunctionGF2.lowerBinaryIdentity( ciphertextLength << 1 );
-        SimplePolynomialFunction Y = PolynomialFunctionGF2.upperBinaryIdentity( ciphertextLength << 1 );
+        SimplePolynomialFunction X = PolynomialFunctions.lowerBinaryIdentity( plaintextLength );
+        SimplePolynomialFunction Y = PolynomialFunctions.upperBinaryIdentity( plaintextLength );
         SimplePolynomialFunction DX = D.multiply( X );
-        SimplePolynomialFunction DY = D.multiply( X );
+        SimplePolynomialFunction DY = D.multiply( Y );
         SimplePolynomialFunction DXplusY = D.multiply( X.xor( Y ) );
         
         EnhancedBitMatrix R = EnhancedBitMatrix.randomInvertibleMatrix( E1.rows() );
         
-        SimplePolynomialFunction R1 = PolynomialFunctionGF2.randomFunction( ciphertextLength << 1 ,  ciphertextLength << 1 ) ,
-                                 R2 = PolynomialFunctionGF2.randomFunction( ciphertextLength << 1 ,  ciphertextLength << 1 );
+        SimplePolynomialFunction R1 = PolynomialFunctions.randomFunction( ciphertextLength >> 1 ,  ciphertextLength >> 1 ) ,
+                                 R2 = PolynomialFunctions.randomFunction( ciphertextLength >> 1 ,  ciphertextLength >> 1 );
         
         SimplePolynomialFunction V1 = 
                 E1
@@ -127,6 +127,14 @@ public class HomomorphicFunctions {
                 E1
                     .multiply( R.multiply( L.multiply( X ).xor( R1 ) ) )
                     .xor( E2.multiply( DXplusY.xor( R2 ) ) );
+        
+        SimplePolynomialFunction Lx = L.multiply( X );
+        SimplePolynomialFunction Ly = L.multiply( Y );
+        
+        SimplePolynomialFunction PLL =
+                E1
+                    .multiply( Lx.and( Ly ).xor( privateKey.getF().compose( DXplusY ) ) ) 
+                    .xor( E2.multiply( DX ) );
         
         return null;
     }
