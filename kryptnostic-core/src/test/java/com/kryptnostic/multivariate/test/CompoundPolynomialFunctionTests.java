@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.CompoundPolynomialFunctionGF2;
-import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 
@@ -14,9 +14,9 @@ import junit.framework.Assert;
 public class CompoundPolynomialFunctionTests {
     @Test
     public void testCreateAndEvaluate() {
-        PolynomialFunction f = PolynomialFunctionGF2.randomFunction( 128 , 512 );
-        PolynomialFunction g = PolynomialFunctionGF2.randomFunction( 512 , 256 );
-        PolynomialFunction h = PolynomialFunctionGF2.randomFunction( 256 , 64 );
+        PolynomialFunction f = PolynomialFunctions.randomFunction( 128 , 512 );
+        PolynomialFunction g = PolynomialFunctions.randomFunction( 512 , 256 );
+        PolynomialFunction h = PolynomialFunctions.randomFunction( 256 , 64 );
         CompoundPolynomialFunction cpf = CompoundPolynomialFunctionGF2.fromFunctions( f , g , h );
         
         Assert.assertEquals( 128 , cpf.getInputLength() );
@@ -29,9 +29,9 @@ public class CompoundPolynomialFunctionTests {
     
     @Test
     public void testComposeAndEvaluate() {
-        PolynomialFunction f = PolynomialFunctionGF2.randomFunction( 128 , 512 );
-        PolynomialFunction g = PolynomialFunctionGF2.randomFunction( 512 , 256 );
-        PolynomialFunction h = PolynomialFunctionGF2.randomFunction( 256 , 64 );
+        PolynomialFunction f = PolynomialFunctions.randomFunction( 128 , 512 );
+        PolynomialFunction g = PolynomialFunctions.randomFunction( 512 , 256 );
+        PolynomialFunction h = PolynomialFunctions.randomFunction( 256 , 64 );
         
         CompoundPolynomialFunction cpf = new CompoundPolynomialFunctionGF2()
                                                 .compose( h )

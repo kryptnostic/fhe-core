@@ -12,6 +12,7 @@ import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
@@ -27,7 +28,7 @@ public class PrivateKey {
 //    private final EnhancedBitMatrix L;
     private final EnhancedBitMatrix E1;
     private final EnhancedBitMatrix E2;
-    private final PolynomialFunctionGF2 F;
+    private final SimplePolynomialFunction F;
     private final SimplePolynomialFunction decryptor;
     private final int longsPerBlock;
     
@@ -80,7 +81,7 @@ public class PrivateKey {
 //        L = lgen;
         E1 = e1gen;
         E2 = e2gen;
-        F = PolynomialFunctionGF2.randomFunction( plainTextBlockLength , plainTextBlockLength );
+        F = PolynomialFunctions.randomFunction( plainTextBlockLength , plainTextBlockLength , 10 , 3 );
         try {
             decryptor = buildDecryptor();
         } catch (SingularMatrixException e) {
@@ -92,7 +93,7 @@ public class PrivateKey {
 
     public SimplePolynomialFunction encryptBinary( SimplePolynomialFunction plaintextFunction ) {
         int plaintextLen =  E1.cols();
-        PolynomialFunctionGF2 R = PolynomialFunctionGF2.randomFunction( plaintextFunction.getInputLength() , plaintextLen );
+        SimplePolynomialFunction R = PolynomialFunctions.randomFunction( plaintextFunction.getInputLength() , plaintextLen );
         SimplePolynomialFunction lhsR = F.compose( R );
         
         return E1
@@ -104,7 +105,7 @@ public class PrivateKey {
     public SimplePolynomialFunction encrypt( SimplePolynomialFunction plaintextFunction ) {
         int plaintextLen =  E1.cols();
         int ciphertextLen = E1.rows();
-        PolynomialFunctionGF2 R = PolynomialFunctionGF2.randomFunction( ciphertextLen , plaintextLen );
+        SimplePolynomialFunction R = PolynomialFunctions.randomFunction( ciphertextLen , plaintextLen );
         
         return E1
                 .multiply( plaintextFunction.xor( F.compose( R ) ) )
@@ -135,7 +136,7 @@ public class PrivateKey {
         return E2;
     }
 
-    public PolynomialFunctionGF2 getF() {
+    public SimplePolynomialFunction getF() {
         return F;
     }
     

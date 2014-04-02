@@ -5,7 +5,6 @@ import com.kryptnostic.bitwise.AbstractBitwiseOperation;
 import cern.colt.bitvector.BitVector;
 
 public class XorOperation extends AbstractBitwiseOperation {
-
     public XorOperation(int length) {
         super(length);
     }
@@ -16,5 +15,4 @@ public class XorOperation extends AbstractBitwiseOperation {
         result.xor( rhs  );
         return result;
     }
-
 }

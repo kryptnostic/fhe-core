@@ -11,7 +11,9 @@ import com.kryptnostic.crypto.PrivateKey;
 import com.kryptnostic.crypto.PublicKey;
 import com.kryptnostic.crypto.fhe.HomomorphicFunctions;
 import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.PolynomialFunctions;
+import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
@@ -27,6 +29,7 @@ public class HomomorphicFunctionsTests {
     private static final int PLAINTEXT_LENGTH = 64;
     private static final PrivateKey privateKey = new PrivateKey( CIPHERTEXT_LENGTH , PLAINTEXT_LENGTH );
     private static final PublicKey pubKey = new PublicKey( privateKey );
+    private static final boolean testNormalAnd = true;
     
     @Test
     public void testKeyStats() {
@@ -58,8 +61,18 @@ public class HomomorphicFunctionsTests {
         Assert.assertEquals( hResult, result );
     }
     
+    @Test
+    public void testEfficientHomomorphicAnd() throws SingularMatrixException {
+        if( !testNormalAnd ) {
+            PolynomialFunction f = HomomorphicFunctions.EfficientAnd( privateKey );
+        }
+    }
+    
     @Test 
     public void testHomomorphicAnd() {
+        if( !testNormalAnd ) {
+            return;
+        }
         SimplePolynomialFunction and = PolynomialFunctions.BINARY_AND( PLAINTEXT_LENGTH );
         long start = System.currentTimeMillis();
         SimplePolynomialFunction homomorphicAnd = HomomorphicFunctions.DirectHomomorphicAnd(privateKey); //privateKey.computeHomomorphicFunction( and );
