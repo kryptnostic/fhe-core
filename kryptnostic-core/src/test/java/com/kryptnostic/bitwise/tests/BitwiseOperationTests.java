@@ -9,7 +9,7 @@ import com.kryptnostic.bitwise.XorOperation;
 import com.kryptnostic.linear.BitUtils;
 
 import cern.colt.bitvector.BitVector;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 public class BitwiseOperationTests {
     @Test
