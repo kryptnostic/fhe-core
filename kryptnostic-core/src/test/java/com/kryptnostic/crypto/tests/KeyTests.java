@@ -12,7 +12,7 @@ import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 public class KeyTests {
     private static final Logger logger = LoggerFactory.getLogger( KeyTests.class );

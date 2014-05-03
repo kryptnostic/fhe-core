@@ -7,7 +7,8 @@ import org.junit.Test;
 import com.kryptnostic.linear.BitUtils;
 
 import cern.colt.bitvector.BitVector;
-import junit.framework.Assert;
+import org.junit.Assert;
+
 
 public class BitUtilsTests {
     private static final Random r = new Random( 0 );
