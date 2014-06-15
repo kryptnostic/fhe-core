@@ -5,6 +5,7 @@ import java.util.Set;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
@@ -257,5 +258,31 @@ public final class PolynomialFunctions {
         }
         
         return PolynomialFunctionGF2.fromMonomialContributionMap( inputLength, outputLength, contributionMap );
+    }
+    
+    /**
+     * Generates random polynomial functions.
+     * @param inputLength Number of input bits to the polynomial function.
+     * @param outputLength Number of output bits to the polynomial function.
+     * @param numTerms 
+     * @param maxOrder
+     * @return a random polynomial function over GF(2)
+     */
+    public static SimplePolynomialFunction denseRandomFunction( int inputLength , int outputLength , int numTerms , int maxOrder ) {
+        Map<Monomial, BitVector> contributionMap = Maps.newHashMap();
+        for( int i = 0 ; i < outputLength ; ++i ) {
+            for( int j = 0; j < inputLength; j++) {
+                for( int k = 0; k < inputLength; k++ ) {
+                    Monomial monomial = new Monomial( inputLength ).chainSet( j ).chainSet( k );
+                    contributionMap.put( monomial , BitUtils.randomVector( outputLength ) );
+                }
+            }       
+        }
+        
+        return PolynomialFunctionGF2.fromMonomialContributionMap( inputLength, outputLength, contributionMap );
+    }
+    
+    public static SimplePolynomialFunction randomLinearCombination( int inputLength, int outputLength ) {
+        FunctionUtils.
     }
 }
