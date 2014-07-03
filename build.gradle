@@ -5,7 +5,13 @@ def getVersionName = { ->
         commandLine 'git', 'describe', '--tags', '--dirty', '--long'
         standardOutput = stdout
     }
-    return stdout.toString().trim()
+    def tagVer = stdout.toString().trim()
+    def semVer = (tagVer =~ /v([\d\.]+)/)[0][1]
+
+    if (tagVer.contains('dev')) {
+        semVer += "-SNAPSHOT"
+    }
+    return semVer
 }
 
 description = "Kryptnostic libraries for fully homomorphic encryption."
@@ -31,6 +37,8 @@ allprojects {
       classifier = 'javadoc'
       from javadoc.destinationDir
     }
+
+    ext.isReleaseVersion = false
 
     ext.sourceCompatibility=JavaVersion.VERSION_1_7
     ext.targetCompatibility=JavaVersion.VERSION_1_7

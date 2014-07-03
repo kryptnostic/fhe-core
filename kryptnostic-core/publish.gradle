@@ -25,61 +25,63 @@ ext."signing.keyId" = 'FDEB5A45'
 ext."signing.secretKeyRingFile" = '/Users/mtamayorios/.gnupg/secring.gpg'
 ext."signing.password" = 'id'
 
-signing {
-    sign configurations.archives
-}
+if (ext.isReleaseVersion) {
 
-signing {
-    sign configurations.pom
-}
-
-
-publishing {
-    repositories {
-        maven { 
-            url repoUrl
-            credentials {
-                username = project.user   
-                password = project.password
-            }
-        }
+    signing {
+        sign configurations.archives
     }
 
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            version '0.1.0-SNAPSHOT'
-            artifact ('README.md') {
-                classifier = 'README'
-                extension  = 'md'
+    signing {
+        sign configurations.pom
+    }
+
+    publishing {
+        repositories {
+            maven { 
+                url repoUrl
+                credentials {
+                    username = project.user   
+                    password = project.password
+                }
             }
+        }
 
-            artifact javadocJar
-            artifact sourceJar
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                version '0.1.0-SNAPSHOT'
+                artifact ('README.md') {
+                    classifier = 'README'
+                    extension  = 'md'
+                }
 
-            pom.withXml {
-                asNode().children().last() + {
-                    resolveStrategy = Closure.DELEGATE_FIRST
-                    name 'fhe-core'
-                    description 'Light weight Java web framework'
-                    url 'https://www.github.com/kryptnostic/fhe-core'
-                    scm {
+                artifact javadocJar
+                artifact sourceJar
+
+                pom.withXml {
+                    asNode().children().last() + {
+                        resolveStrategy = Closure.DELEGATE_FIRST
+                        name 'fhe-core'
+                        description 'Light weight Java web framework'
                         url 'https://www.github.com/kryptnostic/fhe-core'
-                        connection 'https://www.github.com/kryptnostic/fhe-core'
-                        developerConnection 'https://www.github.com/kryptnostic/fhe-core'
-                    }
-                    licenses {
-                        license {
-                            name 'Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License'
-                            url 'https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode'
-                            distribution 'repo'
+                        scm {
+                            url 'https://www.github.com/kryptnostic/fhe-core'
+                            connection 'https://www.github.com/kryptnostic/fhe-core'
+                            developerConnection 'https://www.github.com/kryptnostic/fhe-core'
                         }
-                    }
-                    developers {
-                        developer {
-                            id 'geekbeast'
-                            name 'Matthew Tamayo-Rios'
-                            email 'matthew@kryptnostic.com'
+                        licenses {
+                            license {
+                                name 'Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License'
+                                url 'https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode'
+                                distribution 'repo'
+                            }
+                        }
+                        developers {
+                            developer {
+                                id 'geekbeast'
+                                name 'Matthew Tamayo-Rios'
+                                email 'matthew@kryptnostic.com'
+                            }
                         }
                     }
                 }
