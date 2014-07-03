@@ -282,7 +282,13 @@ public final class PolynomialFunctions {
         return PolynomialFunctionGF2.fromMonomialContributionMap( inputLength, outputLength, contributionMap );
     }
     
+    /**
+     * @TODO
+     * @param inputLength
+     * @param outputLength
+     * @return
+     */
     public static SimplePolynomialFunction randomLinearCombination( int inputLength, int outputLength ) {
-        FunctionUtils.
+    	return null;
     }
 }
