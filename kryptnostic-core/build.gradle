@@ -28,8 +28,8 @@ apply from: "publish.gradle"
 
 mainClassName = ""
 
-ext.sourceCompatibility=JavaVersion.VERSION_1_7
-ext.targetCompatibility=JavaVersion.VERSION_1_7
+ext.sourceCompatibility=JavaVersion.VERSION_1_6
+ext.targetCompatibility=JavaVersion.VERSION_1_6
 
 repositories {
   mavenCentral()  
@@ -149,6 +149,6 @@ eclipse {
     ext.downloadSources = true
     ext.downloadJavadoc = true
 
-    ext.sourceCompatibility=JavaVersion.VERSION_1_7
-    ext.targetCompatibility=JavaVersion.VERSION_1_7
+    ext.sourceCompatibility=JavaVersion.VERSION_1_6
+    ext.targetCompatibility=JavaVersion.VERSION_1_6
 }
