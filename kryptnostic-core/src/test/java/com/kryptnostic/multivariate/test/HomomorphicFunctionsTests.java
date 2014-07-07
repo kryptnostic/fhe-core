@@ -68,7 +68,7 @@ public class HomomorphicFunctionsTests {
         }
     }
     
-    @Test 
+//    @Test 
     public void testHomomorphicAnd() {
         if( !testNormalAnd ) {
             return;
