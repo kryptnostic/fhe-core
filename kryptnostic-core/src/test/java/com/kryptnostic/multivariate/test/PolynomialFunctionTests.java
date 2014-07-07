@@ -146,12 +146,13 @@ public class PolynomialFunctionTests {
    
    @Test
    public void composeTest() {
-       SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(256, 256);
-       SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(256, 256);
+	   final int BIT_SIZE = 256;
+       SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(BIT_SIZE, BIT_SIZE, 10, 2);
+       SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(BIT_SIZE, BIT_SIZE, 10, 2);
        SimplePolynomialFunction composed = outer.compose( inner );
        
        for( int i = 0 ; i < 25 ; ++i ) {
-           BitVector randomInput = BitUtils.randomVector( 256 );
+           BitVector randomInput = BitUtils.randomVector( BIT_SIZE );
            BitVector innerResult = inner.apply( randomInput );
            BitVector outerResult = outer.apply( innerResult );
            BitVector composedResult = composed.apply( randomInput );
