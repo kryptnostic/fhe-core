@@ -28,6 +28,13 @@ allprojects {
         gradleVersion = '1.10'
     }
 
+    test {
+        if (project.hasProperty('maxParallelForks')) 
+            maxParallelForks = project.maxParallelForks as int
+        if (project.hasProperty('forkEvery')) 
+            forkEvery = project.forkEvery as int
+    }
+
     task sourceJar (type : Jar) {
       classifier = 'sources'
       from sourceSets.main.allSource

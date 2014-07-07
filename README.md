@@ -41,6 +41,10 @@ Setup for your IDE of choice:
 Alternatively, if you like IntelliJ:
 
 	> ./gradlew idea	
+
+Also, to run tests in parallel
+
+    > ./gradlew build -PmaxParallelForks=8
 	
 Enjoy!
 
