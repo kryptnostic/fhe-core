@@ -41,7 +41,7 @@ allprojects {
     ext.isReleaseVersion = false
 
     ext.sourceCompatibility=JavaVersion.VERSION_1_6
-    ext.targetCompatibility=JavaVersion.VERSION_1_6
+    ext.targetCompatibility=JavaVersion.VERSION_1_8
 
     ext.jackson_version='2.3.0'
 }

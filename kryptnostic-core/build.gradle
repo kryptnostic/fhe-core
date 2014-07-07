@@ -29,7 +29,7 @@ apply from: "publish.gradle"
 mainClassName = ""
 
 ext.sourceCompatibility=JavaVersion.VERSION_1_6
-ext.targetCompatibility=JavaVersion.VERSION_1_6
+ext.targetCompatibility=JavaVersion.VERSION_1_8
 
 repositories {
   mavenCentral()  
