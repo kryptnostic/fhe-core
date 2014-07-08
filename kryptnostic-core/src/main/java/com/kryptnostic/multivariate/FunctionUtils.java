@@ -78,7 +78,7 @@ public class FunctionUtils {
             ++row;
         }
         
-        return PolynomialFunctionGF2.fromMonomialContributionMap( monomialSize , lines.size() , monomialContributionsMap );
+        return PolynomialFunctions.fromMonomialContributionMap( monomialSize , lines.size() , monomialContributionsMap );
     }
     
     public static SimplePolynomialFunction concatenateInputsAndOutputs( SimplePolynomialFunction lhs , SimplePolynomialFunction rhs ) {

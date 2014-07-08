@@ -38,6 +38,23 @@ public class PolynomialFunctionTests {
         logger.trace( "Result: {}" , result );
         Assert.assertEquals( result.size() ,  256 );
     }
+
+    @Test
+    public void denseRandomMVQTest() {
+        SimplePolynomialFunction f = PolynomialFunctions.denseRandomMultivariateQuadratic(256 , 256);
+        Assert.assertEquals( 256 , f.getInputLength() );
+        Assert.assertEquals( 256 , f.getOutputLength() );
+        for( Monomial m : f.getMonomials() ) {
+            Assert.assertTrue( m.cardinality() > 0 );
+            Assert.assertTrue( m.cardinality() <= 2 );
+        }
+        
+        BitVector input = BitUtils.randomVector( f.getInputLength() );
+        
+        BitVector result = f.apply(input);
+        Assert.assertNotNull( result );
+        Assert.assertEquals( f.getOutputLength(),  result.size() );
+    }
     
     @Test
     public void evaluationTest() {

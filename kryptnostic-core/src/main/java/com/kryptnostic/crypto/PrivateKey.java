@@ -3,11 +3,15 @@ package com.kryptnostic.crypto;
 import java.nio.ByteBuffer;
 import java.security.InvalidParameterException;
 import java.util.Arrays;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cern.colt.bitvector.BitVector;
+
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.FunctionUtils;
@@ -15,13 +19,12 @@ import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
-import cern.colt.bitvector.BitVector;
-
 /**
  * Private key class for decrypting data.
  * @author Matthew Tamayo-Rios
  */
 public class PrivateKey {
+	private static final int DEFAULT_CHAIN_LENGTH = 2; //The value of this constant is fairly arbitrary.
     private static final Logger logger = LoggerFactory.getLogger( PrivateKey.class );
 //    private static ObjectMapper mapper = new ObjectMapper();
     private final EnhancedBitMatrix D;
@@ -30,15 +33,20 @@ public class PrivateKey {
     private final EnhancedBitMatrix E2;
     private final SimplePolynomialFunction F;
     private final SimplePolynomialFunction decryptor;
+    private final SimplePolynomialFunction[] complexityChain;
     private final int longsPerBlock;
     
+    public PrivateKey( int cipherTextBlockLength, int plainTextBlockLength) {
+    	this( cipherTextBlockLength, plainTextBlockLength, DEFAULT_CHAIN_LENGTH );
+    }
     /**
      * Construct a private key instance that can be used for decrypting data encrypted with the public key.
-     * @param cipherTextBlockLength Length of the ciphertext output block, should be multiples of 64 bits 
-     * @param plainTextBlockLength Length of the ciphertext output block, should be multiples of 64 bits
+     * @param cipherTextBlockLength Length of the ciphertext output block, should be multiples of 64 bits. 
+     * @param plainTextBlockLength Length of the ciphertext output block, should be multiples of 64 bits.
+     * @param complexityChainLength Number of multivariate quadratic equations in the complexity chain.
      * @throws SingularMatrixException 
      */
-    public PrivateKey( int cipherTextBlockLength , int plainTextBlockLength ) {
+    public PrivateKey( int cipherTextBlockLength , int plainTextBlockLength , int complexityChainLength ) {
         Preconditions.checkArgument( 
                 cipherTextBlockLength > plainTextBlockLength , 
                 "Ciphertext block length must be greater than plaintext block length." );
@@ -81,6 +89,7 @@ public class PrivateKey {
 //        L = lgen;
         E1 = e1gen;
         E2 = e2gen;
+        complexityChain = new SimplePolynomialFunction[ complexityChainLength ];
         F = PolynomialFunctions.randomFunction( plainTextBlockLength , plainTextBlockLength , 10 , 3 );
         try {
             decryptor = buildDecryptor();

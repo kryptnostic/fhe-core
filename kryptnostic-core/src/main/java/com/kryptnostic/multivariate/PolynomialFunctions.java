@@ -1,8 +1,10 @@
 package com.kryptnostic.multivariate;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.kryptnostic.linear.BitUtils;
@@ -137,7 +139,7 @@ public final class PolynomialFunctions {
     }
     
     public static SimplePolynomialFunction HALF_ADDER( int length ) {
-        return PolynomialFunctionGF2.concatenate(
+        return PolynomialFunctions.concatenate(
                 PolynomialFunctions.BINARY_XOR( length ) ,
                 PolynomialFunctions
                     .LSH( length , 1 )
@@ -160,7 +162,7 @@ public final class PolynomialFunctions {
          * current = x + y; 256 -> 128
          */
         
-        SimplePolynomialFunction halfAdder = PolynomialFunctionGF2.concatenate( xor , carry );
+        SimplePolynomialFunction halfAdder = PolynomialFunctions.concatenate( xor , carry );
         
         for( int i = 0 ; i < length - 1 ; ++i ) {
             cpf.prefix( halfAdder );
@@ -217,6 +219,7 @@ public final class PolynomialFunctions {
             contributions[i] = contribution;
         }
         
+        //No need to use 
         return new PolynomialFunctionGF2( monomialOrder , monomialOrder , monomials , contributions);
     }
 
@@ -257,29 +260,54 @@ public final class PolynomialFunctions {
             
         }
         
-        return PolynomialFunctionGF2.fromMonomialContributionMap( inputLength, outputLength, contributionMap );
+        return fromMonomialContributionMap( inputLength, outputLength, contributionMap );
     }
     
     /**
-     * Generates random polynomial functions.
+     * Generates dense random multivariate quadratic functions.
      * @param inputLength Number of input bits to the polynomial function.
      * @param outputLength Number of output bits to the polynomial function.
-     * @param numTerms 
-     * @param maxOrder
-     * @return a random polynomial function over GF(2)
+     * @return a random multivariate quadratic polynomial function over GF(2)
      */
-    public static SimplePolynomialFunction denseRandomFunction( int inputLength , int outputLength , int numTerms , int maxOrder ) {
+    public static SimplePolynomialFunction denseRandomMultivariateQuadratic(int inputLength, int outputLength) {
         Map<Monomial, BitVector> contributionMap = Maps.newHashMap();
-        for( int i = 0 ; i < outputLength ; ++i ) {
-            for( int j = 0; j < inputLength; j++) {
-                for( int k = 0; k < inputLength; k++ ) {
-                    Monomial monomial = new Monomial( inputLength ).chainSet( j ).chainSet( k );
-                    contributionMap.put( monomial , BitUtils.randomVector( outputLength ) );
-                }
-            }       
+        int maxIndex = (inputLength*(inputLength + 1))>>>1;
+        Monomial[] monomials = new Monomial[ maxIndex ];
+        BitVector[] contributions = new BitVector[ maxIndex ];
+        
+        for(int i = 0; i<inputLength; ++i) {
+        	monomials[ i ] = new Monomial( inputLength ).chainSet( i );
+        	contributions[ i ] = BitUtils.randomVector( outputLength );
         }
         
-        return PolynomialFunctionGF2.fromMonomialContributionMap( inputLength, outputLength, contributionMap );
+        int flatIndex = 0;
+        for( int j = 0; j < inputLength; ++j) {
+        	for( int k = j; k < inputLength; ++k ) {
+        	    flatIndex = j*inputLength - ((j*(j-1))>>>1) + k - j;
+        		monomials[ flatIndex ] = new Monomial( inputLength ).chainSet( j ).chainSet( k );
+        		contributions[ flatIndex ] = BitUtils.randomVector( outputLength );
+//        		contributionMap.put( monomial ,  );
+        	}
+        }       
+        return new PolynomialFunctionGF2(inputLength, outputLength, monomials, contributions);
+//        return PolynomialFunctions.fromMonomialContributionMap( inputLength, outputLength, contributionMap );
+    }
+    
+    /**
+     * Constructs an array of random multivariate quadratic functions.
+     * @param inputLength Number of input bits to the polynomial function.
+     * @param outputLength Number of output bits to the polynomial function.
+     * @param count The number of functions to construct in the array.
+     * @return
+     */
+    public static SimplePolynomialFunction[] arrayOfRandomMultivariateQuadratics(int inputLength, int outputLength, int count) {
+    	SimplePolynomialFunction [] functions = new SimplePolynomialFunction[ count ];
+    	
+    	for(int i = 0; i < functions.length; ++i) {
+    		functions[i] = denseRandomMultivariateQuadratic(inputLength, outputLength);  
+    	}
+    	
+    	return functions;
     }
     
     /**
@@ -291,4 +319,64 @@ public final class PolynomialFunctions {
     public static SimplePolynomialFunction randomLinearCombination( int inputLength, int outputLength ) {
     	return null;
     }
+
+	public static SimplePolynomialFunction fromMonomialContributionMap( int inputLength , int outputLength , Map<Monomial,BitVector> monomialContributionsMap) {
+	    PolynomialFunctionGF2.removeNilContributions(monomialContributionsMap);
+	    Monomial[] newMonomials = new Monomial[ monomialContributionsMap.size() ];
+	    BitVector[] newContributions = new BitVector[ monomialContributionsMap.size() ];
+	    int index = 0;
+	    for( Entry<Monomial,BitVector> entry : monomialContributionsMap.entrySet() ) {
+	        BitVector contribution = entry.getValue();
+	        newMonomials[ index ] = entry.getKey();
+	        newContributions[ index ] = contribution;
+	        ++index;
+	    }
+	    return new PolynomialFunctionGF2( inputLength , outputLength , newMonomials , newContributions );
+	}
+
+	/**
+	 * Builds a new function by concatenating the output of the input functions. It does not change the length
+	 * of the input and the new outputs will be the same order as they are passed in.
+	 * @param first function whose outputs will become the first set of output of the new function
+	 * @param second function whose outputs will become the first set of output of the new function
+	 * @return a function that maps inputs to outputs consisting of the concatenated output of the first and second functions.
+	 */
+	public static SimplePolynomialFunction concatenate( SimplePolynomialFunction first , SimplePolynomialFunction second ) {
+	    Preconditions.checkArgument( first.getInputLength() == second.getInputLength() , "Functions being composed must have compatible monomial lengths" );
+	    int lhsOutputLength = first.getOutputLength();
+	    int rhsOutputLength = second.getOutputLength();
+	    int combinedOutputLength = lhsOutputLength + rhsOutputLength;
+	    Map<Monomial, BitVector> lhsMap = 
+	            FunctionUtils.mapViewFromMonomialsAndContributions( first.getMonomials() , first.getContributions() );
+	    Map<Monomial, BitVector> rhsMap =
+	            FunctionUtils.mapViewFromMonomialsAndContributions( second.getMonomials() , second.getContributions() );
+	    Map<Monomial, BitVector> monomialContributionMap = Maps.newHashMap();
+	    
+	    Set<Monomial> monomials = Sets.union( lhsMap.keySet() , rhsMap.keySet() );
+	    for( Monomial monomial : monomials ) {
+	        BitVector lhsContribution = lhsMap.get( monomial );
+	        BitVector rhsContribution = rhsMap.get( monomial );
+	        long[] newElements = new long[ combinedOutputLength >>> 6 ];
+	        
+	        if( lhsContribution != null ) { 
+	            for( int i = 0 ; i < lhsOutputLength >>> 6; ++i ) {
+	                newElements[ i ] = lhsContribution.elements()[ i ];
+	            }
+	        }
+	        
+	        if( rhsContribution != null ) { 
+	            for( int i = 0 ; i < rhsOutputLength >>> 6; ++i ) {
+	                newElements[ i + lhsOutputLength>>>6 ] = rhsContribution.elements()[ i ];
+	            }
+	        }
+	        
+	        monomialContributionMap.put( monomial , new BitVector( newElements , combinedOutputLength ) );
+	    }
+	    
+	    return fromMonomialContributionMap( 
+	                        first.getInputLength(), 
+	                        combinedOutputLength ,  
+	                        monomialContributionMap );
+	    
+	}
 }
