@@ -24,15 +24,19 @@ public class PublicKey {
     private static final Random r = new Random( 0 );
     private final SimplePolynomialFunction encrypter;
     private final SimplePolynomialFunction m;
+    private final SimplePolynomialFunction[] complexityChain;
     private final PaddingStrategy paddingStrategy;
     private final int longsPerBlock;
+    
     public PublicKey( PrivateKey privateKey ) {
         this( privateKey, new ZeroPaddingStrategy( privateKey.getE1().rows() >>> 4 ) );
     }
+    
     public PublicKey( PrivateKey privateKey , PaddingStrategy paddingStrategy ) {
         this.paddingStrategy = paddingStrategy;
         int inputLen =  privateKey.getE1().cols();
         int outputLen = privateKey.getE1().rows();
+        complexityChain = null;
         m = PolynomialFunctionGF2.truncatedIdentity( inputLen , outputLen );
         logger.debug( "m: {} -> {}" , inputLen , outputLen );
         

@@ -55,7 +55,7 @@ public class HomomorphicFunctions {
                             .compose( PolynomialFunctions.BINARY_AND( length ) ) );
 //        return privateKey.computeBinaryHomomorphicFunction( PolynomialFunctions.HALF_ADDER( 64 ) ) ; 
         logger.debug( "Generated carry portion of half adder" );
-        return PolynomialFunctionGF2.concatenate( xor , carry ); 
+        return PolynomialFunctions.concatenate( xor , carry ); 
     }
     
     public static SimplePolynomialFunction DirectHomomorphicAnd( PrivateKey privateKey ) {
