@@ -275,6 +275,16 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         }
         return count;
     }
+    
+    @Override
+    public int getMaximumMonomialOrder() {
+        int maxOrder = 0;
+        for( Monomial m : monomials ) {
+            maxOrder = Math.max( maxOrder , m.cardinality() );
+        }
+        return maxOrder;
+    }
+    
     public static Map<Monomial, Set<Monomial>> initializeMemoMap( int outerInputLength , Monomial[] monomials , BitVector[] contributions ) {
         Map<Monomial, Set<Monomial>> memoizedComputations = Maps.newHashMap();
         for( int i = 0 ; i < outerInputLength ; ++i ) {

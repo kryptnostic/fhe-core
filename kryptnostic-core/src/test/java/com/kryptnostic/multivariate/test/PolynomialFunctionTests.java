@@ -4,9 +4,13 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import cern.colt.bitvector.BitVector;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -17,9 +21,6 @@ import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-
-import cern.colt.bitvector.BitVector;
-import org.junit.Assert;
 
 
 public class PolynomialFunctionTests {
@@ -212,4 +213,20 @@ public class PolynomialFunctionTests {
        Assert.assertEquals( f , fPrime );
    }
 
+   @Test
+   public void testRandomlyPartitionMVQ() {
+       SimplePolynomialFunction f = PolynomialFunctions.denseRandomMultivariateQuadratic( 256 , 256 );
+       Pair<SimplePolynomialFunction,SimplePolynomialFunction> gh = PolynomialFunctions.randomlyPartitionMVQ(f);
+       SimplePolynomialFunction g = gh.getLeft();
+       SimplePolynomialFunction h = gh.getRight();
+       
+       Assert.assertEquals( f, h.xor(g) );
+       
+       BitVector input = BitUtils.randomVector( f.getInputLength() );
+       BitVector expected = f.apply( input );
+       BitVector result = g.apply(input);
+       result.xor( h.apply(input) );
+       
+       Assert.assertEquals( expected , result );
+   }
 }

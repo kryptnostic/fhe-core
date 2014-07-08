@@ -4,6 +4,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Pair;
+
+import cern.colt.bitvector.BitVector;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -12,8 +16,6 @@ import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-
-import cern.colt.bitvector.BitVector;
 
 /**
  * Utility and factory methods for PolynomialFunctions.
@@ -378,5 +380,14 @@ public final class PolynomialFunctions {
 	                        combinedOutputLength ,  
 	                        monomialContributionMap );
 	    
+	}
+	
+	public static Pair<SimplePolynomialFunction,SimplePolynomialFunction> randomlyPartitionMVQ( SimplePolynomialFunction f ) {
+	    Preconditions.checkArgument( f.getMaximumMonomialOrder() == 2 );
+	    
+	    SimplePolynomialFunction g = denseRandomMultivariateQuadratic( f.getInputLength(), f.getOutputLength() );
+	    SimplePolynomialFunction h = f.xor(g);
+	    
+	    return Pair.of(g, h);
 	}
 }
