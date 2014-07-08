@@ -35,7 +35,7 @@ public class PolynomialFunctionTests {
         
         PolynomialFunctionGF2 f = builder.build();
         BitVector result = f.apply( BitUtils.randomVector( 256 ) );
-        logger.info( "Result: {}" , result );
+        logger.trace( "Result: {}" , result );
         Assert.assertEquals( result.size() ,  256 );
     }
     
@@ -49,7 +49,7 @@ public class PolynomialFunctionTests {
         
         PolynomialFunctionGF2 f = builder.build();
         BitVector result = f.apply( BitUtils.randomVector( 256 ) );
-        logger.info( "Result: {}" , result );
+        logger.trace( "Result: {}" , result );
         Assert.assertEquals( result.size() ,  256 );
     }
     
@@ -84,8 +84,8 @@ public class PolynomialFunctionTests {
                rowB.add( monomials.get( i ) );
            }
        }
-       logger.info("Row A: {}", rowA);
-       logger.info("Row B: {}", rowB);
+       logger.trace("Row A: {}", rowA);
+       logger.trace("Row B: {}", rowB);
        Set<Monomial> expected = Sets.newHashSet();
        
        for( Monomial mA : rowA ) {
@@ -96,7 +96,7 @@ public class PolynomialFunctionTests {
                } 
            }
        }
-       logger.info("Expected: {}", expected );
+       logger.trace("Expected: {}", expected );
        Set<Monomial> actual = PolynomialFunctionGF2.product( rowA , rowB );
        Assert.assertEquals( expected , actual );
    }
@@ -140,7 +140,7 @@ public class PolynomialFunctionTests {
        Map<Monomial, Set<Monomial>> memoizedComputations = PolynomialFunctionGF2.initializeMemoMap( 256 , monomials , contributions );
        Map<Monomial, List<Monomial>> possibleProducts = PolynomialFunctionGF2.allPossibleProduct( memoizedComputations.keySet() );  // 1
        Monomial mostFrequent = PolynomialFunctionGF2.mostFrequentFactor( monomials , possibleProducts.keySet() , ImmutableSet.<Monomial>of() );
-       logger.info( "Most frequent monomial found: {}" , mostFrequent );
+       logger.trace( "Most frequent monomial found: {}" , mostFrequent );
        Assert.assertEquals( new Monomial( 256 ).chainSet( 0 ).chainSet( 1 ) , mostFrequent );
    }
    
@@ -156,10 +156,10 @@ public class PolynomialFunctionTests {
            BitVector innerResult = inner.apply( randomInput );
            BitVector outerResult = outer.apply( innerResult );
            BitVector composedResult = composed.apply( randomInput );
-           logger.info("Random input: {}" , randomInput );
-           logger.info("Inner result: {}" , innerResult );
-           logger.info("Outer result: {}" , outerResult );
-           logger.info("Composed result: {}" , composedResult );
+           logger.trace("Random input: {}" , randomInput );
+           logger.trace("Inner result: {}" , innerResult );
+           logger.trace("Outer result: {}" , outerResult );
+           logger.trace("Composed result: {}" , composedResult );
            Assert.assertEquals( outerResult , composedResult );
        }
    }
@@ -189,7 +189,7 @@ public class PolynomialFunctionTests {
    public void testToFromString() {
        SimplePolynomialFunction f = PolynomialFunctions.randomFunction( 256 , 128 );
        String fString = f.toString();
-       logger.info( "f = {}" , fString );
+       logger.trace( "f = {}" , fString );
        
        SimplePolynomialFunction fPrime = FunctionUtils.fromString( 256 , fString );
        Assert.assertEquals( f , fPrime );

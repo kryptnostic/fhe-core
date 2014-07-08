@@ -40,11 +40,11 @@ public class KeyTests {
         String plaintext = "hey!1234hey!1234hey!1234hey!12";
         byte[] plaintextBytes = plaintext.getBytes();
         byte[] ciphertext = pubKey.encrypt( plaintextBytes );
-        logger.info( "Plaintext: {}", plaintext );
-        logger.info( "Ciphertext: {}", new String( ciphertext ) );
+        logger.trace( "Plaintext: {}", plaintext );
+        logger.trace( "Ciphertext: {}", new String( ciphertext ) );
         byte[] decryptedBytes = privKey.decrypt( ciphertext ); 
         String decryptedPlaintext = new String( decryptedBytes );
-        logger.info( "Decrypted ciphertext: {}" , decryptedPlaintext );
+        logger.trace( "Decrypted ciphertext: {}" , decryptedPlaintext );
         Assert.assertTrue( StringUtils.startsWith( decryptedPlaintext , plaintext ) );
     }
     
@@ -55,7 +55,7 @@ public class KeyTests {
         Ciphertext ciphertext = pubKey.encryptIntoEnvelope( plaintextBytes );
         byte[] decryptedBytes = privKey.decryptFromEnvelope( ciphertext ); 
         String decryptedPlaintext = new String( decryptedBytes );
-        logger.info( "Decrypted ciphertext: {}" , decryptedPlaintext );
+        logger.trace( "Decrypted ciphertext: {}" , decryptedPlaintext );
         Assert.assertEquals( decryptedPlaintext , plaintext );
     }
 }
