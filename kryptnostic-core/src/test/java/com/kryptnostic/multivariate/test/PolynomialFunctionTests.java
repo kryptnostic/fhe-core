@@ -45,8 +45,9 @@ public class PolynomialFunctionTests {
         SimplePolynomialFunction f = PolynomialFunctions.denseRandomMultivariateQuadratic(256 , 256);
         Assert.assertEquals( 256 , f.getInputLength() );
         Assert.assertEquals( 256 , f.getOutputLength() );
+        Assert.assertEquals( 1 + 128*257 , f.getMonomials().length );
+        
         for( Monomial m : f.getMonomials() ) {
-            Assert.assertTrue( m.cardinality() > 0 );
             Assert.assertTrue( m.cardinality() <= 2 );
         }
         

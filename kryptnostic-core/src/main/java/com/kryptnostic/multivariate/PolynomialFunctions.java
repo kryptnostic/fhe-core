@@ -272,27 +272,32 @@ public final class PolynomialFunctions {
      * @return a random multivariate quadratic polynomial function over GF(2)
      */
     public static SimplePolynomialFunction denseRandomMultivariateQuadratic(int inputLength, int outputLength) {
-        Map<Monomial, BitVector> contributionMap = Maps.newHashMap();
-        int maxIndex = (inputLength*(inputLength + 1))>>>1;
+        int maxIndex = 1+((inputLength*(inputLength + 1))>>>1);
         Monomial[] monomials = new Monomial[ maxIndex ];
         BitVector[] contributions = new BitVector[ maxIndex ];
-        
-        for(int i = 0; i<inputLength; ++i) {
-        	monomials[ i ] = new Monomial( inputLength ).chainSet( i );
-        	contributions[ i ] = BitUtils.randomVector( outputLength );
-        }
-        
+
         int flatIndex = 0;
+        monomials[ flatIndex ] = Monomial.constantMonomial( inputLength );
+        contributions[ flatIndex ] = BitUtils.randomVector( outputLength );
         for( int j = 0; j < inputLength; ++j) {
         	for( int k = j; k < inputLength; ++k ) {
-        	    flatIndex = j*inputLength - ((j*(j-1))>>>1) + k - j;
+        	    /*
+        	     * Converts cartesian index j,k to linear index as a function of j and k
+        	     * 
+        	     * j*(inputLength-1) accounts for k starting at j and that j rows have already been 
+                 * assigned
+                 * 
+        	     * ((j*(j-1))>>>1) tracks how many indices have been skipped in the triangle 
+        	     * above the diagonal.
+        	     * 
+        	     * k controls the assignment
+        	     */
+        	    flatIndex = 1+j*(inputLength - 1) - ((j*(j-1))>>>1) + k;
         		monomials[ flatIndex ] = new Monomial( inputLength ).chainSet( j ).chainSet( k );
         		contributions[ flatIndex ] = BitUtils.randomVector( outputLength );
-//        		contributionMap.put( monomial ,  );
         	}
         }       
         return new PolynomialFunctionGF2(inputLength, outputLength, monomials, contributions);
-//        return PolynomialFunctions.fromMonomialContributionMap( inputLength, outputLength, contributionMap );
     }
     
     /**

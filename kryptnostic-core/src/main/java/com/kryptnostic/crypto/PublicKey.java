@@ -36,6 +36,7 @@ public class PublicKey {
         this.paddingStrategy = paddingStrategy;
         int inputLen =  privateKey.getE1().cols();
         int outputLen = privateKey.getE1().rows();
+        complexityChain = null;
         m = PolynomialFunctionGF2.truncatedIdentity( inputLen , outputLen );
         logger.debug( "m: {} -> {}" , inputLen , outputLen );
         
