@@ -1,6 +1,7 @@
 package com.kryptnostic.multivariate;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -173,9 +174,10 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                 inputLength == inner.getOutputLength() ,
                 "Input length of outer function must match output length of inner function it is being composed with"
                 );
-        Set<Monomial> requiredMonomials = Monomials.deepCloneToImmutableSet( monomials );
+        Set<Monomial> requiredMonomials = Monomials.deepCloneToMutableSet( monomials );
+        Set<Monomial> stoppingMonomials = Monomials.deepCloneToImmutableSet( monomials );
         Map<Monomial, Set<Monomial>> memoizedComputations = initializeMemoMap( inputLength , inner.getMonomials() , inner.getContributions() );
-        
+        requiredMonomials.remove( Monomial.constantMonomial( inputLength ) );
         /*
          * Figure out most desirable product to compute next and use this to build up all required monomials.
          * 
@@ -197,7 +199,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         while( !Sets.difference( requiredMonomials , memoizedComputations.keySet() ).isEmpty() ) {
             //TODO: allPossibleProductts already filters out previously computed products, remove double filtering.
             //TODO: Don't compute products that don't exist. Do this by only computing products which will be used.
-            possibleProducts.putAll( allPossibleProductParallelEx2( possibleProducts.keySet(), memoizedComputations.keySet(), requiredMonomials , maxMonomialOrder ) );  // 1
             Monomial mostFrequent = mostFrequentFactorParallel( possibleProducts.keySet() , requiredMonomials );                
             List<Monomial> factors = Preconditions.checkNotNull( 
                     possibleProducts.get( mostFrequent ) ,
@@ -207,6 +208,21 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                     Preconditions.checkNotNull( memoizedComputations.get( factors.get( 1 ) ) ) );  //3
             memoizedComputations.put( mostFrequent , mproducts ); //4
             possibleProducts.remove(  mostFrequent );
+            possibleProducts.putAll( allPossibleProductParallelEx2( ImmutableSet.of(mostFrequent) , memoizedComputations.keySet(), requiredMonomials , maxMonomialOrder ) );  
+        }
+        
+        Set<Monomial> remainders = Sets.difference( stoppingMonomials , memoizedComputations.keySet() ); 
+        
+        for( Monomial remainder : remainders ) {
+            for( Monomial required : requiredMonomials ) {
+                Optional<Monomial> divResult = remainder.divide( required );
+                if( divResult.isPresent() && memoizedComputations.containsKey( divResult.get() ) ) {
+                    Set<Monomial> mproducts = product( 
+                            Preconditions.checkNotNull( memoizedComputations.get( divResult.get() ) ), 
+                            Preconditions.checkNotNull( memoizedComputations.get( required ) ) );  
+                    memoizedComputations.put( remainder , mproducts ); 
+                }
+            }
         }
         
         Map<Monomial, BitVector> composedFunction = Maps.newHashMap();
@@ -474,7 +490,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                     .concurrencyLevel( CONCURRENCY_LEVEL )
                     .initialCapacity( ( monomials.size() * ( monomials.size()  - 1 ) ) >>> 1 )
                     .makeMap();
-            
+        final CountDownLatch latch = new CountDownLatch( newMonomials.size() );
         for( final Monomial lhs : newMonomials ) {
             executor.execute( 
                     new Runnable() {
@@ -495,10 +511,16 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                                     }
                                 }
                             }
+                            latch.countDown();
                         }
                     });
         }
-
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
         return result;
     }
@@ -545,11 +567,22 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             e.printStackTrace();
         }
         
+        Set<Monomial> sharesFactor = Sets.newHashSet();
+        
         for( Monomial rM : remainingMonomials ) {
             if( rM.hasFactor( result.mostFrequentMonomial ) ) {
-                rM.xor( result.mostFrequentMonomial );
+                sharesFactor.add( rM );
             }
         }
+        
+        for( Monomial sF : sharesFactor ) {
+            remainingMonomials.remove( sF );
+            sF.xor( result.mostFrequentMonomial );
+            if( !sF.isZero() ) {
+                remainingMonomials.add( sF );
+            }
+        }
+        
         return result.mostFrequentMonomial;
     }
    

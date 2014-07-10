@@ -34,4 +34,8 @@ public class Monomials {
     public static Set<Monomial> concurrentDeepClone( Set<Monomial> monomials ) {
         return Sets.newConcurrentHashSet( Iterables.transform( monomials , cloner  ) );
     }
+
+    public static Set<Monomial> deepCloneToMutableSet(Monomial ... monomials) {
+        return Sets.newHashSet( Iterables.transform( Arrays.asList( monomials ) , cloner  ) );
+    }
 }

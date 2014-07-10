@@ -118,7 +118,7 @@ public class Monomial extends BitVector {
     
     public static Monomial randomMonomial( int size , int maxOrder ) {
         
-        int order = r.nextInt( maxOrder - 1 ) + 1;
+        int order = r.nextInt( maxOrder ) + 1;
         Monomial monomial = new Monomial( size );
         
         Set<Integer> terms = Sets.newHashSet();
