@@ -10,11 +10,14 @@ import org.slf4j.LoggerFactory;
 
 import cern.colt.bitvector.BitVector;
 
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.kryptnostic.linear.EnhancedBitMatrix;
+import com.kryptnostic.linear.EnhancedBitMatrix.NonSquareMatrixException;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.FunctionUtils;
+import com.kryptnostic.multivariate.ParameterizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -31,9 +34,15 @@ public class PrivateKey {
 //    private final EnhancedBitMatrix L;
     private final EnhancedBitMatrix E1;
     private final EnhancedBitMatrix E2;
+    
+    private final EnhancedBitMatrix A;
+    private final EnhancedBitMatrix B;
+    
     private final SimplePolynomialFunction F;
+    private final SimplePolynomialFunction G;
     private final SimplePolynomialFunction decryptor;
     private final SimplePolynomialFunction[] complexityChain;
+    private final Function<SimplePolynomialFunction, SimplePolynomialFunction> composer;
     private final int longsPerBlock;
     
     public PrivateKey( int cipherTextBlockLength, int plainTextBlockLength) {
@@ -89,8 +98,29 @@ public class PrivateKey {
 //        L = lgen;
         E1 = e1gen;
         E2 = e2gen;
+        
+        EnhancedBitMatrix Agen;
+        EnhancedBitMatrix Bgen;
+        
+        try {
+            do {
+                Agen = EnhancedBitMatrix.randomInvertibleMatrix( plainTextBlockLength );
+                Bgen = EnhancedBitMatrix.randomInvertibleMatrix( plainTextBlockLength );
+            } while ( !EnhancedBitMatrix.determinant( Agen.add(Bgen) ) );
+        } catch (NonSquareMatrixException e) {
+            //This should never happen.
+            throw new Error("Encountered non-square matrix, where non-should exist.");
+        } 
+        
+        A = Agen;
+        B = Bgen;
+        
         complexityChain = new SimplePolynomialFunction[ complexityChainLength ];
         F = PolynomialFunctions.randomFunction( plainTextBlockLength , plainTextBlockLength , 10 , 3 );
+        G = PolynomialFunctions.randomManyToOneLinearCombination(cipherTextBlockLength);
+        
+        composer = PolynomialFunctions.getComposer(G);
+
         try {
             decryptor = buildDecryptor();
         } catch (SingularMatrixException e) {
@@ -110,15 +140,25 @@ public class PrivateKey {
                 .xor( E2.multiply( R ) );
     }
     
+    public SimplePolynomialFunction encrypt( SimplePolynomialFunction input ) {
+        return encrypt( input , G );
+    }
     
-    public SimplePolynomialFunction encrypt( SimplePolynomialFunction plaintextFunction ) {
+    public SimplePolynomialFunction encrypt( SimplePolynomialFunction input , SimplePolynomialFunction g ) {
         int plaintextLen =  E1.cols();
         int ciphertextLen = E1.rows();
-        SimplePolynomialFunction R = PolynomialFunctions.randomFunction( ciphertextLen , plaintextLen );
         
-        return E1
-                .multiply( plaintextFunction.xor( F.compose( R ) ) )
-                .xor( E2.multiply( R ) );
+        /*
+         *  First we extend the input... 
+         *   Return a ParameterizedPolynomialFunction that takes m and r as inputs and does the rest. 
+         */
+        //Create 
+        List<SimplePolynomialFunction> encryptingChain = Lists.transform( Arrays.asList( complexityChain ), PolynomialFunctions.getComposer(g) );
+        
+        SimplePolynomialFunction E = 
+                E1.multiply( input.xor( A.multiply( g ) ).xor( PolynomialFunctionGF2.truncatedIdentity( ciphertextLen , ciphertextLen + plaintextLen , input.getInputLength() ) ) )
+                .xor( E2.multiply( input.xor( B.multiply( g ) ).xor( PolynomialFunctionGF2.truncatedIdentity( ciphertextLen + plaintextLen , ciphertextLen<<1 , input.getInputLength() ) ) ) );
+        return new ParameterizedPolynomialFunctionGF2(E, encryptingChain);
     }
     
     public SimplePolynomialFunction computeHomomorphicFunction( SimplePolynomialFunction f ) {
@@ -177,7 +217,7 @@ public class PrivateKey {
          * Inv( E1 ) X + Inv( E1 ) E2 D X + F( DX ) = m
          * Inv( E1 ) ( I + E2 D ) X + F( DX ) = m    
          */
-        PolynomialFunctionGF2 X = PolynomialFunctionGF2.identity( E1.rows() );
+        SimplePolynomialFunction X = PolynomialFunctions.identity( E1.rows() );
         return E1.leftGeneralizedInverse()
                 .multiply( EnhancedBitMatrix.identity( E2.rows() ).add( E2.multiply( D ) ) )
                 .multiply( X )

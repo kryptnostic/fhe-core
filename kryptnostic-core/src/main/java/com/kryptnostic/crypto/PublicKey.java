@@ -41,7 +41,7 @@ public class PublicKey {
         logger.debug( "m: {} -> {}" , inputLen , outputLen );
         
         /*
-         * E(m) = E1(m + F( R(m,r)) ) + E2(R(m,r))
+         * E(m) = E1(m + h + Ag ) + E2(m + h + Bg )
          */
         
         encrypter = privateKey.encrypt( m ); 

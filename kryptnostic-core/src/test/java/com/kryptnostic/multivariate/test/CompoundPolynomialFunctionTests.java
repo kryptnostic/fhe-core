@@ -4,11 +4,13 @@ import org.junit.Test;
 
 import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.CompoundPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.CompoundPolynomialFunctions;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
+
 import org.junit.Assert;
 
 public class CompoundPolynomialFunctionTests {
@@ -17,7 +19,7 @@ public class CompoundPolynomialFunctionTests {
         PolynomialFunction f = PolynomialFunctions.randomFunction( 128 , 512 );
         PolynomialFunction g = PolynomialFunctions.randomFunction( 512 , 256 );
         PolynomialFunction h = PolynomialFunctions.randomFunction( 256 , 64 );
-        CompoundPolynomialFunction cpf = CompoundPolynomialFunctionGF2.fromFunctions( f , g , h );
+        CompoundPolynomialFunction cpf = CompoundPolynomialFunctions.fromFunctions( f , g , h );
         
         Assert.assertEquals( 128 , cpf.getInputLength() );
         Assert.assertEquals( 64 , cpf.getOutputLength() );

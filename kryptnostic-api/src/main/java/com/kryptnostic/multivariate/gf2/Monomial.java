@@ -5,13 +5,14 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Set;
 
+import cern.colt.bitvector.BitVector;
+
 import com.google.common.base.CharMatcher;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 import com.kryptnostic.multivariate.predicates.MonomialOrderHomogeneityPredicate;
-
-import cern.colt.bitvector.BitVector;
 
 public class Monomial extends BitVector {
     private static final long serialVersionUID = -8751413919025034976L;
@@ -27,15 +28,29 @@ public class Monomial extends BitVector {
     }
     
     public boolean hasFactor( Monomial m ) {
-        if( m.size() > size() ) {
-            throw new InvalidParameterException( "Monomial to test as factor cannot be of higher order than monomial that it factors into." );
-        }
+        Preconditions.checkArgument( m.size() <= size() ,"Monomial to test as factor cannot be of higher order than monomial that it factors into." );
+        return unsafeHasFactor( m );
+    }
+    
+    public boolean unsafeHasFactor( Monomial m ) {
         for( int i = 0 ; i < bits.length ; ++i ) {
             if( ( bits[i] & m.bits[i] ) != m.bits[i] ) {
                 return false;
             }
         }
         return true;
+    }
+    
+    public Optional<Monomial> divide( Monomial m ) {
+        Monomial result = clone();
+        for( int i = 0 ; i < result.bits.length ; ++i ) {
+            if( ( result.bits[i] & m.bits[i] ) != m.bits[i] ) {
+                return Optional.absent();
+            } else {
+                result.bits[i]^=m.bits[i];
+            }
+        }
+        return Optional.of( result );
     }
     
     public boolean isZero() {

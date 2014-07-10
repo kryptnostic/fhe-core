@@ -1,6 +1,5 @@
 package com.kryptnostic.multivariate;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,7 +28,7 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
         this( ImmutableList.<PolynomialFunction>of() );
     }
     
-    public CompoundPolynomialFunctionGF2( List<PolynomialFunction> functions ) {
+    public CompoundPolynomialFunctionGF2( List<? extends PolynomialFunction> functions ) {
         this.functions = Lists.newLinkedList( functions );
     }
     
@@ -112,14 +111,6 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
                     getInputLength() == inner.getOutputLength() ,
                     "Input length of outer function must match output length of inner function it is being composed with"
                     );
-        }
-    }
-
-    public static CompoundPolynomialFunctionGF2 fromFunctions( PolynomialFunction ... functions ) {
-        if( functions.length == 0 ) { 
-            return new CompoundPolynomialFunctionGF2();
-        } else {
-            return new CompoundPolynomialFunctionGF2( Arrays.asList( functions ) );
         }
     }
 
