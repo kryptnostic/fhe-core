@@ -1,4 +1,5 @@
 package com.kryptnostic.multivariate.test;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -15,6 +16,7 @@ import cern.colt.bitvector.BitVector;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix;
@@ -146,6 +148,40 @@ public class PolynomialFunctionTests {
    }
    
    @Test 
+   public void testRowProduct() {
+       SimplePolynomialFunction f = PolynomialFunctions.randomManyToOneLinearCombination( 256 );
+       Monomial[] monomials = f.getMonomials();
+       List<BitVector> contribs = Lists.newArrayList( f.getContributions() );
+       Map<Monomial,Integer> indices = Maps.newHashMapWithExpectedSize( f.getMonomials().length );
+       
+       for( int i = 0; i < monomials.length ; ++i ) {
+           indices.put( monomials[ i ] , i );
+       }
+       
+       EnhancedBitMatrix.transpose( contribs , f.getContributions().length );
+       
+       BitVector lhs = contribs.get( 110 );
+       BitVector rhs = contribs.get( 100 );
+       List<Monomial> mList = Lists.newArrayList( monomials );
+       BitVector p = PolynomialFunctionGF2.product( lhs , rhs , mList , indices );
+       
+       for( int i = 0 ; i < lhs.size() ; ++i ) {
+           if( lhs.get( i ) ) {
+               for( int j = 0 ; j < rhs.size(); j++ ) {
+                   if( rhs.get( j ) ) {
+                       Assert.assertNotNull( indices.get( mList.get( i ).product( mList.get( j ) ) ) );
+                   }
+                   
+                   if( i!=j && lhs.get( i ) && rhs.get( j ) && lhs.get( j ) && rhs.get( i ) ) {
+                       Assert.assertFalse( p.get( indices.get( mList.get( i ).product( mList.get( j ) ) ) ) );
+                   }
+               }
+           }
+       }
+       
+   }
+   
+   @Test 
    public void mostFrequentFactorTest() {
        Monomial[] monomials = new Monomial[] { 
          new Monomial( 256 ).chainSet( 0 ).chainSet(1) ,
@@ -203,7 +239,7 @@ public class PolynomialFunctionTests {
            SimplePolynomialFunction mvq = PolynomialFunctions.denseRandomMultivariateQuadratic( INPUT_LENGTH, OUTPUT_LENGTH );
            Map<Monomial, Set<Monomial>> memoizedComputations = PolynomialFunctionGF2.initializeMemoMap( INPUT_LENGTH , mvq.getMonomials() , mvq.getContributions() );
            start = System.nanoTime();
-           Map<Monomial, List<Monomial>> possibleProducts = PolynomialFunctionGF2.allPossibleProductParallelEx2( memoizedComputations.keySet() , memoizedComputations.keySet() ,Monomials.deepCloneToImmutableSet( mvq.getMonomials() ) , 2); 
+//           Map<Monomial, List<Monomial>> possibleProducts = PolynomialFunctionGF2.allPossibleProductParallelEx2( memoizedComputations.keySet() , memoizedComputations.keySet() ,Monomials.deepCloneToImmutableSet( mvq.getMonomials() ) , 2); 
            stop = System.nanoTime();
            timings[ i ] = stop - start;
            totalNanos += timings[ i ];
@@ -258,9 +294,9 @@ public class PolynomialFunctionTests {
            SimplePolynomialFunction mvq = PolynomialFunctions.denseRandomMultivariateQuadratic( INPUT_LENGTH, OUTPUT_LENGTH );
            Set<Monomial> remaining = Monomials.deepCloneToImmutableSet( mvq.getMonomials() );
            Map<Monomial, Set<Monomial>> memoizedComputations = PolynomialFunctionGF2.initializeMemoMap( INPUT_LENGTH , mvq.getMonomials() , mvq.getContributions() );
-           Map<Monomial, List<Monomial>> possibleProducts = PolynomialFunctionGF2.allPossibleProductParallelEx2( memoizedComputations.keySet() , memoizedComputations.keySet() , remaining , 2); 
+//           Map<Monomial, List<Monomial>> possibleProducts = PolynomialFunctionGF2.allPossibleProductParallelEx2( memoizedComputations.keySet() , memoizedComputations.keySet() , remaining , 2); 
            start = System.nanoTime();
-           Monomial mostFreq = PolynomialFunctionGF2.mostFrequentFactorParallel( possibleProducts.keySet() , remaining );
+//           Monomial mostFreq = PolynomialFunctionGF2.mostFrequentFactorParallel( possibleProducts.keySet() , remaining );
            stop = System.nanoTime();
            timings[ i ] = stop - start;
            totalNanos += timings[ i ];
@@ -281,10 +317,10 @@ public class PolynomialFunctionTests {
    @Test
    public void composeTest() {
 	   final int BIT_SIZE = 128;
-       //SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(BIT_SIZE, BIT_SIZE, 10, 3);
-       //SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(BIT_SIZE, BIT_SIZE, 10, 3);
-       SimplePolynomialFunction outer = PolynomialFunctions.denseRandomMultivariateQuadratic( BIT_SIZE, BIT_SIZE );
-       SimplePolynomialFunction inner = PolynomialFunctions.randomManyToOneLinearCombination( BIT_SIZE );
+//       SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(BIT_SIZE, BIT_SIZE, 10, 3);
+//       SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(BIT_SIZE, BIT_SIZE, 10, 2);
+	   SimplePolynomialFunction outer = PolynomialFunctions.denseRandomMultivariateQuadratic( BIT_SIZE, BIT_SIZE );
+	   SimplePolynomialFunction inner = PolynomialFunctions.randomManyToOneLinearCombination( BIT_SIZE );
        long start = System.nanoTime();
        SimplePolynomialFunction composed = outer.compose( inner );
        long millis = TimeUnit.MILLISECONDS.convert( System.nanoTime() - start , TimeUnit.NANOSECONDS ); 

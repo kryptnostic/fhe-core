@@ -47,7 +47,7 @@ public class EnhancedBitMatrix {
         this( m.rows );
     }
     
-    public EnhancedBitMatrix( List<BitVector> rows ) {
+    public EnhancedBitMatrix( Iterable<BitVector> rows ) {
         this.rows = 
                 Lists.newArrayList(
                         Iterables.transform( rows , new Function<BitVector,BitVector>() {
@@ -478,6 +478,10 @@ public class EnhancedBitMatrix {
         public NonSquareMatrixException( String message ) {
             super( message );
         }
+    }
+
+    public BitVector getRow(int i) {
+        return rows.get( i ).copy();
     }
     
 }
