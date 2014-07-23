@@ -204,7 +204,7 @@ public class PolynomialFunctionTests {
        Assert.assertEquals( new Monomial( 256 ).chainSet( 0 ).chainSet( 1 ) , mostFrequent );
    }
    
-   @Test 
+   //@Test 
    public void benchmarkAllPossibleProduct() {
        final int ROUNDS = 2;
        final int INPUT_LENGTH = 256;
@@ -257,7 +257,7 @@ public class PolynomialFunctionTests {
        
    }
    
-   @Test 
+   //@Test 
    public void benchmarkMostFrequentFactor() {
        final int ROUNDS = 100;
        final int INPUT_LENGTH = 128;
