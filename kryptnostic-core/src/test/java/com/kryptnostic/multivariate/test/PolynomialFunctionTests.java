@@ -1,5 +1,4 @@
 package com.kryptnostic.multivariate.test;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -24,6 +23,7 @@ import com.kryptnostic.multivariate.CompoundPolynomialFunctions;
 import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.Monomials;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.PolynomialFunctionPipelineStage;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
@@ -386,6 +386,73 @@ public class PolynomialFunctionTests {
        Assert.assertEquals( expected , result );
    }
    
+   @Test 
+   public void testPipelineStage() {
+       final int inputLength = 64;
+       final int outputLength = 64;
+       int totalMillis = 0;
+       
+       long start = System.currentTimeMillis();
+       SimplePolynomialFunction f = PolynomialFunctions.denseRandomMultivariateQuadratic( inputLength , outputLength );
+       SimplePolynomialFunction inner = 
+                   PolynomialFunctions
+                       .randomManyToOneLinearCombination( inputLength  );
+       PolynomialFunctionPipelineStage stage = PolynomialFunctionPipelineStage.build( f , inner );
+       long stop = System.currentTimeMillis();
+       long millis = stop - start;
+       logger.info( "Non-linear pipeline stage generation took {} ms" , millis );
+       totalMillis+=millis;
+
+       BitVector input = BitUtils.randomVector( inputLength<<1 );
+       BitVector inputLower = stage.getLower().apply( input );
+       BitVector inputUpper = stage.getUpper().apply( input );        
+       BitVector expected = f.apply( inner.apply( input ) );
+       
+       BitVector actual = 
+               stage.getC1().multiply( inputLower );
+       actual.xor( stage.getC2().multiply( inputUpper ) );
+       Assert.assertEquals( expected, actual );
+       
+       BitVector concatenatedInput = FunctionUtils.concatenate( inputLower, inputUpper );
+       
+       Assert.assertEquals( inputLower, PolynomialFunctions.lowerIdentity( inputLength << 1 ).apply( concatenatedInput ) );
+       Assert.assertEquals( inputUpper, PolynomialFunctions.upperIdentity( inputLength << 1 ).apply( concatenatedInput ) );
+       
+       BitVector combinationActual = stage.getCombination().apply(  concatenatedInput );
+       Assert.assertEquals( expected, combinationActual );
+   }
+   
+   @Test
+   public void testCombination() {
+       int inputLength = 64;
+       BitVector inputLower = BitUtils.randomVector( inputLength );
+       BitVector inputUpper = BitUtils.randomVector( inputLength );
+       
+       EnhancedBitMatrix c1 = EnhancedBitMatrix.randomInvertibleMatrix( inputLength );
+       EnhancedBitMatrix c2 = EnhancedBitMatrix.randomInvertibleMatrix( inputLength );
+       
+       SimplePolynomialFunction combination = PolynomialFunctions.linearCombination( c1 , c2 );
+       
+       BitVector expected = c1.multiply( inputLower );
+       expected.xor( c2.multiply( inputUpper ) );
+       
+       BitVector concatenatedInput = FunctionUtils.concatenate( inputLower, inputUpper );
+       
+       Assert.assertEquals( inputLower, PolynomialFunctions.lowerIdentity( inputLength << 1 ).apply( concatenatedInput ) );
+       Assert.assertEquals( inputUpper, PolynomialFunctions.upperIdentity( inputLength << 1 ).apply( concatenatedInput ) );
+       
+       SimplePolynomialFunction f = c1.multiply( PolynomialFunctions.lowerIdentity( inputLength << 1 ) );
+       SimplePolynomialFunction g = c2.multiply( PolynomialFunctions.upperIdentity( inputLength << 1 ) );
+       
+       Assert.assertEquals( c1.multiply( inputLower ) , f.apply( concatenatedInput ) );
+       Assert.assertEquals( c2.multiply( inputUpper ) , g.apply( concatenatedInput ) );
+       
+       SimplePolynomialFunction fg = f.xor( g );
+       Assert.assertEquals( expected, fg.apply( concatenatedInput ) ); 
+       
+       Assert.assertEquals( expected , combination.apply( concatenatedInput ) );
+   }
+   
    @Test
    public void testNonlinearPipeline() {
        final int inputLength = 128;
@@ -396,17 +463,17 @@ public class PolynomialFunctionTests {
            
            SimplePolynomialFunction[] functions = 
                PolynomialFunctions
-                   .arrayOfRandomMultivariateQuadratics( inputLength , outputLength , 3 );
+                   .arrayOfRandomMultivariateQuadratics( inputLength , outputLength , 1 );
 
-           SimplePolynomialFunction innerFirst = 
-                   PolynomialFunctions
-                       .randomManyToOneLinearCombination( inputLength );
+           SimplePolynomialFunction innerFirst = PolynomialFunctions.identity( inputLength );
+                   /*PolynomialFunctions
+                       .randomManyToOneLinearCombination( inputLength  );*/
 
-           SimplePolynomialFunction innerSecond = 
-                   EnhancedBitMatrix
-                       .randomInvertibleMatrix( outputLength ).multiply( innerFirst );
+//           SimplePolynomialFunction innerSecond = 
+//                   EnhancedBitMatrix
+//                       .randomInvertibleMatrix( outputLength ).multiply( innerFirst );
 
-           Pair<Pair<SimplePolynomialFunction,SimplePolynomialFunction>, SimplePolynomialFunction[]> pipelineDescription = PolynomialFunctions.buildNonlinearPipeline( innerFirst , innerSecond , functions );
+           Pair<SimplePolynomialFunction, SimplePolynomialFunction[]> pipelineDescription = PolynomialFunctions.buildNonlinearPipeline( innerFirst , functions );
 
            CompoundPolynomialFunction originalPipeline = CompoundPolynomialFunctions.fromFunctions( functions );
            CompoundPolynomialFunction newPipeline = CompoundPolynomialFunctions.fromFunctions( pipelineDescription.getRight() );
@@ -416,9 +483,13 @@ public class PolynomialFunctionTests {
            logger.info( "Non-linear pipeline test of length {} took {} ms" , i , millis );
            totalMillis+=millis;
            
+//           SimplePolynomialFunction spf = pipelineDescription.getLeft().compose( (SimplePolynomialFunction) newPipeline.getFunctions().get( 0 ) );
+           
            BitVector input = BitUtils.randomVector( inputLength );
-           BitVector expected = originalPipeline.apply( input );
-           BitVector actual = innerFirst.apply( newPipeline.apply( expected ) );
+           BitVector expected = originalPipeline.apply( innerFirst.apply( input ) );
+           
+           BitVector actual = pipelineDescription.getLeft().apply( newPipeline.apply( input ) );
+           
            Assert.assertEquals( expected, actual );
        }
        logger.info( "Non-linear pipeline test took a total of {} ms" , totalMillis );

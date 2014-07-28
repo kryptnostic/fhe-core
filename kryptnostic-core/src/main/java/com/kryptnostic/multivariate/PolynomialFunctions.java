@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import cern.colt.bitvector.BitVector;
 
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -206,6 +207,28 @@ public final class PolynomialFunctions {
     }
 
     /**
+     * Useful for constructing an Gf(2)^2n -> GF(2)^n function that takes the upper identity.
+     * 
+     * @param inputLength
+     * @return A polynomial function the takes the upper inputLength / 2 bits and outputs them without modifying them
+     */
+    public static SimplePolynomialFunction upperIdentity( int monomialOrder ) {
+        int baseIndex = monomialOrder >>> 1;
+        Monomial[] monomials = new Monomial[ baseIndex ];
+        BitVector[] contributions = new BitVector[ baseIndex ];
+        
+        for( int i = baseIndex ; i < monomialOrder ; ++i ) {
+            int adjustedIndex = i - baseIndex;
+            monomials[ adjustedIndex ] = Monomial.linearMonomial( monomialOrder , i );
+            BitVector contribution = new BitVector( baseIndex );
+            contribution.set( i - baseIndex );
+            contributions[ adjustedIndex ] = contribution;
+        }
+        
+        return new PolynomialFunctionGF2( monomialOrder , baseIndex , monomials , contributions);
+    }
+    
+    /**
      * Static factory method for building identity functions that extract the lower half of the input.
      * These are useful when dealing with functions that operate on two ciphertext inputs of equal length.
      * 
@@ -228,6 +251,27 @@ public final class PolynomialFunctions {
         
         //No need to use 
         return new PolynomialFunctionGF2( inputLength , inputLength , monomials , contributions);
+    }
+    
+    /**
+     * Useful for constructing an Gf(2)^2n -> GF(2)^n function that takes the lower identity.
+     * 
+     * @param inputLength
+     * @return A polynomial function the takes the lower inputLength / 2 bits and outputs them without modifying them
+     */
+    public static SimplePolynomialFunction lowerIdentity( int inputLength ) {
+        int maxIndex = inputLength >>> 1;
+        Monomial[] monomials = new Monomial[ maxIndex ];
+        BitVector[] contributions = new BitVector[ maxIndex ];
+        for( int i = 0 ; i < maxIndex ; ++i ) {
+            monomials[i] = Monomial.linearMonomial( inputLength , i);
+            BitVector contribution = new BitVector( maxIndex );
+            contribution.set( i );
+            contributions[i] = contribution;
+        }
+        
+        //No need to use 
+        return new PolynomialFunctionGF2( inputLength , maxIndex , monomials , contributions);
     }
 
     /**
@@ -333,8 +377,8 @@ public final class PolynomialFunctions {
     }
     
     public static SimplePolynomialFunction linearCombination( EnhancedBitMatrix c1 , EnhancedBitMatrix c2 ) {
-        return c1.multiply( lowerBinaryIdentity( c1.cols() ) )
-                .xor( c2.multiply( upperBinaryIdentity( c2.cols() ) ) );
+        return c1.multiply( lowerIdentity( c1.cols() << 1) )
+                .xor( c2.multiply( upperIdentity( c2.cols() << 1 ) ) );
     }
     
 	public static SimplePolynomialFunction fromMonomialContributionMap( int inputLength , int outputLength , Map<Monomial,BitVector> monomialContributionsMap) {
@@ -430,7 +474,7 @@ public final class PolynomialFunctions {
      * @return a sequences of functions that evaluations to the same {@code functions}.
      */
     
-    public static Pair<Pair<SimplePolynomialFunction,SimplePolynomialFunction>,SimplePolynomialFunction[]> buildNonlinearPipeline( SimplePolynomialFunction innerFirst, SimplePolynomialFunction innerSecond, SimplePolynomialFunction [] functions ) {
+    public static Pair<SimplePolynomialFunction,SimplePolynomialFunction[]> buildNonlinearPipeline( SimplePolynomialFunction innerFirst, SimplePolynomialFunction [] functions ) {
         Preconditions.checkArgument( functions.length > 0 , "Pipeline must contain at least one function.");
         SimplePolynomialFunction [] pipeline = new SimplePolynomialFunction[ functions.length ];
         /*
@@ -439,12 +483,10 @@ public final class PolynomialFunctions {
          * pair = <h[0]_i,h[1]_i> satisfying the recurrence relationship 
          * h_i[s] = c1_i*h[0]_{i}( c1_{i-1}*h[0]_{i-1} + c_2*h[1]_{i-1}  ) + c_2*h[1]_{i-1}( c1_{i-1}*h[0]_{i-1} + c_2*h[1]_{i-1} ) 
          */
-        
+        PolynomialFunctionPipelineStage stage = null;
         for( int i = 0 ; i < pipeline.length ; ++i ) {
-            Pair<SimplePolynomialFunction, SimplePolynomialFunction> pair = PolynomialFunctions.randomlyPartitionMVQ( functions[i] );
-            EnhancedBitMatrix c1 = EnhancedBitMatrix.randomInvertibleMatrix( functions[i].getOutputLength() );
-            EnhancedBitMatrix c2 = EnhancedBitMatrix.randomInvertibleMatrix( functions[i].getOutputLength() );
-            try {
+             stage = PolynomialFunctionPipelineStage.build( functions[i] , stage==null ? innerFirst : stage.getCombination() );
+//            try {
                 /*
                  * Prepare the function so that partitioned outputs are passed to the next function in the chain the the
                  * inner compose applies the appropriate combination. An unstated assumpt here is that linearCombination
@@ -452,19 +494,20 @@ public final class PolynomialFunctions {
                  * 
                  *  Unit tests should catch any violations of that.  
                  */
-                pipeline[i] = PolynomialFunctions.concatenate(
-                        c1.inverse().multiply( pair.getLeft().compose( innerFirst ) ), 
-                        c2.inverse().multiply( pair.getRight().compose( innerSecond ) ) );
-            } catch (SingularMatrixException e) {
-                logger.error("Encountered singular matrix, when it shouldn't be possible.");
-                throw new Error("Encountered singular matrix, when it shouldn't be possible.");
-            }
-            innerFirst = innerSecond = linearCombination( c1 , c2 );
+                pipeline[i] =         PolynomialFunctions.concatenate(
+                        stage.getLower(), 
+                        stage.getUpper() );
+//            } catch (SingularMatrixException e) {
+//                logger.error("Encountered singular matrix, when it shouldn't be possible.");
+//                throw new Error("Encountered singular matrix, when it shouldn't be possible.");
+//            }
+//            innerFirst = linearCombination( c1 , c2 );
         }
         
-        return Pair.of( Pair.of( innerFirst , innerSecond ) , pipeline );
+        return Pair.of( stage.getCombination() , pipeline );
     }
     
+
     public static Function<SimplePolynomialFunction,SimplePolynomialFunction> getComposer( final SimplePolynomialFunction inner ) {
         return new Function<SimplePolynomialFunction,SimplePolynomialFunction>() {
             @Override

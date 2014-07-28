@@ -63,13 +63,10 @@ public class Monomial extends BitVector {
     }
     
     public boolean eval( BitVector input ) {
-        if( size() == input.size() ) {
-            BitVector check = copy();
-            check.and( input );
-            return check.equals( this ) ;
-        } else {
-            throw new InvalidParameterException("Number of terms in input doesn't not much number of terms in Monomial.");
-        }
+        Preconditions.checkArgument( size() == input.size() , "Number of terms in input doesn't not much number of terms in Monomial." );
+        BitVector check = copy();
+        check.and( input );
+        return check.equals( this ) ;
     }
     
     public Monomial product( Monomial monomial ) {

@@ -280,7 +280,9 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             if( constantInnerMonomialIndex.isPresent() ) {
                 unfilteredContributions.get( constantInnerMonomialIndex.get() ).xor( contributions[ constantOuterMonomialIndex.get() ] );
             } else {
-                mList.add( monomials[ constantOuterMonomialIndex.get() ] );
+                //Don't use the outer monomial directly since it maybe the wrong size.
+                //mList.add( monomials[ constantOuterMonomialIndex.get() ] );
+                mList.add( Monomial.constantMonomial( inner.getInputLength() ) ); 
                 unfilteredContributions.add( contributions[ constantOuterMonomialIndex.get() ] );
             }
         }
@@ -473,7 +475,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             }
         }
         
-
         return result;
     }
     
