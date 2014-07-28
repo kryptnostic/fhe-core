@@ -465,15 +465,11 @@ public class PolynomialFunctionTests {
                PolynomialFunctions
                    .arrayOfRandomMultivariateQuadratics( inputLength , outputLength , 1 );
 
-           SimplePolynomialFunction innerFirst = PolynomialFunctions.identity( inputLength );
-                   /*PolynomialFunctions
-                       .randomManyToOneLinearCombination( inputLength  );*/
+           SimplePolynomialFunction inner =
+                   PolynomialFunctions
+                       .randomManyToOneLinearCombination( inputLength  );
 
-//           SimplePolynomialFunction innerSecond = 
-//                   EnhancedBitMatrix
-//                       .randomInvertibleMatrix( outputLength ).multiply( innerFirst );
-
-           Pair<SimplePolynomialFunction, SimplePolynomialFunction[]> pipelineDescription = PolynomialFunctions.buildNonlinearPipeline( innerFirst , functions );
+           Pair<SimplePolynomialFunction, SimplePolynomialFunction[]> pipelineDescription = PolynomialFunctions.buildNonlinearPipeline( inner , functions );
 
            CompoundPolynomialFunction originalPipeline = CompoundPolynomialFunctions.fromFunctions( functions );
            CompoundPolynomialFunction newPipeline = CompoundPolynomialFunctions.fromFunctions( pipelineDescription.getRight() );
@@ -483,13 +479,9 @@ public class PolynomialFunctionTests {
            logger.info( "Non-linear pipeline test of length {} took {} ms" , i , millis );
            totalMillis+=millis;
            
-//           SimplePolynomialFunction spf = pipelineDescription.getLeft().compose( (SimplePolynomialFunction) newPipeline.getFunctions().get( 0 ) );
-           
            BitVector input = BitUtils.randomVector( inputLength );
-           BitVector expected = originalPipeline.apply( innerFirst.apply( input ) );
-           
+           BitVector expected = originalPipeline.apply( inner.apply( input ) );
            BitVector actual = pipelineDescription.getLeft().apply( newPipeline.apply( input ) );
-           
            Assert.assertEquals( expected, actual );
        }
        logger.info( "Non-linear pipeline test took a total of {} ms" , totalMillis );
