@@ -326,7 +326,7 @@ public class PolynomialFunctionTests {
        long millis = TimeUnit.MILLISECONDS.convert( System.nanoTime() - start , TimeUnit.NANOSECONDS ); 
        logger.info( "Compose took {} ms." , millis );
        for( int i = 0 ; i < 25 ; ++i ) {
-           BitVector randomInput = BitUtils.randomVector( BIT_SIZE );
+           BitVector randomInput = BitUtils.randomVector( BIT_SIZE << 1);
            BitVector innerResult = inner.apply( randomInput );
            BitVector outerResult = outer.apply( innerResult );
            BitVector composedResult = composed.apply( randomInput );
@@ -360,6 +360,25 @@ public class PolynomialFunctionTests {
    }
    
    @Test
+   public void testConcatenateOutputs() {
+       int inputLength = 256;
+       int outputLength = 128;
+       SimplePolynomialFunction lhs = PolynomialFunctions.denseRandomMultivariateQuadratic( inputLength, outputLength );
+       SimplePolynomialFunction rhs = PolynomialFunctions.denseRandomMultivariateQuadratic( inputLength, outputLength );
+       
+       SimplePolynomialFunction concatenated = PolynomialFunctions.concatenate( lhs , rhs);
+       
+       BitVector input = BitUtils.randomVector( inputLength );
+       
+       BitVector concatenatedResult = concatenated.apply( input );
+       BitVector lhsResult = lhs.apply( input );
+       BitVector rhsResult = rhs.apply( input );
+       BitVector expected = FunctionUtils.concatenate( lhsResult , rhsResult );
+       
+       Assert.assertEquals( expected , concatenatedResult ); 
+   }
+   
+   @Test
    public void testToFromString() {
        SimplePolynomialFunction f = PolynomialFunctions.randomFunction( 256 , 128 );
        String fString = f.toString();
@@ -388,9 +407,8 @@ public class PolynomialFunctionTests {
    
    @Test 
    public void testPipelineStage() {
-       final int inputLength = 64;
-       final int outputLength = 64;
-       int totalMillis = 0;
+       final int inputLength = 128;
+       final int outputLength = 128;
        
        long start = System.currentTimeMillis();
        SimplePolynomialFunction f = PolynomialFunctions.denseRandomMultivariateQuadratic( inputLength , outputLength );
@@ -401,11 +419,10 @@ public class PolynomialFunctionTests {
        long stop = System.currentTimeMillis();
        long millis = stop - start;
        logger.info( "Non-linear pipeline stage generation took {} ms" , millis );
-       totalMillis+=millis;
 
        BitVector input = BitUtils.randomVector( inputLength<<1 );
-       BitVector inputLower = stage.getLower().apply( input );
-       BitVector inputUpper = stage.getUpper().apply( input );        
+       BitVector inputLower = stage.getLower().apply( inner.apply( input ) );
+       BitVector inputUpper = stage.getUpper().apply( inner.apply( input ) );        
        BitVector expected = f.apply( inner.apply( input ) );
        
        BitVector actual = 
@@ -418,13 +435,17 @@ public class PolynomialFunctionTests {
        Assert.assertEquals( inputLower, PolynomialFunctions.lowerIdentity( inputLength << 1 ).apply( concatenatedInput ) );
        Assert.assertEquals( inputUpper, PolynomialFunctions.upperIdentity( inputLength << 1 ).apply( concatenatedInput ) );
        
-       BitVector combinationActual = stage.getCombination().apply(  concatenatedInput );
+       BitVector combinationActual = stage.getCombination().apply( concatenatedInput );
        Assert.assertEquals( expected, combinationActual );
+        
+       BitVector overallActual = stage.getCombination().apply( stage.getStep().apply( input ) );
+       Assert.assertEquals( concatenatedInput , stage.getStep().apply( input ) );   
+       Assert.assertEquals( expected , overallActual );
    }
    
    @Test
    public void testCombination() {
-       int inputLength = 64;
+       int inputLength = 128;
        BitVector inputLower = BitUtils.randomVector( inputLength );
        BitVector inputUpper = BitUtils.randomVector( inputLength );
        
@@ -449,8 +470,38 @@ public class PolynomialFunctionTests {
        
        SimplePolynomialFunction fg = f.xor( g );
        Assert.assertEquals( expected, fg.apply( concatenatedInput ) ); 
-       
        Assert.assertEquals( expected , combination.apply( concatenatedInput ) );
+   }
+   
+   @Test
+   public void testUnitPipeline() {
+       final int inputLength = 128;
+       final int outputLength = 128;
+       int totalMillis = 0;
+       long start = System.currentTimeMillis();
+
+       SimplePolynomialFunction[] functions = 
+               PolynomialFunctions
+                   .arrayOfRandomMultivariateQuadratics( inputLength , outputLength , 1 );
+
+       SimplePolynomialFunction inner =
+               PolynomialFunctions
+                   .randomManyToOneLinearCombination( inputLength  );
+
+       Pair<SimplePolynomialFunction, SimplePolynomialFunction[]> pipelineDescription = PolynomialFunctions.buildNonlinearPipeline( inner , functions );
+       
+       SimplePolynomialFunction fg = pipelineDescription.getRight()[0];
+       
+       long stop = System.currentTimeMillis();
+       long millis = stop - start;
+       logger.info( "Non-linear unit pipeline test took {} ms" , millis );
+       totalMillis+=millis;
+
+       BitVector input = BitUtils.randomVector( inputLength << 1 );
+       BitVector expected = functions[0].apply( inner.apply( input ) );
+       BitVector actual = pipelineDescription.getLeft().apply( fg.apply( input ) );
+       Assert.assertEquals( expected, actual );
+       logger.info( "Non-linear unit pipeline test took a total of {} ms" , totalMillis );
    }
    
    @Test
@@ -479,7 +530,7 @@ public class PolynomialFunctionTests {
            logger.info( "Non-linear pipeline test of length {} took {} ms" , i , millis );
            totalMillis+=millis;
            
-           BitVector input = BitUtils.randomVector( inputLength );
+           BitVector input = BitUtils.randomVector( inputLength << 1 );
            BitVector expected = originalPipeline.apply( inner.apply( input ) );
            BitVector actual = pipelineDescription.getLeft().apply( newPipeline.apply( input ) );
            Assert.assertEquals( expected, actual );

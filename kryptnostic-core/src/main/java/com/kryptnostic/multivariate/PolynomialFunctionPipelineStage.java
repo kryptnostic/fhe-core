@@ -18,6 +18,7 @@ public class PolynomialFunctionPipelineStage {
     private final SimplePolynomialFunction combination;
     private SimplePolynomialFunction       lower;
     private SimplePolynomialFunction       upper;
+    private final SimplePolynomialFunction       step;
 
     private PolynomialFunctionPipelineStage( SimplePolynomialFunction f , SimplePolynomialFunction inner ) {
         c1 = EnhancedBitMatrix.randomInvertibleMatrix( f.getOutputLength() );
@@ -27,11 +28,12 @@ public class PolynomialFunctionPipelineStage {
                 PolynomialFunctions
                     .randomlyPartitionMVQ( f );
         try {
-            lower = c1.inverse().multiply( functionPair.getLeft().compose( inner ) );
-            upper = c2.inverse().multiply( functionPair.getRight().compose( inner ) );
+            lower = c1.inverse().multiply( functionPair.getLeft() );
+            upper = c2.inverse().multiply( functionPair.getRight() );
         } catch (SingularMatrixException e) {
             logger.error("Encountered singular matrix, where none should be possible due to generation procedure.");
         }
+        step = PolynomialFunctions.concatenate( lower , upper ).compose( inner );
     }
 
     public EnhancedBitMatrix getC1() {
@@ -54,6 +56,10 @@ public class PolynomialFunctionPipelineStage {
         return upper;
     }
     
+    public SimplePolynomialFunction getStep() {
+        return step;
+    }
+
     public static PolynomialFunctionPipelineStage build( SimplePolynomialFunction f , SimplePolynomialFunction inner ) {
         return new PolynomialFunctionPipelineStage( f , inner );
     }

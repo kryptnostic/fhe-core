@@ -16,7 +16,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix;
-import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
@@ -412,26 +411,15 @@ public final class PolynomialFunctions {
 	    Map<Monomial, BitVector> rhsMap =
 	            FunctionUtils.mapViewFromMonomialsAndContributions( second.getMonomials() , second.getContributions() );
 	    Map<Monomial, BitVector> monomialContributionMap = Maps.newHashMap();
+	    BitVector lhsZero = new BitVector( lhsOutputLength );
+	    BitVector rhsZero = new BitVector( rhsOutputLength );
 	    
 	    Set<Monomial> monomials = Sets.union( lhsMap.keySet() , rhsMap.keySet() );
 	    for( Monomial monomial : monomials ) {
-	        BitVector lhsContribution = lhsMap.get( monomial );
-	        BitVector rhsContribution = rhsMap.get( monomial );
-	        long[] newElements = new long[ combinedOutputLength >>> 6 ];
-	        
-	        if( lhsContribution != null ) { 
-	            for( int i = 0 ; i < lhsOutputLength >>> 6; ++i ) {
-	                newElements[ i ] = lhsContribution.elements()[ i ];
-	            }
-	        }
-	        
-	        if( rhsContribution != null ) { 
-	            for( int i = 0 ; i < rhsOutputLength >>> 6; ++i ) {
-	                newElements[ i + lhsOutputLength>>>6 ] = rhsContribution.elements()[ i ];
-	            }
-	        }
-	        
-	        monomialContributionMap.put( monomial , new BitVector( newElements , combinedOutputLength ) );
+	        BitVector lhsContribution = Objects.firstNonNull( lhsMap.get( monomial ) , lhsZero );
+	        BitVector rhsContribution = Objects.firstNonNull( rhsMap.get( monomial ) , rhsZero );
+	        	        
+	        monomialContributionMap.put( monomial , FunctionUtils.concatenate( lhsContribution , rhsContribution ) );
 	    }
 	    
 	    return fromMonomialContributionMap( 
@@ -468,43 +456,37 @@ public final class PolynomialFunctions {
      * Builds a non-linear sequence of functions that has the same output as another given sequence of functions,
      * but with a unique non-linear partitioning applied at each stage.
      *      *   
-     * @param innerFirst The initial internal basis for using in the partition of the first function.
+     * @param inner The initial internal basis for using in the partition of the first function.
      * @param innerSecond The initial internal basis for using in the partition of the second function.
      * @param functions The sequence of functions to convert into a pipeline of partitioned functions 
      * @return a sequences of functions that evaluations to the same {@code functions}.
      */
     
-    public static Pair<SimplePolynomialFunction,SimplePolynomialFunction[]> buildNonlinearPipeline( SimplePolynomialFunction innerFirst, SimplePolynomialFunction [] functions ) {
+    public static Pair<SimplePolynomialFunction,SimplePolynomialFunction[]> buildNonlinearPipeline( SimplePolynomialFunction inner, SimplePolynomialFunction [] functions ) {
         Preconditions.checkArgument( functions.length > 0 , "Pipeline must contain at least one function.");
         SimplePolynomialFunction [] pipeline = new SimplePolynomialFunction[ functions.length ];
+        SimplePolynomialFunction innerCombination = inner;
         /*
          * functions = h_i( s )
          * 
          * pair = <h[0]_i,h[1]_i> satisfying the recurrence relationship 
          * h_i[s] = c1_i*h[0]_{i}( c1_{i-1}*h[0]_{i-1} + c_2*h[1]_{i-1}  ) + c_2*h[1]_{i-1}( c1_{i-1}*h[0]_{i-1} + c_2*h[1]_{i-1} ) 
          */
-        PolynomialFunctionPipelineStage stage = null;
         for( int i = 0 ; i < pipeline.length ; ++i ) {
-             stage = PolynomialFunctionPipelineStage.build( functions[i] , stage==null ? innerFirst : stage.getCombination() );
-//            try {
-                /*
-                 * Prepare the function so that partitioned outputs are passed to the next function in the chain the the
-                 * inner compose applies the appropriate combination. An unstated assumpt here is that linearCombination
-                 * treats the first half as corresponding to c1 and the second half as corresponding to c2.
-                 * 
-                 *  Unit tests should catch any violations of that.  
-                 */
-                pipeline[i] =         PolynomialFunctions.concatenate(
-                        stage.getLower(), 
-                        stage.getUpper() );
-//            } catch (SingularMatrixException e) {
-//                logger.error("Encountered singular matrix, when it shouldn't be possible.");
-//                throw new Error("Encountered singular matrix, when it shouldn't be possible.");
-//            }
-//            innerFirst = linearCombination( c1 , c2 );
+            PolynomialFunctionPipelineStage stage = PolynomialFunctionPipelineStage.build( functions[i] , innerCombination );
+            //            try {
+            /*
+             * Prepare the function so that partitioned outputs are passed to the next function in the chain the the
+             * inner compose applies the appropriate combination. An unstated assumpt here is that linearCombination
+             * treats the first half as corresponding to c1 and the second half as corresponding to c2.
+             * 
+             *  Unit tests should catch any violations of that.  
+             */
+            pipeline[i] = stage.getStep();
+            innerCombination = stage.getCombination();
         }
         
-        return Pair.of( stage.getCombination() , pipeline );
+        return Pair.of( innerCombination , pipeline );
     }
     
 
