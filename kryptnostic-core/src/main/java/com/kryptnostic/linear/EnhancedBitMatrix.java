@@ -20,6 +20,7 @@ import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
 
 import cern.colt.bitvector.BitVector;
 
@@ -229,7 +230,12 @@ public class EnhancedBitMatrix {
             newContributions[ index ] = result.getValue();
             ++index;
         }
-        ;
+        
+        if( f.isParameterized() ) {
+            ParameterizedPolynomialFunctionGF2 ppf = (ParameterizedPolynomialFunctionGF2)f;
+            return new ParameterizedPolynomialFunctionGF2( f.getInputLength() , rows() , newMonomials , newContributions , ppf.getPipelines() );
+        }
+        
         return PolynomialFunctions.fromMonomialContributionMap(
                 f.getInputLength() , 
                 rows() , 

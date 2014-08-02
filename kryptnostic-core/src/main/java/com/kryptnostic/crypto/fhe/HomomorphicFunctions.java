@@ -131,10 +131,10 @@ public class HomomorphicFunctions {
         SimplePolynomialFunction Lx = L.multiply( X );
         SimplePolynomialFunction Ly = L.multiply( Y );
         
-        SimplePolynomialFunction PLL =
-                E1
-                    .multiply( Lx.and( Ly ).xor( privateKey.getF().compose( DXplusY ) ) ) 
-                    .xor( E2.multiply( DX ) );
+//        SimplePolynomialFunction PLL =
+//                E1
+//                    .multiply( Lx.and( Ly ).xor( privateKey.getF().compose( DXplusY ) ) ) 
+//                    .xor( E2.multiply( DX ) );
         
         return null;
     }

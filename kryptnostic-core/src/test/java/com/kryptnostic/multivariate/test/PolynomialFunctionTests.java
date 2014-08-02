@@ -139,8 +139,8 @@ public class PolynomialFunctionTests {
    
    @Test
    public void productTest() {
-       SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction(256, 256);
-       SimplePolynomialFunction rhs = PolynomialFunctions.randomFunction(256, 256);
+       SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction(256, 256, 10, 2);
+       SimplePolynomialFunction rhs = PolynomialFunctions.randomFunction(256, 256, 10, 2);
        BitVector val = BitUtils.randomVector( 256 ) ;
        BitVector expected = lhs.apply( val );
        expected.and( rhs.apply( val ) );

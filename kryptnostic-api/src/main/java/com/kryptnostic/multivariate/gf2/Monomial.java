@@ -107,10 +107,32 @@ public class Monomial extends BitVector {
         super.set(index);
         return this;
     }
+    
     @Override
     public Monomial clone() {
         long[] e = this.elements();
         return new Monomial( Arrays.copyOf( e, e.length ) , this.size() );
+    }
+    
+    public Monomial extend( int newSize ) {
+        Monomial copy = clone();
+        copy.setSize( newSize );
+        return copy;
+    }
+    
+    public Monomial extendAndShift( int newSize , int shiftSize ) {
+        Preconditions.checkArgument( newSize - size() >= shiftSize , "Size difference must be greater than shift size." );
+        Monomial copy = clone();
+        copy.setSize( newSize );
+        int indexShift = shiftSize >>> 6;
+        for( int i = copy.bits.length - 1 ; i >= 0 ; --i ) {
+            if( i >=indexShift ) {
+                copy.bits[ i ] = copy.bits[ i - indexShift];
+            } else {
+                copy.bits[ i ] = 0L;
+            }
+        }
+        return copy;
     }
     
     public static Monomial randomMonomial( int size , int maxOrder ) {

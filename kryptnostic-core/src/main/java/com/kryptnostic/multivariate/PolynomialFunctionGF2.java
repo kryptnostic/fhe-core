@@ -17,12 +17,10 @@ import org.slf4j.LoggerFactory;
 
 import cern.colt.bitvector.BitVector;
 
-import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
@@ -62,8 +60,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         }
     };
     
-    public PolynomialFunctionGF2(int inputLength, int outputLength,
-            Monomial[] monomials, BitVector[] contributions) {
+    public PolynomialFunctionGF2(int inputLength, int outputLength,Monomial[] monomials, BitVector[] contributions) {
         super(inputLength, outputLength, monomials, contributions);
      
     }
@@ -128,8 +125,17 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                 Monomial product = this.monomials[ i ].product( rhsMonomials[ j ] );
                 BitVector contribution = this.contributions[ i ].copy();
                 contribution.and( rhsContributions[ j ] );
-                contribution.xor( Objects.firstNonNull( results.get( product ) , new BitVector( outputLength ) ) );
-                results.put( product , contribution );
+                BitVector existingContribution = results.get( product );
+                
+                /*
+                 * If we have no existing contribution just store the computed contribution.
+                 * Otherwise, xor into the existing contribution  
+                 */
+                if( existingContribution == null ) {
+                    results.put( product , contribution );
+                } else {
+                    existingContribution.xor( contribution );
+                }
             }
         }
         
@@ -220,8 +226,8 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                 if( m.isZero() ) {
                     lhs = new BitVector( mList.size() );
                 } else {
-                    for( int i = Long.numberOfTrailingZeros( m.elements()[0] ); i < m.size() ; ++i ) {
-                        if( m.get( i ) ) {
+                    for( int i = Long.numberOfTrailingZeros( m.elements()[0] ); i < inputLength ; ++i ) {
+                        if( m.get( i ) ) {  
                             if( lhs == null ) {
                                 lhs = innerRows[ i ];
                             } else  {
@@ -630,7 +636,19 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         return result;
     }
     
+    /**
+     * Filters monomials and contributions, which do not contribute to any output bits.
+     * @param monomialContributionMap
+     * @return A filtered map {@link Maps#filterValues(Map, Predicate)} created using {@link PolynomialFunctionGF2#notNilContributionPredicate}
+     */
+    public static Map<Monomial,BitVector> filterNilContributions( Map<Monomial,BitVector> monomialContributionMap ) {
+        return Maps.filterValues( monomialContributionMap , notNilContributionPredicate );
+    }
     
+    /**
+     * Removes monomials and contributions, which do not contribute to any output bits.
+     * @param monomialContributionMap The map from which to remove entries.
+     */
     public static void removeNilContributions( Map<Monomial,BitVector> monomialContributionMap ) {
         Set<Monomial> forRemoval = Sets.newHashSet();
         for( Entry<Monomial,BitVector> monomialContribution : monomialContributionMap.entrySet() ) {
@@ -641,11 +659,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         for( Monomial m : forRemoval ) {
             monomialContributionMap.remove( m );
         }
-    }
-    
-    //TODO: Figure out what's more efficient filter keys + copy to immutable map, or removing from existing map.
-    public static Map<Monomial,BitVector> filterNilContributions( Map<Monomial, BitVector> monomialContributionMap ) {
-        return ImmutableMap.copyOf( Maps.filterKeys( monomialContributionMap , notNilContributionPredicate ) );
     }
     
     public static Set<Monomial> contributionsToMonomials( int row , Monomial[] monomials, BitVector[] contributions ) {
@@ -707,6 +720,9 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         
         return new PolynomialFunctionGF2( monomials[0].size() , contributions.length , monomials, contributions );
     }
-    
-   
+
+    @Override
+    public boolean isParameterized() {
+        return false;
+    }
 }

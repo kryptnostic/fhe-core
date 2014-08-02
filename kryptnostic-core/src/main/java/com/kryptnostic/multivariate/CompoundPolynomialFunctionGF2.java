@@ -4,13 +4,14 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import cern.colt.bitvector.BitVector;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
-
-import cern.colt.bitvector.BitVector;
+import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 /**
  * Basic implementation of CompoundPolynomialFunction over GF2, consisting of a linked list of functions.
@@ -117,5 +118,17 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
     @Override
     public List<PolynomialFunction> getFunctions() {
         return Collections.unmodifiableList( functions );
+    }
+    
+    @Override
+    public int count() {
+        return functions.size();
+    }
+
+    @Override
+    public void composeHeadDirectly(SimplePolynomialFunction inner) {
+        Preconditions.checkArgument( functions.getFirst() instanceof SimplePolynomialFunction , "Cannot compose function that isn't of type SimplePolynomialFunction." );
+        SimplePolynomialFunction outer = (SimplePolynomialFunction) functions.getFirst();
+        functions.set( 0 , outer.compose( inner ) );
     }
 }
