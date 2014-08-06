@@ -50,6 +50,32 @@ public class MonomialTests {
         
         Assert.assertEquals( pairs , m.subsets( 2 ) );
         Assert.assertEquals( triplets, m.subsets( 3 ) );
+        Assert.assertEquals( Sets.newHashSet(), m.subsets( 5 ));
+    }
+    
+    @Test
+    public void testSubsetsOfSize() {
+    	Monomial m = new Monomial( 4 );
+    	
+    	Set<Monomial> monomials = Sets.newHashSet();
+    	monomials.add( new Monomial( 4 ) );
+    	monomials.add( new Monomial( 4 ).chainSet(0) );
+    	monomials.add( new Monomial( 4 ).chainSet(1) );
+    	monomials.add( new Monomial( 4 ).chainSet(2) );
+    	monomials.add( new Monomial( 4 ).chainSet(3) );
+    	monomials.add( new Monomial( 4 ).chainSet(0).chainSet(1) );
+    	monomials.add( new Monomial( 4 ).chainSet(0).chainSet(2) );
+    	monomials.add( new Monomial( 4 ).chainSet(0).chainSet(3) );
+    	monomials.add( new Monomial( 4 ).chainSet(1).chainSet(2) );
+    	monomials.add( new Monomial( 4 ).chainSet(1).chainSet(3) );
+    	monomials.add( new Monomial( 4 ).chainSet(2).chainSet(3) );	
+    	monomials.add( new Monomial( 4 ).chainSet(0).chainSet(1).chainSet(2) );
+    	monomials.add( new Monomial( 4 ).chainSet(0).chainSet(1).chainSet(3) );
+    	monomials.add( new Monomial( 4 ).chainSet(0).chainSet(2).chainSet(3) );
+    	monomials.add( new Monomial( 4 ).chainSet(1).chainSet(2).chainSet(3) );
+    	monomials.add( new Monomial( 4 ).chainSet(0).chainSet(1).chainSet(2).chainSet(3) );
+    	
+    	Assert.assertEquals( monomials, m.subsetsOfSize());
     }
     
     @Test

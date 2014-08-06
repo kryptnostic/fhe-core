@@ -86,6 +86,11 @@ public class Monomial extends BitVector {
         return this;
     }
     
+    /**
+     * Creates a list of N choose K monomials, where N is the order of this monomial and K is a chosen order < N.
+     * @param order
+     * @return
+     */
     public Set<Monomial> subsets( int order ) {
         int len = size();
         Set<Monomial> subsets = Sets.newHashSet( Monomial.constantMonomial( len ) );
@@ -101,6 +106,21 @@ public class Monomial extends BitVector {
             subsets = nextSubsets;
         }
         return subsets;
+    }
+    
+    /**
+     * Generate a list of monomials corresponding to every unique term possible for monomials of this length.
+     * @param order
+     * @return
+     */
+    public Set<Monomial> subsetsOfSize() {
+    	Monomial maxOrderMonomial = new Monomial( this.size());
+    	maxOrderMonomial.replaceFromToWith(0, maxOrderMonomial.size() - 1, true);
+    	Set<Monomial> monomials = Sets.newHashSet();
+    	for (int i = 0; i <= this.size() ; i++) {
+    		monomials.addAll( maxOrderMonomial.subsets(i) );
+    	}
+    	return monomials;
     }
     
     public Monomial chainSet(int index) {
