@@ -19,15 +19,16 @@ import com.kryptnostic.multivariate.learning.MultivariateLearning;
 public class MultivariateLearningTests {
 	private static final Logger logger = LoggerFactory.getLogger( MultivariateLearningTests.class );
 	private static final Random r = new Random(0);
-	private static final Integer testPolynomialOrder = 2;
-	private static final Integer testPolynomialInputLength = 128;
-	private static final Integer testPolynomialOutputLength = 256;
 	
 	/**
 	 * Tests that learning is accurate when the learning function is given an accurate test polynomial order. 
 	 */
 	@Test
 	public void learnInverseTest() {
+		Integer testPolynomialOrder = 2;
+		Integer testPolynomialInputLength = 64;
+		Integer testPolynomialOutputLength = 128;
+		
 		logger.info("Generating function to invert.");
 		PolynomialFunction function =  PolynomialFunctions.randomFunction(testPolynomialInputLength, testPolynomialOutputLength, 4, testPolynomialOrder); // TODO randomly generate number of terms by order
 		logger.info("Learning inverse function.");
