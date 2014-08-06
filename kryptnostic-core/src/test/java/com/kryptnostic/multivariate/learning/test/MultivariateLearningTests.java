@@ -1,7 +1,5 @@
 package com.kryptnostic.multivariate.learning.test;
 
-import java.util.Random;
-
 import org.junit.Assert;
 
 import org.junit.Test;
@@ -18,8 +16,6 @@ import com.kryptnostic.multivariate.learning.MultivariateLearning;
 
 public class MultivariateLearningTests {
 	private static final Logger logger = LoggerFactory.getLogger( MultivariateLearningTests.class );
-	private static final Random r = new Random(0);
-	
 	/**
 	 * Tests that learning is accurate when the learning function is given an accurate test polynomial order. 
 	 */
