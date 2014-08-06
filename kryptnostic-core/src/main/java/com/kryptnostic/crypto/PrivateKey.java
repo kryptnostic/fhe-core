@@ -146,10 +146,7 @@ public class PrivateKey {
         
         SimplePolynomialFunction E = 
                 E1.multiply( input.xor( A.multiply( g ) ) ).xor( E2.multiply( input.xor( B.multiply( g ) ) ) );
-//                E1.multiply( input.xor( A.multiply( g ) ).xor( PolynomialFunctionGF2.truncatedIdentity( ciphertextLen , ciphertextLen + plaintextLen , input.getInputLength() ) ) )
-//                .xor( E2.multiply( input.xor( B.multiply( g ) ).xor( PolynomialFunctionGF2.truncatedIdentity( ciphertextLen + plaintextLen , ciphertextLen<<1 , input.getInputLength() ) ) ) );
         return E.xor( ParameterizedPolynomialFunctions.fromUnshiftedVariables( g.getInputLength() , E1.multiply( pipeline.getLeft() ).xor( E2.multiply( pipeline.getLeft() ) ) , pipeline.getRight() ) );
-//        return ParameterizedPolynomialFunctionGF2.fromExistingViaXor( E , E1.multiply( pipeline.getLeft() ).xor( E2.multiply( pipeline.getLeft() ) ), pipeline.getRight() );
     }
     
     public SimplePolynomialFunction computeHomomorphicFunction( SimplePolynomialFunction f ) {
@@ -217,7 +214,7 @@ public class PrivateKey {
         SimplePolynomialFunction GofX = A.add( B ).inverse().multiply( L.add( D ) ).multiply( X );
         
         Pair<SimplePolynomialFunction,SimplePolynomialFunction[]> pipeline = PolynomialFunctions.buildNonlinearPipeline( GofX , complexityChain );
-        ParameterizedPolynomialFunctionGF2 DofX = ParameterizedPolynomialFunctionGF2.fromExistingViaXor( L.multiply( X ).xor( A.multiply( GofX ) ) , pipeline.getLeft() , pipeline.getRight() );
+        SimplePolynomialFunction DofX = L.multiply( X ).xor( A.multiply( GofX ) ).xor( ParameterizedPolynomialFunctions.fromUnshiftedVariables( GofX.getInputLength() , pipeline.getLeft() , pipeline.getRight() ) );
         return DofX;
     }
     

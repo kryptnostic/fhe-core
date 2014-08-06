@@ -105,6 +105,48 @@ public final class ParameterizedPolynomialFunctions {
         return null;
     }
     
+    public static SimplePolynomialFunction and( SimplePolynomialFunction f, SimplePolynomialFunction g ) {
+        Preconditions.checkArgument( f.isParameterized() || g.isParameterized() , "At least one of the functions should be parameterized!" );
+        Preconditions.checkArgument( f.getInputLength() == g.getInputLength() , "Input lengths must match in order to compute the XOR of two functions.");
+        Preconditions.checkArgument( f.getOutputLength() == g.getOutputLength() , "Output lengths must match in order to compute the XOR of two functions.");
+        if( f.isParameterized() && g.isParameterized() ) {
+            /*
+             * Both functions are parameterized.  We need to check whether the pipelines are equal or whether one pipeline will have to be concatenated with the other.
+             */
+            ParameterizedPolynomialFunctionGF2 ppfF = (ParameterizedPolynomialFunctionGF2)f;
+            ParameterizedPolynomialFunctionGF2 ppfG = (ParameterizedPolynomialFunctionGF2)g;
+            
+            if( ppfF.getPipelines().equals( ppfG.getPipelines() ) ) {
+                //Pipelines are the same no need for concatenation, we can just xor directly.
+                SimplePolynomialFunction partialResult =  wrapAsNonParameterizedFunction( ppfF ).and( wrapAsNonParameterizedFunction( ppfG ) );
+                return new ParameterizedPolynomialFunctionGF2( f.getInputLength() , f.getOutputLength() , partialResult.getMonomials() , partialResult.getContributions() , ppfF.getPipelines() );
+            } else {
+                /*
+                 * Pipelines are not equal so we allocate monomials such that variables corresponding to g's pipeline
+                 * are positioned after the f's pipeline variables. 
+                 */
+                int extendedSize = ppfF.getInputLength() + ppfF.getPipelineOutputLength() + ppfG.getPipelineOutputLength();
+                SimplePolynomialFunction shiftedRhs = ParameterizedPolynomialFunctions.extendAndShift( extendedSize , g.getInputLength(), ppfF.getPipelineOutputLength() , g );
+                SimplePolynomialFunction extendedLhs = ParameterizedPolynomialFunctions.extend( extendedSize, f );
+                SimplePolynomialFunction partialResult = shiftedRhs.and( extendedLhs );
+                Iterable<CompoundPolynomialFunction> pipelines = Iterables.concat( ppfF.getPipelines() , ppfG.getPipelines() );
+                return new ParameterizedPolynomialFunctionGF2( ppfF.getInputLength() , ppfF.getOutputLength() , partialResult.getMonomials() , partialResult.getContributions() , pipelines );
+            }
+        } else if ( f.isParameterized() && !g.isParameterized() ) {
+            //Problem is that extendedLhs
+            ParameterizedPolynomialFunctionGF2 ppfF = (ParameterizedPolynomialFunctionGF2)f;
+            int extendedSize = ppfF.getInputLength() + ppfF.getPipelineOutputLength();
+            SimplePolynomialFunction extendedLhs = ParameterizedPolynomialFunctions.extend( extendedSize, g );
+            SimplePolynomialFunction partialResult = wrapAsNonParameterizedFunction( f ).xor( extendedLhs );
+            return new ParameterizedPolynomialFunctionGF2( ppfF.getInputLength() , ppfF.getOutputLength() , partialResult.getMonomials() , partialResult.getContributions() , ppfF.getPipelines() );
+        } else if ( !f.isParameterized() && g.isParameterized() ) {
+            return xor( g , f );
+        } 
+        
+        //We should never reach here, since it will result in an exception at the beginning of the function if neither function is parameterized.
+        return null;
+    }
+    
     public static SimplePolynomialFunction fromUnshiftedVariables( int inputLength, SimplePolynomialFunction base , SimplePolynomialFunction[] pipelines ) {
         /*
          * Need to create parameterized function by shifting newXorVariables 

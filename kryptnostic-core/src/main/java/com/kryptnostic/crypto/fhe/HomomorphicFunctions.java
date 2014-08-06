@@ -13,6 +13,7 @@ import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
 
 public class HomomorphicFunctions {
     private static final Logger logger = LoggerFactory.getLogger( HomomorphicFunctions.class );
@@ -58,23 +59,22 @@ public class HomomorphicFunctions {
         return PolynomialFunctions.concatenate( xor , carry ); 
     }
     
+    //TODO: Fix this to support parameterized functions
     public static SimplePolynomialFunction DirectHomomorphicAnd( PrivateKey privateKey ) {
-        SimplePolynomialFunction decryptor = privateKey.getDecryptor();
+        /*
+         * Doing a direct homomorphic and with parameterized functions requires making sure the pipelines are preserved in the shifting process.
+         */
+        ParameterizedPolynomialFunctionGF2 decryptor = (ParameterizedPolynomialFunctionGF2) privateKey.getDecryptor();
         Monomial [] monomials = decryptor.getMonomials();
         Monomial [] lhsMonomials = new Monomial[ monomials.length ];
         Monomial [] rhsMonomials = new Monomial[ monomials.length ];
-        int inputLength = monomials[ 0 ].size() << 1;
-        int outputLength = decryptor.getContributions()[ 0 ].size();
+        int inputLength = decryptor.getInputLength() << 1;
+        int outputLength = decryptor.getOutputLength();
         
         for( int i = 0 ; i < monomials.length ; ++i ) {
             Monomial m = monomials[ i ];
-            Monomial mLHS = new Monomial( Arrays.copyOf( m.elements() , m.elements().length << 1 ) , inputLength );
-            Monomial mRHS = new Monomial( inputLength );
-            long[] srcArray = m.elements();
-            long[] destArray = mRHS.elements();
-            for( int j = 0 ; j < srcArray.length ; ++j ) {
-                destArray[ j + srcArray.length ] = srcArray[ j ];
-            }
+            Monomial mLHS = m.extendAndShift( inputLength, decryptor.getInputLength() );
+            Monomial mRHS = m.extend( inputLength );
             lhsMonomials[ i ] = mLHS;
             rhsMonomials[ i ] = mRHS;
         }
@@ -86,7 +86,7 @@ public class HomomorphicFunctions {
         SimplePolynomialFunction XY = X.and( Y );
         logger.info("Computed product of decryption functons");
         
-        return privateKey.encryptBinary( XY );
+        return privateKey.encryptBinary( new ParameterizedPolynomialFunctionGF2( inputLength , outputLength , XY.getMonomials() , XY.getContributions() , decryptor.getPipelines() ) );
     }
     
     public static PolynomialFunction EfficientAnd( PrivateKey privateKey ) throws SingularMatrixException {

@@ -25,8 +25,8 @@ import cern.colt.bitvector.BitVector;
 public class HomomorphicFunctionsTests {
     private static final Logger logger = LoggerFactory.getLogger( HomomorphicFunctionsTests.class );
     private static final Random r = new Random( System.currentTimeMillis() );
-    private static final int CIPHERTEXT_LENGTH = 256;
-    private static final int PLAINTEXT_LENGTH = 128;
+    private static final int CIPHERTEXT_LENGTH = 128;
+    private static final int PLAINTEXT_LENGTH = 64;
     private static final PrivateKey privateKey = new PrivateKey( CIPHERTEXT_LENGTH , PLAINTEXT_LENGTH );
     private static final PublicKey pubKey = new PublicKey( privateKey );
     private static final boolean testNormalAnd = true;
@@ -90,10 +90,11 @@ public class HomomorphicFunctionsTests {
         }
     }
     
+    @Test
     public void testHomomorphicAnd() {
         SimplePolynomialFunction and = PolynomialFunctions.BINARY_AND( PLAINTEXT_LENGTH );
         long start = System.currentTimeMillis();
-        SimplePolynomialFunction homomorphicAnd = HomomorphicFunctions.DirectHomomorphicAnd(privateKey); //privateKey.computeHomomorphicFunction( and );
+        SimplePolynomialFunction homomorphicAnd = HomomorphicFunctions.DirectHomomorphicAnd( privateKey );//privateKey.computeBinaryHomomorphicFunction( and );
         long stop = System.currentTimeMillis();
         logger.trace( "Homomorphic AND generation took {} ms" , stop - start );
         logger.trace( "Homomorphic AND has {} monomials" , homomorphicAnd.getMonomials().length );

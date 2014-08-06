@@ -78,20 +78,4 @@ public class ParameterizedPolynomialFunctionGF2 extends PolynomialFunctionGF2 {
         }
         return inputLength;
     }
-    
-    public static ParameterizedPolynomialFunctionGF2 fromExistingViaXor( SimplePolynomialFunction f , SimplePolynomialFunction newXorVariables , SimplePolynomialFunction[] pipeline ) {
-        /*
-         * Need to create parameterized function by shifting newXorVariables 
-         */
-        int extendedSize = f.getInputLength() + newXorVariables.getInputLength();
-        SimplePolynomialFunction shiftedRhs = ParameterizedPolynomialFunctions.extendAndShift( extendedSize , f.getInputLength() , newXorVariables );
-        SimplePolynomialFunction extendedLhs = ParameterizedPolynomialFunctions.extend( extendedSize, f );
-        SimplePolynomialFunction partialResult = shiftedRhs.xor( extendedLhs );
-        if( f.isParameterized() ) {
-            ParameterizedPolynomialFunctionGF2 ppf = (ParameterizedPolynomialFunctionGF2)f;
-            return new ParameterizedPolynomialFunctionGF2( f.getInputLength() , f.getOutputLength() , partialResult.getMonomials() , partialResult.getContributions() , ImmutableList.<CompoundPolynomialFunction>builder().addAll( ppf.getPipelines() ).add( CompoundPolynomialFunctions.fromFunctions( pipeline ) ).build() );
-        }
-        
-        return new ParameterizedPolynomialFunctionGF2( f.getInputLength() , f.getOutputLength() , partialResult.getMonomials() , partialResult.getContributions() , Lists.newArrayList( CompoundPolynomialFunctions.fromFunctions( pipeline ) ) );
-    }
 }
