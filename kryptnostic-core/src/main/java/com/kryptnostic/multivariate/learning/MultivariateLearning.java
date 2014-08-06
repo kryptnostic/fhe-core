@@ -34,13 +34,8 @@ public class MultivariateLearning {
 	 * @return
 	 */
 	public static PolynomialFunction learnInverse(PolynomialFunction function, Integer orderOfInverse) {
-		// generate monomials
 		Set<Monomial> monomials = new Monomial( orderOfInverse + 1 ).subsetsOfSize();
 		
-		// create monomials.size() of BitVector inputs to function and retain outputs
-		// evaluate output BV for each monomial.
-		// transpose this matrix
-		// check that null space is zero if not double quantity of input
 		List<BitVector> functionInputs;
 		EnhancedBitMatrix outputs, outputsTransposed;
 		int quantityInputVectors = monomials.size();
@@ -56,7 +51,6 @@ public class MultivariateLearning {
 			quantityInputVectors = quantityInputVectors << 2;
 		} while ( !( outputs.getNullspaceBasis().rows() == 0 ) );
 		
-		// compute generalized inverse
 		EnhancedBitMatrix generalizedInverse = null;
 		try {
 			generalizedInverse = outputsTransposed.rightGeneralizedInverse();
