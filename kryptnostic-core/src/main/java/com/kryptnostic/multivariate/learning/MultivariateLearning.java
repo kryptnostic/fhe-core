@@ -2,7 +2,6 @@ package com.kryptnostic.multivariate.learning;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -11,10 +10,10 @@ import org.slf4j.LoggerFactory;
 import cern.colt.bitvector.BitVector;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
+import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
@@ -27,7 +26,6 @@ import com.kryptnostic.multivariate.gf2.PolynomialFunction;
  */
 public class MultivariateLearning {
 	private static final Logger logger = LoggerFactory.getLogger( MultivariateLearning.class );
-	private static final Random r = new Random( 0 );
 
 	/**
 	 * Given a polynomial and an assumed order of that polynomial, computes the inverse.
@@ -69,20 +67,10 @@ public class MultivariateLearning {
 		// multiply by plaintext to get contributions
 		EnhancedBitMatrix contributions =  generalizedInverse.multiply( new EnhancedBitMatrix( functionInputs ));
 		//  generate inverse polynomial
-		PolynomialFunction inverseFunction = generateFunction(function.getOutputLength(), function.getInputLength(), 
-				Lists.newArrayList( monomials ), contributions.getRows());
-		
-		return inverseFunction;
-	}
-
-	private static PolynomialFunction generateFunction(int inputLength, int outputLength, List<Monomial> monomials,
-			List<BitVector> contributions) {
-		
-		Map<Monomial, BitVector> contributionsMap = Maps.newHashMap();
-		for (int i = 0; i < monomials.size(); i++) {
-			contributionsMap.put(monomials.get(i), contributions.get(i));
-		}
-		PolynomialFunction inverseFunction = PolynomialFunctions.fromMonomialContributionMap(inputLength, outputLength, contributionsMap);
+		Map<Monomial, BitVector> contributionsMap = FunctionUtils.mapViewFromMonomialsAndContributions( 
+				monomials.toArray( new Monomial[monomials.size()]), 
+				contributions.getRows().toArray( new BitVector[contributions.getRows().size()])); 
+		PolynomialFunction inverseFunction = PolynomialFunctions.fromMonomialContributionMap(function.getOutputLength(), function.getInputLength(), contributionsMap);
 		
 		return inverseFunction;
 	}
