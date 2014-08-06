@@ -105,7 +105,7 @@ public class Monomial extends BitVector {
     	Monomial maxOrderMonomial = new Monomial( this.size());
     	maxOrderMonomial.replaceFromToWith(0, maxOrderMonomial.size() - 1, true);
     	Set<Monomial> monomials = Sets.newHashSet();
-    	for (int i = 0; i <= this.size() ; i++) {
+    	for (int i = 1; i <= this.size() ; i++) {
     		monomials.addAll( maxOrderMonomial.subsets(i) );
     	}
     	return monomials;

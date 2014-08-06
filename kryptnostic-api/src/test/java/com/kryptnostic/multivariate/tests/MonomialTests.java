@@ -58,7 +58,6 @@ public class MonomialTests {
     	Monomial m = new Monomial( 4 );
     	
     	Set<Monomial> monomials = Sets.newHashSet();
-    	monomials.add( new Monomial( 4 ) );
     	monomials.add( new Monomial( 4 ).chainSet(0) );
     	monomials.add( new Monomial( 4 ).chainSet(1) );
     	monomials.add( new Monomial( 4 ).chainSet(2) );
