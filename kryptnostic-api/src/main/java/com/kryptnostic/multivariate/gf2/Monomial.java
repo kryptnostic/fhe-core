@@ -121,16 +121,18 @@ public class Monomial extends BitVector {
     }
     
     public Monomial extendAndShift( int newSize , int shiftSize ) {
-        Preconditions.checkArgument( newSize - size() >= shiftSize , "Size difference must be greater than shift size." );
+        return extendAndShift( newSize , 0 , shiftSize );
+    }
+    
+    public Monomial extendAndShift( int newSize , int baseIndex, int shiftSize ) {
+//        Preconditions.checkArgument( baseIndex + shiftSize <= newSize, "Size difference must be greater than shift size." );
         Monomial copy = clone();
         copy.setSize( newSize );
         int indexShift = shiftSize >>> 6;
-        for( int i = copy.bits.length - 1 ; i >= 0 ; --i ) {
-            if( i >=indexShift ) {
-                copy.bits[ i ] = copy.bits[ i - indexShift];
-            } else {
-                copy.bits[ i ] = 0L;
-            }
+        int base = baseIndex >>> 6;
+        for( int i = 0; i < indexShift; ++i ) {
+            copy.bits[ base + i ] = 0L;
+            copy.bits[ base + i + indexShift ] = bits[ base + i ];
         }
         return copy;
     }

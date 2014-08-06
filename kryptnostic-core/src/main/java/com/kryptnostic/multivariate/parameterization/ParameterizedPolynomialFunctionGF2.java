@@ -7,6 +7,7 @@ import cern.colt.bitvector.BitVector;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.kryptnostic.multivariate.CompoundPolynomialFunctions;
 import com.kryptnostic.multivariate.FunctionUtils;
@@ -31,10 +32,10 @@ public class ParameterizedPolynomialFunctionGF2 extends PolynomialFunctionGF2 {
      * @param contributions
      * @param pipeline
      */
-    public ParameterizedPolynomialFunctionGF2(int inputLength, int outputLength,Monomial[] monomials, BitVector[] contributions, List<CompoundPolynomialFunction> pipelines) {
+    public ParameterizedPolynomialFunctionGF2(int inputLength, int outputLength,Monomial[] monomials, BitVector[] contributions, Iterable<CompoundPolynomialFunction> pipelines) {
         super( inputLength, outputLength, monomials, contributions);
-        Preconditions.checkArgument( pipelines.size() > 0 ,"There must be a least one function in the provided chain.");
-        Preconditions.checkArgument( pipelines.get( 0 ).getInputLength() == inputLength , "The input length to the pipeline must be the same as the input length to the overall function.");
+        Preconditions.checkArgument( !Iterables.isEmpty( pipelines ) ,"There must be a least one function in the provided chain.");
+        Preconditions.checkArgument( pipelines.iterator().next().getInputLength() == inputLength , "The input length to the pipeline must be the same as the input length to the overall function.");
         this.pipelines = ImmutableList.copyOf( pipelines );
     }
     
@@ -70,6 +71,14 @@ public class ParameterizedPolynomialFunctionGF2 extends PolynomialFunctionGF2 {
         return Collections.unmodifiableList( pipelines );
     }
     
+    public int getPipelineOutputLength() {
+        int inputLength = 0;
+        for( CompoundPolynomialFunction pipeline : pipelines ) {
+            inputLength += pipeline.getOutputLength();
+        }
+        return inputLength;
+    }
+    
     public static ParameterizedPolynomialFunctionGF2 fromExistingViaXor( SimplePolynomialFunction f , SimplePolynomialFunction newXorVariables , SimplePolynomialFunction[] pipeline ) {
         /*
          * Need to create parameterized function by shifting newXorVariables 
@@ -77,8 +86,11 @@ public class ParameterizedPolynomialFunctionGF2 extends PolynomialFunctionGF2 {
         int extendedSize = f.getInputLength() + newXorVariables.getInputLength();
         SimplePolynomialFunction shiftedRhs = ParameterizedPolynomialFunctions.extendAndShift( extendedSize , f.getInputLength() , newXorVariables );
         SimplePolynomialFunction extendedLhs = ParameterizedPolynomialFunctions.extend( extendedSize, f );
-        
         SimplePolynomialFunction partialResult = shiftedRhs.xor( extendedLhs );
+        if( f.isParameterized() ) {
+            ParameterizedPolynomialFunctionGF2 ppf = (ParameterizedPolynomialFunctionGF2)f;
+            return new ParameterizedPolynomialFunctionGF2( f.getInputLength() , f.getOutputLength() , partialResult.getMonomials() , partialResult.getContributions() , ImmutableList.<CompoundPolynomialFunction>builder().addAll( ppf.getPipelines() ).add( CompoundPolynomialFunctions.fromFunctions( pipeline ) ).build() );
+        }
         
         return new ParameterizedPolynomialFunctionGF2( f.getInputLength() , f.getOutputLength() , partialResult.getMonomials() , partialResult.getContributions() , Lists.newArrayList( CompoundPolynomialFunctions.fromFunctions( pipeline ) ) );
     }

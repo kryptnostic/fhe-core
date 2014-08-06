@@ -499,4 +499,12 @@ public final class PolynomialFunctions {
             }
         }; 
     }
+
+    public static Map<Monomial, BitVector> mapCopyFromMonomialsAndContributions( Monomial[] monomials, BitVector[] contributions ) {
+        Map<Monomial, BitVector> result = Maps.newHashMapWithExpectedSize( monomials.length );
+        for( int i = 0 ; i < monomials.length ; ++i  ) {
+            result.put( monomials[ i ].clone() , contributions[ i ].copy() );
+        }
+        return result;
+    }
 }

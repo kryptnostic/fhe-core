@@ -19,6 +19,7 @@ import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
 
 /**
  * Private key class for decrypting data.
@@ -141,26 +142,18 @@ public class PrivateKey {
     }
     
     public SimplePolynomialFunction encrypt( SimplePolynomialFunction input , SimplePolynomialFunction g ) {
-        int plaintextLen =  E1.cols();
-        int ciphertextLen = E1.rows();
-        
-        /*
-         *  First we extend the input... 
-         *   Return a ParameterizedPolynomialFunction that takes m and r as inputs and does the rest. 
-         */
-        //Create 
-        
         Pair<SimplePolynomialFunction,SimplePolynomialFunction[]> pipeline = PolynomialFunctions.buildNonlinearPipeline( g , complexityChain );
         
         SimplePolynomialFunction E = 
                 E1.multiply( input.xor( A.multiply( g ) ) ).xor( E2.multiply( input.xor( B.multiply( g ) ) ) );
 //                E1.multiply( input.xor( A.multiply( g ) ).xor( PolynomialFunctionGF2.truncatedIdentity( ciphertextLen , ciphertextLen + plaintextLen , input.getInputLength() ) ) )
 //                .xor( E2.multiply( input.xor( B.multiply( g ) ).xor( PolynomialFunctionGF2.truncatedIdentity( ciphertextLen + plaintextLen , ciphertextLen<<1 , input.getInputLength() ) ) ) );
-        return ParameterizedPolynomialFunctionGF2.fromExistingViaXor( E , E1.multiply( pipeline.getLeft() ).xor( E2.multiply( pipeline.getLeft() ) ), pipeline.getRight() );
+        return E.xor( ParameterizedPolynomialFunctions.fromUnshiftedVariables( g.getInputLength() , E1.multiply( pipeline.getLeft() ).xor( E2.multiply( pipeline.getLeft() ) ) , pipeline.getRight() ) );
+//        return ParameterizedPolynomialFunctionGF2.fromExistingViaXor( E , E1.multiply( pipeline.getLeft() ).xor( E2.multiply( pipeline.getLeft() ) ), pipeline.getRight() );
     }
     
     public SimplePolynomialFunction computeHomomorphicFunction( SimplePolynomialFunction f ) {
-        return encrypt( f.compose( decryptor ) );
+        return encrypt( f.compose( decryptor ) , PolynomialFunctions.randomManyToOneLinearCombination( E1.cols() ) );
     }
     
     public SimplePolynomialFunction computeBinaryHomomorphicFunction( SimplePolynomialFunction f ) {

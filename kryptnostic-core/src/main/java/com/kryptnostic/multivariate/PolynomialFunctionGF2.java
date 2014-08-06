@@ -31,6 +31,8 @@ import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunctionRepresentationGF2;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
 
 /**
  * This class is used for operating on and evaluating vector polynomial functions over GF(2).
@@ -98,19 +100,23 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         Preconditions.checkArgument( inputLength == rhs.getInputLength() , "Function being added must have the same input length." );
         Preconditions.checkArgument( outputLength == rhs.getOutputLength() , "Function being added must have the same output length." );
         
-        Map<Monomial,BitVector> monomialContributionsMap = mapCopyFromMonomialsAndContributions(monomials, contributions);
+        if( isParameterized() || rhs.isParameterized() ) {
+            return ParameterizedPolynomialFunctions.xor( this , rhs );
+        }
+        
+        Map<Monomial,BitVector> monomialContributionsMap = PolynomialFunctions.mapCopyFromMonomialsAndContributions(monomials, contributions);
         Monomial[] rhsMonomials = rhs.getMonomials();
-        BitVector[] rhsContributions = rhs.getContributions();
+        BitVector[] rhsContributions = rhs.getContributions(); 
         for( int i = 0 ; i < rhsMonomials.length ; ++i  ) {
+            //TODO: Make sure that monomials are immutable as extending monomials without making a copy will cause hard to diagnose side effects and bugs
             Monomial m = rhsMonomials[ i ];
-            BitVector contribution = monomialContributionsMap.get( rhsMonomials[ i ] );
+            BitVector contribution = monomialContributionsMap.get( m );
             if( contribution == null ){
                 contribution = new BitVector( outputLength ) ;
                 monomialContributionsMap.put( m , contribution );
             }
             contribution.xor( rhsContributions[ i ] );
         }
-        
         return PolynomialFunctions.fromMonomialContributionMap( inputLength , outputLength , monomialContributionsMap );
     }
     
@@ -305,6 +311,11 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                 filteredContributions.add( contrib  );
                 filteredMonomials.add( mList.get( i ) );
             } 
+        }
+        
+        if( inner.isParameterized() ) {
+            ParameterizedPolynomialFunctionGF2 ppf = (ParameterizedPolynomialFunctionGF2) inner;
+            return new ParameterizedPolynomialFunctionGF2( inner.getInputLength() , outputLength , filteredMonomials.toArray( new Monomial[0] ),  filteredContributions.toArray( new BitVector[0] ) , ppf.getPipelines() );
         }
         
         return new PolynomialFunctionGF2( 
@@ -624,14 +635,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                     result.remove( product );
                 }
             }
-        }
-        return result;
-    }
-    
-    public static Map<Monomial, BitVector> mapCopyFromMonomialsAndContributions( Monomial[] monomials, BitVector[] contributions ) {
-        Map<Monomial, BitVector> result = Maps.newHashMapWithExpectedSize( monomials.length );
-        for( int i = 0 ; i < monomials.length ; ++i  ) {
-            result.put( monomials[ i ].clone() , contributions[ i ].copy() );
         }
         return result;
     }
