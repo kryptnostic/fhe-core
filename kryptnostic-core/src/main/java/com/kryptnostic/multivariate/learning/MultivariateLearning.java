@@ -32,7 +32,7 @@ public class MultivariateLearning {
 	 * Given a polynomial and an assumed order of that polynomial, computes the inverse.
 	 * @param function
 	 * @param order
-	 * @return
+	 * @return Pair of inverse function and training data over which it was valid
 	 */
 	public static Pair<SimplePolynomialFunction,List<BitVector>> learnInverse(PolynomialFunction function, Integer orderOfInverse) {
 		Set<Monomial> monomials = Monomial.allMonomials( function.getOutputLength() , orderOfInverse);
@@ -62,13 +62,12 @@ public class MultivariateLearning {
         return Pair.of( coefficients.multiply( monomialsFunction ) , functionInputs );
 	}
 	
-	
-
 	/**
-     * Given a polynomial and an assumed order of that polynomial, computes the inverse.
+     * Given a polynomial and an assumed order of that polynomial, computes a representative polynomial of known coefficients
+     * and monomials.
      * @param function
      * @param order
-     * @return Pair of inverse function and training data over which it was valid
+     * @return Pair of function and training data over which it was valid
      */
     public static Pair<SimplePolynomialFunction, List <BitVector>> learnFunction(PolynomialFunction function, Integer order) {
         Set<Monomial> monomials = Monomial.allMonomials( function.getInputLength() , order);
@@ -98,6 +97,27 @@ public class MultivariateLearning {
         }
         return Pair.of( coefficients.multiply( monomialsFunction ) , functionInputs );
     }
+	
+    /**
+	 * Attempts to compute the coefficients of a supplied polynomial function, given training data.
+	 * Returns null on failure to learn coefficients.
+	 */
+	public static EnhancedBitMatrix learnCoefficients(List<BitVector> inputs, List<BitVector> outputs, PolynomialFunction monomialsFunction) {
+		EnhancedBitMatrix coefficients;
+		
+		EnhancedBitMatrix outputsTransposed = new EnhancedBitMatrix( outputs ).tranpose();
+		EnhancedBitMatrix inputsTransposed = new EnhancedBitMatrix( inputs ).tranpose();
+		try {
+			EnhancedBitMatrix generalizedInverseInputs = inputsTransposed.rightGeneralizedInverse();
+			coefficients = outputsTransposed.multiply( generalizedInverseInputs );
+		} catch (SingularMatrixException e) {
+			logger.info( e.toString() );
+			return null;
+		}
+		
+		return coefficients;
+		
+	}
 	
     /**
      * Create polynomial with unit contribution from every monomial in the set given.
@@ -135,26 +155,4 @@ public class MultivariateLearning {
 		
 		return Pair.of(inputs, outputs);
 	}
-	
-	/**
-	 * Attempts to compute the coefficients of a supplied polynomial function, given training data.
-	 * Returns null on failure to learn coefficients.
-	 */
-	public static EnhancedBitMatrix learnCoefficients(List<BitVector> inputs, List<BitVector> outputs, PolynomialFunction monomialsFunction) {
-		EnhancedBitMatrix coefficients;
-		
-		EnhancedBitMatrix outputsTransposed = new EnhancedBitMatrix( outputs ).tranpose();
-		EnhancedBitMatrix inputsTransposed = new EnhancedBitMatrix( inputs ).tranpose();
-		try {
-			EnhancedBitMatrix generalizedInverseInputs = inputsTransposed.rightGeneralizedInverse();
-			coefficients = outputsTransposed.multiply( generalizedInverseInputs );
-		} catch (SingularMatrixException e) {
-			logger.info( e.toString() );
-			return null;
-		}
-		
-		return coefficients;
-		
-	}
-
 }
