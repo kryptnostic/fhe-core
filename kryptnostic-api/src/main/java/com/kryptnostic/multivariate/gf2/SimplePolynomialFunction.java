@@ -19,4 +19,5 @@ public interface SimplePolynomialFunction extends PolynomialFunction {
     BitVector[] getContributions();
     int getTotalMonomialCount();
     int getMaximumMonomialOrder();
+    boolean isParameterized();
 }

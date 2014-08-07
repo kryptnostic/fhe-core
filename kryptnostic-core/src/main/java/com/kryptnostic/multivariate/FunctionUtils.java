@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
 import com.kryptnostic.multivariate.gf2.Monomial;
@@ -21,12 +22,30 @@ public class FunctionUtils {
         return newArray;
     }
     
-    public static BitVector subVector( BitVector v , int from , int to ) {
-        int len = to - from;
-        return new BitVector( Arrays.copyOfRange( v.elements() , from , to ) , len << 3 );
+    public static BitVector concatenate( BitVector ... elements ) {
+        Preconditions.checkArgument( Preconditions.checkNotNull( elements , "Null elements are not concatenatable.").length > 1, "Need at least two elements to concatenate" );
+        int newLength= 0;
+        for( BitVector v : elements ){
+            Preconditions.checkArgument( v.size()%64==0 , "Concatenate only works for block lengths of size 64." );
+            newLength += v.elements().length;
+        }
+        
+        BitVector result = new BitVector( newLength<<6 );
+        long[] resultBits = result.elements();
+        int i = 0;
+        for( BitVector v : elements ) {
+            long[] bits = v.elements();
+            for( int j = 0 ; j < bits.length ; ++j ) {
+                resultBits[i++] = bits[j];
+            }
+            
+        }
+        
+        return result;
     }
     
     public static BitVector concatenate( BitVector lhs, BitVector rhs ) {
+        Preconditions.checkArgument( (lhs.size()%64)==0 && (rhs.size()%64)==0 , "Block length for concatenate must be a multiple of 64.");
         BitVector concatenated = new BitVector( Arrays.copyOf( lhs.elements() , lhs.elements().length + rhs.elements().length ) , lhs.size() + rhs.size() );
         for( int i = 0 ; i < rhs.elements().length ; ++i ) {
             concatenated.elements()[ i + lhs.elements().length ] = rhs.elements()[ i ];

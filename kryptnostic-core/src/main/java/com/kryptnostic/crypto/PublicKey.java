@@ -10,6 +10,7 @@ import com.google.common.base.Preconditions;
 import com.kryptnostic.crypto.padding.PaddingStrategy;
 import com.kryptnostic.crypto.padding.ZeroPaddingStrategy;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
@@ -38,10 +39,10 @@ public class PublicKey {
         int outputLen = privateKey.getE1().rows();
         complexityChain = null;
         m = PolynomialFunctionGF2.truncatedIdentity( inputLen , outputLen );
-        logger.debug( "m: {} -> {}" , inputLen , outputLen );
+        logger.debug( "m: {} -> {}" , outputLen , inputLen );
         
         /*
-         * E(m) = E1(m + F( R(m,r)) ) + E2(R(m,r))
+         * E(m) = E1(m + h + Ag ) + E2(m + h + Bg )
          */
         
         encrypter = privateKey.encrypt( m ); 

@@ -5,22 +5,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Objects;
+import cern.colt.bitvector.BitVector;
+
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunctionRepresentationGF2;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-
-import cern.colt.bitvector.BitVector;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
 
 /**
  * This class is used for operating on and evaluating vector polynomial functions over GF(2).
@@ -35,6 +47,9 @@ import cern.colt.bitvector.BitVector;
  * @author Matthew Tamayo-Rios
  */
 public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 implements SimplePolynomialFunction {
+    private static final int CONCURRENCY_LEVEL = 8;
+    private static final Logger logger = LoggerFactory.getLogger( PolynomialFunctionGF2.class );
+    private static final ListeningExecutorService executor = MoreExecutors.listeningDecorator( Executors.newFixedThreadPool( 8 ) );
     private static final Predicate<BitVector> notNilContributionPredicate = new Predicate<BitVector>() {
         @Override
         public boolean apply(BitVector v) {
@@ -47,9 +62,9 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         }
     };
     
-    public PolynomialFunctionGF2(int inputLength, int outputLength,
-            Monomial[] monomials, BitVector[] contributions) {
+    public PolynomialFunctionGF2(int inputLength, int outputLength,Monomial[] monomials, BitVector[] contributions) {
         super(inputLength, outputLength, monomials, contributions);
+     
     }
     
     public static class Builder extends PolynomialFunctionRepresentationGF2.Builder {
@@ -85,25 +100,35 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         Preconditions.checkArgument( inputLength == rhs.getInputLength() , "Function being added must have the same input length." );
         Preconditions.checkArgument( outputLength == rhs.getOutputLength() , "Function being added must have the same output length." );
         
-        Map<Monomial,BitVector> monomialContributionsMap = mapCopyFromMonomialsAndContributions(monomials, contributions);
+        if( isParameterized() || rhs.isParameterized() ) {
+            return ParameterizedPolynomialFunctions.xor( this , rhs );
+        }
+        
+        Map<Monomial,BitVector> monomialContributionsMap = PolynomialFunctions.mapCopyFromMonomialsAndContributions(monomials, contributions);
         Monomial[] rhsMonomials = rhs.getMonomials();
-        BitVector[] rhsContributions = rhs.getContributions();
+        BitVector[] rhsContributions = rhs.getContributions(); 
         for( int i = 0 ; i < rhsMonomials.length ; ++i  ) {
+            //TODO: Make sure that monomials are immutable as extending monomials without making a copy will cause hard to diagnose side effects and bugs
             Monomial m = rhsMonomials[ i ];
-            BitVector contribution = monomialContributionsMap.get( rhsMonomials[ i ] );
+            BitVector contribution = monomialContributionsMap.get( m );
             if( contribution == null ){
                 contribution = new BitVector( outputLength ) ;
                 monomialContributionsMap.put( m , contribution );
             }
             contribution.xor( rhsContributions[ i ] );
         }
-        
         return PolynomialFunctions.fromMonomialContributionMap( inputLength , outputLength , monomialContributionsMap );
     }
     
     public SimplePolynomialFunction and( SimplePolynomialFunction rhs ) {
         Preconditions.checkArgument( inputLength == rhs.getInputLength() , "Functions must have the same input length." );
         Preconditions.checkArgument( outputLength == rhs.getOutputLength() , "Functions must have the same output length." );
+        
+        //TODO: Unit test and for parameterized functions.
+        if( isParameterized() || rhs.isParameterized() ) {
+            return ParameterizedPolynomialFunctions.and( this , rhs );
+        }
+        
         Map<Monomial, BitVector> results = Maps.newHashMap();
         Monomial[] rhsMonomials = rhs.getMonomials();
         BitVector[] rhsContributions = rhs.getContributions();
@@ -112,8 +137,17 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                 Monomial product = this.monomials[ i ].product( rhsMonomials[ j ] );
                 BitVector contribution = this.contributions[ i ].copy();
                 contribution.and( rhsContributions[ j ] );
-                contribution.xor( Objects.firstNonNull( results.get( product ) , new BitVector( outputLength ) ) );
-                results.put( product , contribution );
+                BitVector existingContribution = results.get( product );
+                
+                /*
+                 * If we have no existing contribution just store the computed contribution.
+                 * Otherwise, xor into the existing contribution  
+                 */
+                if( existingContribution == null ) {
+                    results.put( product , contribution );
+                } else {
+                    existingContribution.xor( contribution );
+                }
             }
         }
         
@@ -158,49 +192,147 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                 inputLength == inner.getOutputLength() ,
                 "Input length of outer function must match output length of inner function it is being composed with"
                 );
-        Set<Monomial> requiredMonomials = Sets.newHashSet( monomials );
-        Map<Monomial, Set<Monomial>> memoizedComputations = initializeMemoMap( inputLength , inner.getMonomials() , inner.getContributions() );
+        Optional<Integer> constantOuterMonomialIndex = Optional.absent();
+        EnhancedBitMatrix contributionRows = new EnhancedBitMatrix( Arrays.asList( inner.getContributions() ) );
+        EnhancedBitMatrix.transpose( contributionRows );
         
-        /*
-         * Figure out most desirable product to compute next and use this to build up all required monomials.
-         * 
-         * We do this by:
-         * 
-         * 1) Computing all pairwise computable monomial factors for the outer monomial, 
-         * which is cheap relative to an actual product computation.
-         * 
-         * 2) Finding the most frequently occurring factors from step 1.
-         * 
-         * 3) Computing the product corresponding to most frequently occurring factor.
-         * 
-         * 4) Memoizing the product from step 3.
-         * 
-         * We are done when we've have computed the products for all outer monomials.
-         */
-        
-        while( !Sets.difference( requiredMonomials , memoizedComputations.keySet() ).isEmpty() ) {
-            //TODO: allPossibleProductts already filters out previously computed products, remove double filtering.
-            Map<Monomial, List<Monomial>> possibleProducts = allPossibleProduct( memoizedComputations.keySet() );  // 1
-            Monomial mostFrequent = mostFrequentFactor( this.monomials , possibleProducts.keySet() , memoizedComputations.keySet() );                // 2
-            List<Monomial> factors = Preconditions.checkNotNull( 
-                    possibleProducts.get( mostFrequent ) ,
-                    "Composition failure! Encountered unexpected null when searching for next product to compute.");
-            Set<Monomial> mproducts = product( 
-                    Preconditions.checkNotNull( memoizedComputations.get( factors.get( 0 ) ) ), 
-                    Preconditions.checkNotNull( memoizedComputations.get( factors.get( 1 ) ) ) );  //3
-            memoizedComputations.put( mostFrequent , mproducts ); //4
+        List<Monomial> mList = Lists.newArrayList( inner.getMonomials() );
+        Map<Monomial,Integer> indices = Maps.newHashMapWithExpectedSize( mList.size()*(mList.size() - 1 ) / 2 );
+        Map<Monomial,Integer> indicesResults = Maps.newHashMapWithExpectedSize( mList.size()*(mList.size() - 1 ) / 2 );
+        for( int i = 0 ; i < mList.size() ; ++i ) {
+            indices.put( mList.get( i ) , i );
         }
         
-        Map<Monomial, BitVector> composedFunction = Maps.newHashMap();
+        Optional<Integer> constantInnerMonomialIndex = Optional.fromNullable( indices.get( Monomial.constantMonomial( inner.getInputLength() ) ) );
+
+        Monomial [] linearMonomials = new Monomial[ inputLength ];
+        BitVector [] innerRows = new BitVector[ inputLength ];
+        BitVector[] results = new BitVector[ monomials.length ];
+        
+        for( int i = 0 ; i < inputLength ; ++i ) {
+            Monomial linearMonomial = Monomial.linearMonomial( inputLength , i );
+            linearMonomials[ i ] = linearMonomial;
+            innerRows[ i ] = contributionRows.getRow( i );
+//            productCache.put( linearMonomial , contributionRows.getRow( i ) );
+        }
+        for( int i = 0 ; i < monomials.length ; ++i ) {
+            indicesResults.put( monomials[ i ] , i );
+        }
+        
+//        if( maxMonomialOrder <= 2 ) {
+//            for( int i = 0; i< linearMonomials.length;++i) {
+//                final CountDownLatch latch = new CountDownLatch( linearMonomials.length );
+//                for( int j = i+1; j<linearMonomials.length;++j) {
+//                    Monomial p = linearMonomials[i].product( linearMonomials[j] );
+//                    if( stoppingMonomials.contains( p ) ) {
+//                        BitVector result = product( innerRows[ i ] , innerRows[ j ] , mList , indices );
+//                        results[ indicesResults.get( p ) ] = result;
+////                        productCache.put( p , result );
+//                    }
+//                }
+//            } 
+//        } else {
+            for( int k = 0; k < monomials.length ; ++k ) {
+                Monomial m = monomials[ k ];
+                BitVector lhs = null; 
+                if( m.isZero() ) {
+                    lhs = new BitVector( mList.size() );
+                } else {
+                    for( int i = Long.numberOfTrailingZeros( m.elements()[0] ); i < inputLength ; ++i ) {
+                        if( m.get( i ) ) {  
+                            if( lhs == null ) {
+                                lhs = innerRows[ i ];
+                            } else  {
+                                lhs = product( lhs , innerRows[ i ] , mList , indices );
+                            }
+                        }
+                    }
+                } 
+                results[ k ] = lhs;
+            }
+//        }
+        
+        //Now lets fix the contributions so they're all the same length.
+        for( int i = 0 ; i < results.length ; ++i ) {
+            BitVector contribution = results [ i ];
+            if ( contribution.size() != mList.size() ) {
+                contribution.setSize(  mList.size() );
+            }
+        }
         
         /*
-         * Each monomial that has been computed in terms of the inner function contributes a set of monomials
-         * to each output of the outer function.  We need to resolve the sum of all of these in order to calculate
-         * what the contribution of each newMonomial looks like.
+         * Each monomial that has been computed in terms of the inner function contributes a set of monomials 
+         * to each row of output of the output, i.e proudctCache.get( monomials[ i ] )
          * 
-         * For each BitVector in the contribution we check if that monomial contributes.
+         * We have to compute the resulting set of contributions in terms of the new monomial basis for the polynomials ( mList )
          */
         
+        BitVector[] outputContributions = new BitVector[ outputLength ];
+        
+        for( int row = 0; row < outputLength ; ++row ) {
+            outputContributions[ row ] = new BitVector( mList.size() );
+            for( int i = 0 ; i < contributions.length; ++i ) {
+                if( contributions[ i ].get( row ) ) {
+                    if( monomials[ i ].isZero() ) {
+                        constantOuterMonomialIndex = Optional.of( i );
+                    } else {
+                        outputContributions[ row ].xor( results[ i ] );
+                    } 
+                }
+            }
+        }
+        
+        /*
+         * After we have computed the contributions in terms of the new monomial basis we transform from row 
+         * to column form of contributions to match up with each monomial in mList
+         */
+        List<BitVector> unfilteredContributions = Lists.newArrayList( outputContributions );
+        EnhancedBitMatrix.transpose( unfilteredContributions , mList.size() );
+
+        /*
+         * If the outer monomial has constant terms and the unfiltered contributions have 
+         * a constant term, than we xor them together to get the overall constant contributions.
+         */
+        
+        if( constantOuterMonomialIndex.isPresent() ){
+            if( constantInnerMonomialIndex.isPresent() ) {
+                unfilteredContributions.get( constantInnerMonomialIndex.get() ).xor( contributions[ constantOuterMonomialIndex.get() ] );
+            } else {
+                //Don't use the outer monomial directly since it maybe the wrong size.
+                //mList.add( monomials[ constantOuterMonomialIndex.get() ] );
+                mList.add( Monomial.constantMonomial( inner.getInputLength() ) ); 
+                unfilteredContributions.add( contributions[ constantOuterMonomialIndex.get() ] );
+            }
+        }
+        
+        /*
+         * Now we filter out any monomials, which have nil contributions.
+         */
+        
+        List<BitVector> filteredContributions = Lists.newArrayListWithCapacity( unfilteredContributions.size() );
+        List<BitVector> filteredMonomials = Lists.newArrayListWithCapacity( mList.size() );
+        for( int i = 0; i < mList.size() ; ++i ) {
+            BitVector contrib = unfilteredContributions.get( i );
+            if( notNilContributionPredicate.apply( contrib ) ) {
+                filteredContributions.add( contrib  );
+                filteredMonomials.add( mList.get( i ) );
+            } 
+        }
+        
+        if( inner.isParameterized() ) {
+            ParameterizedPolynomialFunctionGF2 ppf = (ParameterizedPolynomialFunctionGF2) inner;
+            return new ParameterizedPolynomialFunctionGF2( inner.getInputLength() , outputLength , filteredMonomials.toArray( new Monomial[0] ),  filteredContributions.toArray( new BitVector[0] ) , ppf.getPipelines() );
+        }
+        
+        return new PolynomialFunctionGF2( 
+                    inner.getInputLength(), 
+                    outputLength, 
+                    filteredMonomials.toArray( new Monomial[0] ) ,
+                    filteredContributions.toArray( new BitVector[0] )
+                    );
+                    
+        
+        /*
         for( int row = 0; row < outputLength ; ++row ) {
             Set<Monomial> monomialsForOutputRow = ImmutableSet.of();
             for( int i = 0 ; i < contributions.length; ++i ) {
@@ -227,16 +359,18 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             }
             
         }
+        */
         
-        return PolynomialFunctions.fromMonomialContributionMap( inner.getInputLength() , outputLength , composedFunction );  
+//        return PolynomialFunctions.fromMonomialContributionMap( inner.getInputLength() , outputLength , composedFunction );  
     }
     
+
     @Override
     public SimplePolynomialFunction compose( SimplePolynomialFunction lhs, SimplePolynomialFunction rhs) {
         return this.compose( PolynomialFunctions.concatenate( lhs , rhs ) );
         
     }
-    
+
     public PolynomialFunctionGF2 extend( int length ) {
         //TODO: Add re-entrant read/write lock for updating contributions.
         Monomial[] newMonomials = new Monomial[ monomials.length ];
@@ -297,6 +431,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         return memoizedComputations;
     }
     
+      
     public static Monomial mostFrequentFactor( Monomial[] toBeComputed , Set<Monomial> readyToCompute , Set<Monomial> alreadyComputed ) {
         Monomial result = null;
         int max = -1;
@@ -317,10 +452,40 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         return result;
     }
     
+    public static Set<Monomial> getCandidatesForProducting( final Set<Monomial> monomials , final Set<Monomial> requiredMonomials ) {
+        /*
+         * Only consider products that can be formed from existing monomials and will divide something that can be computed. 
+         */
+        final Set<Monomial> candidates = Sets.newConcurrentHashSet();
+        final CountDownLatch latch = new CountDownLatch( requiredMonomials.size() );
+        for( final Monomial required : requiredMonomials ) {
+            executor.execute( new Runnable() {
+                @Override
+                public void run() {
+                    for( Monomial m : monomials ) {
+                        Optional<Monomial> result = required.divide( m );
+                        if( result.isPresent() ) {
+                            candidates.add( result.get() );
+                        }
+                    }
+                    latch.countDown();
+                }
+            });
+        }
+        
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            logger.error("Thread interrupted while waiting on candidates for producting.");
+        }
+        
+        return candidates;
+    }
     //TODO: Decide whether its worth unit testing this.
-    public static Map<Monomial,List<Monomial>> allPossibleProduct( Set<Monomial> monomials ) {
-        Map<Monomial, List<Monomial>> result = Maps.newHashMap();
-        for( Monomial lhs : monomials ) {
+    public static Map<Monomial,List<Monomial>> allPossibleProduct( final Set<Monomial> monomials ) {
+        Map<Monomial, List<Monomial>> result = Maps.newHashMapWithExpectedSize( ( monomials.size() * ( monomials.size()  - 1 ) ) >>> 1 );
+
+        for( final Monomial lhs : monomials ) {
             for( Monomial rhs : monomials ) {
                 //Skip identical monomials
                 if( !lhs.equals( rhs ) ) {
@@ -332,9 +497,140 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                 }
             }
         }
+        
         return result;
     }
     
+    //TODO: Decide whether its worth unit testing this.
+    public static Map<Monomial,List<Monomial>> allPossibleProductParallelEx( final Set<Monomial> monomials ) {
+        final ConcurrentMap<Monomial, List<Monomial>> result = 
+                new MapMaker()
+                    .concurrencyLevel( CONCURRENCY_LEVEL )
+                    .initialCapacity( ( monomials.size() * ( monomials.size()  - 1 ) ) >>> 1 )
+                    .makeMap();
+        final Monomial[] monomialArray = monomials.toArray( new Monomial[0] );
+        final CountDownLatch latch = new CountDownLatch( monomials.size() );
+        for( int i = 0 ; i <  monomialArray.length ; ++i ) {
+            final Monomial lhs = monomialArray[ i ];
+            final int currentIndex = i;
+            executor.execute( new Runnable() {
+                @Override
+                public void run() { 
+                    for( int j = currentIndex ; j < monomialArray.length ; ++j ) {
+                        Monomial rhs = monomialArray[ j ];
+                        //Skip identical monomials
+                        if( !lhs.equals( rhs ) ) {
+                            Monomial product = lhs.product( rhs );
+                            //The only way we see an already existing product is x1 x2 * x2 * x3
+                            if( !monomials.contains( product ) ) {
+                                result.putIfAbsent( product , ImmutableList.of( lhs, rhs ) );
+                            }
+                        }
+                    }
+                    latch.countDown();
+                }
+            });
+        }
+        
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            logger.error("Thread interrupted while waiting on all possible products.");
+        }
+        return result;
+    }
+    
+    public static Monomial mostFrequentFactorParallel( final Set<Monomial> monomials, final Set<Monomial> remainingMonomials ) {
+        final class MostFrequentFactorResult {
+            int count = 0;
+            Monomial mostFrequentMonomial = null;
+        }; 
+        final MostFrequentFactorResult result = new MostFrequentFactorResult();
+        final Lock updateLock = new ReentrantLock();
+        final CountDownLatch latch = new CountDownLatch( monomials.size() );
+        for( final Monomial m : monomials ) {
+            executor.execute( new Runnable() {
+                @Override
+                public void run() {
+                    int count = 0;
+                    for( Monomial remainingMonomial : remainingMonomials ) {
+                        if( remainingMonomial.hasFactor( m ) ) {
+                            ++count;  
+                        }
+                    }
+                    
+                    try {
+                        updateLock.lock();
+                        if( count > result.count ) {
+                            result.count = count;
+                            result.mostFrequentMonomial = m;
+                        }
+                    } finally {
+                        updateLock.unlock();
+                    }
+                    
+                    latch.countDown();
+                }
+            });
+        }
+        
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        Set<Monomial> sharesFactor = Sets.newHashSet();
+        
+        for( Monomial rM : remainingMonomials ) {
+            if( rM.hasFactor( result.mostFrequentMonomial ) ) {
+                sharesFactor.add( rM );
+            }
+        }
+        
+        for( Monomial sF : sharesFactor ) {
+            remainingMonomials.remove( sF );
+            sF.xor( result.mostFrequentMonomial );
+            if( !sF.isZero() ) {
+                remainingMonomials.add( sF );
+            }
+        }
+        
+        return result.mostFrequentMonomial;
+    }
+    
+    public static BitVector product( BitVector lhs, BitVector rhs , List<Monomial> monomials , Map<Monomial,Integer> indices ) {
+        BitVector result = new BitVector( monomials.size() );
+        for(int i = 0; i <  lhs.size(); ++i ) {
+            if( lhs.get( i ) ) {
+                for( int j = 0 ; j < rhs.size(); ++j ) {
+                    if( rhs.get( j ) ) {
+                        Monomial p = monomials.get( i ).product( monomials.get( j ) );
+                        Integer indexObj = indices.get( p );
+                        int index = 0;
+                        if( indexObj == null ) {
+                            index = monomials.size();
+                            monomials.add( p );
+                            int newsize = monomials.size();
+                            
+                            result.setSize( newsize );
+                            indices.put( p , index );
+                        } else {
+                            index = indexObj;
+                        }
+                        
+                        if( result.get( index ) ) {
+                            result.clear( index );
+                        } else {
+                            result.set( index );
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
     //TODO: Figure out whether this worth unit testing.
     public static Set<Monomial> product( Set<Monomial> lhs, Set<Monomial> rhs ) {
         Set<Monomial> result = Sets.newHashSetWithExpectedSize( lhs.size() * rhs.size() / 2 );
@@ -349,15 +645,19 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         return result;
     }
     
-    public static Map<Monomial, BitVector> mapCopyFromMonomialsAndContributions( Monomial[] monomials, BitVector[] contributions ) {
-        Map<Monomial, BitVector> result = Maps.newHashMapWithExpectedSize( monomials.length );
-        for( int i = 0 ; i < monomials.length ; ++i  ) {
-            result.put( monomials[ i ].clone() , contributions[ i ].copy() );
-        }
-        return result;
+    /**
+     * Filters monomials and contributions, which do not contribute to any output bits.
+     * @param monomialContributionMap
+     * @return A filtered map {@link Maps#filterValues(Map, Predicate)} created using {@link PolynomialFunctionGF2#notNilContributionPredicate}
+     */
+    public static Map<Monomial,BitVector> filterNilContributions( Map<Monomial,BitVector> monomialContributionMap ) {
+        return Maps.filterValues( monomialContributionMap , notNilContributionPredicate );
     }
     
-    
+    /**
+     * Removes monomials and contributions, which do not contribute to any output bits.
+     * @param monomialContributionMap The map from which to remove entries.
+     */
     public static void removeNilContributions( Map<Monomial,BitVector> monomialContributionMap ) {
         Set<Monomial> forRemoval = Sets.newHashSet();
         for( Entry<Monomial,BitVector> monomialContribution : monomialContributionMap.entrySet() ) {
@@ -368,11 +668,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         for( Monomial m : forRemoval ) {
             monomialContributionMap.remove( m );
         }
-    }
-    
-    //TODO: Figure out what's more efficient filter keys + copy to immutable map, or removing from existing map.
-    public static Map<Monomial,BitVector> filterNilContributions( Map<Monomial, BitVector> monomialContributionMap ) {
-        return ImmutableMap.copyOf( Maps.filterKeys( monomialContributionMap , notNilContributionPredicate ) );
     }
     
     public static Set<Monomial> contributionsToMonomials( int row , Monomial[] monomials, BitVector[] contributions ) {
@@ -386,20 +681,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             }
         }
         return result;
-    }
-    
-    public static PolynomialFunctionGF2 identity( int monomialCount ) {
-        Monomial[] monomials = new Monomial[ monomialCount ];
-        BitVector[] contributions = new BitVector[ monomialCount ];
-        
-        for( int i = 0 ; i < monomialCount ; ++i ) {
-            monomials[i] = Monomial.linearMonomial( monomialCount , i);
-            BitVector contribution = new BitVector( monomialCount );
-            contribution.set( i );
-            contributions[i] = contribution;
-        }
-        
-        return new PolynomialFunctionGF2( monomialCount , monomialCount , monomials , contributions);
     }
     
     public static PolynomialFunctionGF2 truncatedIdentity( int outputLength , int inputLength ) {
@@ -448,5 +729,9 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         
         return new PolynomialFunctionGF2( monomials[0].size() , contributions.length , monomials, contributions );
     }
-    
+
+    @Override
+    public boolean isParameterized() {
+        return false;
+    }
 }
