@@ -97,17 +97,18 @@ public class Monomial extends BitVector {
     }
     
     /**
-     * Generate a list of monomials corresponding to every unique term possible for monomials of this length.
+     * Generate a list of monomials corresponding to every unique term possible for monomials of this size, at 
+     * or below the order given.
      * @param order
      * @return
      */
-    public Set<Monomial> subsetsOfSize() {
-    	Monomial maxOrderMonomial = new Monomial( this.size());
+    public static Set<Monomial> allMonomials(int size, int maxOrder) {
+    	Monomial maxOrderMonomial = new Monomial( size );
     	maxOrderMonomial.replaceFromToWith(0, maxOrderMonomial.size() - 1, true);
     	Set<Monomial> monomials = Sets.newHashSet();
-    	for (int i = 1; i <= this.size() ; i++) {
-    		monomials.addAll( maxOrderMonomial.subsets(i) );
-    	}
+		for (int i = 1; i <= maxOrder ; i++) {
+			monomials.addAll( maxOrderMonomial.subsets(i) );
+		}
     	return monomials;
     }
     
