@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +38,7 @@ public class MultivariateLearning {
 	 * @param order
 	 * @return
 	 */
-	public static SimplePolynomialFunction learnInverse(PolynomialFunction function, Integer orderOfInverse) {
+	public static Pair<List<BitVector>, SimplePolynomialFunction> learnInverse(PolynomialFunction function, Integer orderOfInverse) {
 		Set<Monomial> monomials = Monomial.allMonomials( function.getOutputLength() , orderOfInverse);
 		monomials.add( Monomial.constantMonomial( function.getOutputLength() ) ) ;
 		SimplePolynomialFunction f = functionFromMonomials( monomials );
@@ -64,10 +65,8 @@ public class MultivariateLearning {
 			}
 		}
 		
-		// multiply by plaintext to get contributions
-		
 		EnhancedBitMatrix coefficients = new EnhancedBitMatrix( functionInputs ).tranpose().multiply( generalizedInverse );
-		return coefficients.multiply( f );
+		return Pair.of(functionInputs, coefficients.multiply( f ));
 	}
 	
 	private static SimplePolynomialFunction functionFromMonomials( Set<Monomial> monomialSet ) {
