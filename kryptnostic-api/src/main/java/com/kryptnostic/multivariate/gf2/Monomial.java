@@ -105,6 +105,9 @@ public class Monomial extends BitVector {
             }
             subsets = nextSubsets;
         }
+        if (order == 0) {
+            subsets.add( Monomial.constantMonomial( len ));
+        }
         return subsets;
     }
     
@@ -116,9 +119,9 @@ public class Monomial extends BitVector {
      */
     public static Set<Monomial> allMonomials(int size, int maxOrder) {
     	Monomial maxOrderMonomial = new Monomial( size );
-    	maxOrderMonomial.replaceFromToWith(0, maxOrderMonomial.size() - 1, true);
+    	maxOrderMonomial.not();
     	Set<Monomial> monomials = Sets.newHashSet();
-		for (int i = 1; i <= maxOrder ; i++) {
+		for (int i = 0; i <= maxOrder ; i++) {
 			monomials.addAll( maxOrderMonomial.subsets(i) );
 		}
     	return monomials;

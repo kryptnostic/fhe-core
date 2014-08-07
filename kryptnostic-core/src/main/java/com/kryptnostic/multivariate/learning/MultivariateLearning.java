@@ -7,6 +7,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import sun.security.pkcs11.wrapper.Functions;
 import cern.colt.bitvector.BitVector;
 
 import com.google.common.collect.Lists;
@@ -14,9 +15,11 @@ import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.FunctionUtils;
+import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
+import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 
 /**
@@ -34,8 +37,10 @@ public class MultivariateLearning {
 	 * @param order
 	 * @return
 	 */
-	public static PolynomialFunction learnInverse(PolynomialFunction function, Integer orderOfInverse) {
-		Set<Monomial> monomials = Monomial.allMonomials( function.getOutputLength() + 1, orderOfInverse);
+	public static SimplePolynomialFunction learnInverse(PolynomialFunction function, Integer orderOfInverse) {
+		Set<Monomial> monomials = Monomial.allMonomials( function.getOutputLength() , orderOfInverse);
+		monomials.add( Monomial.constantMonomial( function.getOutputLength() ) ) ;
+		SimplePolynomialFunction f = functionFromMonomials( monomials );
 		
 		List<BitVector> functionInputs = null;
 		EnhancedBitMatrix outputs, outputsTransposed, generalizedInverse = null;
@@ -44,7 +49,7 @@ public class MultivariateLearning {
 			functionInputs = generateInputs( function.getInputLength(), quantityInput );
 			List<BitVector> functionOutputs = Lists.newArrayList();
 			for (BitVector input : functionInputs) {
-				functionOutputs.add( function.apply( input ) );
+				functionOutputs.add( f.apply( function.apply( input ) ) );
 			}
 			
 			outputs = new EnhancedBitMatrix( functionOutputs );
@@ -60,14 +65,20 @@ public class MultivariateLearning {
 		}
 		
 		// multiply by plaintext to get contributions
-		EnhancedBitMatrix contributions =  generalizedInverse.multiply( new EnhancedBitMatrix( functionInputs ));
-		//  generate inverse polynomial
-		Map<Monomial, BitVector> contributionsMap = FunctionUtils.mapViewFromMonomialsAndContributions( 
-				monomials.toArray( new Monomial[monomials.size()]), 
-				contributions.getRows().toArray( new BitVector[contributions.getRows().size()])); 
-		PolynomialFunction inverseFunction = PolynomialFunctions.fromMonomialContributionMap(function.getOutputLength(), function.getInputLength(), contributionsMap);
 		
-		return inverseFunction;
+		EnhancedBitMatrix coefficients = new EnhancedBitMatrix( functionInputs ).tranpose().multiply( generalizedInverse );
+		return coefficients.multiply( f );
+	}
+	
+	private static SimplePolynomialFunction functionFromMonomials( Set<Monomial> monomialSet ) {
+	    Monomial[] monomials = monomialSet.toArray( new Monomial[0] );
+	    BitVector[] contributions = new BitVector[ monomials.length ];
+	    for( int i = 0 ; i < monomials.length ; ++i ) {
+	        BitVector contribution = new BitVector( monomials.length );
+	        contribution.set( i );
+	        contributions[ i ] = contribution;
+	    }
+	    return new PolynomialFunctionGF2( monomials[ 0 ].size() , monomials.length , monomials, contributions );
 	}
 
 	/**
