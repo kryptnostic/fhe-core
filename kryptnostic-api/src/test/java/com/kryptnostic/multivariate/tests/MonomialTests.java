@@ -56,6 +56,7 @@ public class MonomialTests {
     @Test
     public void testAllMonomials() {
     	Set<Monomial> allMonomials = Sets.newHashSet();
+    	allMonomials.add( new Monomial( 4 ));
     	allMonomials.add( new Monomial( 4 ).chainSet(0) );
     	allMonomials.add( new Monomial( 4 ).chainSet(1) );
     	allMonomials.add( new Monomial( 4 ).chainSet(2) );
@@ -73,6 +74,7 @@ public class MonomialTests {
     	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(1).chainSet(2).chainSet(3) );
     	
     	Set<Monomial> order2AndLessMonomials = Sets.newHashSet();
+    	order2AndLessMonomials.add( new Monomial( 4 ));
     	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(0) );
     	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(1) );
     	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(2) );
