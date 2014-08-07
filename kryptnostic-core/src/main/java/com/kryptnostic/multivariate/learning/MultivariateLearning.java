@@ -42,7 +42,7 @@ public class MultivariateLearning {
 		List<BitVector> functionInputs = null;
 		EnhancedBitMatrix outputs, outputsTransposed, generalizedInverse = null;
 		
-		for (int quantityInput = monomials.size() + 1000; quantityInput < MAX_INPUT_VECTORS; quantityInput = quantityInput << 1) {
+		for (int quantityInput = monomials.size(); quantityInput < MAX_INPUT_VECTORS; quantityInput = quantityInput << 1) {
 			functionInputs = generateInputs( function.getInputLength(), quantityInput );
 			List<BitVector> functionOutputs = Lists.newArrayList();
 			for (BitVector input : functionInputs) {
@@ -54,9 +54,10 @@ public class MultivariateLearning {
 			try {
 				generalizedInverse = outputsTransposed.rightGeneralizedInverse();
 			} catch (SingularMatrixException e) {
-				logger.error("Error inverting evaluated monomials: " + e.toString());
+				logger.info("Singular Matrix Exception inverting evaluated monomials with " + quantityInput + " inputs");
 			}
 			if ( generalizedInverse != null) {
+				logger.info("Succesfully inverted evaluated monomials with " + quantityInput + " inputs");
 				break;
 			}
 		}

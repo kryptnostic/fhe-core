@@ -24,44 +24,37 @@ public class MultivariateLearningTests {
 	 */
 	@Test
 	public void learnInverseTest() {
-		Integer testPolynomialOrder = 8;
+		Integer testPolynomialOrder = 1;
 		Integer testPolynomialInputLength = 4;
-		Integer testPolynomialOutputLength = 8;
 		
 		logger.info("Generating function to invert.");
-		PolynomialFunction function =  PolynomialFunctions.randomFunction(testPolynomialInputLength, testPolynomialOutputLength, 4, testPolynomialOrder); // TODO randomly generate number of terms by order
+		PolynomialFunction function =  PolynomialFunctions.identity( testPolynomialInputLength );
+		
 		logger.info("Learning inverse function.");
 		Pair<SimplePolynomialFunction, List<BitVector>> learnedInfo = MultivariateLearning.learnInverse(function, testPolynomialOrder);
 		SimplePolynomialFunction inverse = learnedInfo.getLeft();
 		List<BitVector> inputs = learnedInfo.getRight();
 		
-		Assert.assertEquals( inputs.get( 25 ) , inverse.apply( function.apply( inputs.get( 25 ) ) ) );
-		
-		BitVector input = BitUtils.randomVector(testPolynomialInputLength);
-		BitVector output = function.apply(input);
-		
-		BitVector invertedOutput = inverse.apply(output);
-		
-		Assert.assertTrue(invertedOutput.equals(input));
+		Assert.assertEquals( inputs.get( 0 ) , inverse.apply( function.apply( inputs.get( 0 ) ) ) );
 	}
 	
-	   @Test
-	    public void learnTest() {
-	        Integer testPolynomialOrder = 8;
-	        Integer testPolynomialInputLength = 8;
-	        Integer testPolynomialOutputLength = 16;
-	        
-	        logger.info("Generating function to invert.");
-	        PolynomialFunction function =  PolynomialFunctions.randomFunction(testPolynomialInputLength, testPolynomialOutputLength, 4, testPolynomialOrder); // TODO randomly generate number of terms by order
-	        logger.info("Learning inverse function.");
-	        Pair<SimplePolynomialFunction, List<BitVector>> learnedInfo = MultivariateLearning.learnFunction( function, testPolynomialOrder);
-	        SimplePolynomialFunction learned = learnedInfo.getLeft();
-	        List<BitVector> inputs = learnedInfo.getRight();
-	        
-	        Assert.assertEquals( function.apply( inputs.get( 25 ) ) , learned.apply( inputs.get( 25 ) ) );
-	        
-	        BitVector input = BitUtils.randomVector(testPolynomialInputLength);
-	        
-	        Assert.assertEquals( function.apply( input ) , learned.apply( input ) );
-	    }
+	@Test
+    public void learnTest() {
+        Integer testPolynomialOrder = 2;
+        Integer testPolynomialInputLength = 8;
+        Integer testPolynomialOutputLength = 16;
+        
+        logger.info("Generating function to learn.");
+        PolynomialFunction function =  PolynomialFunctions.randomFunction(testPolynomialInputLength, testPolynomialOutputLength, 4, testPolynomialOrder); // TODO randomly generate number of terms by order
+        logger.info("Learning function.");
+        Pair<SimplePolynomialFunction, List<BitVector>> learnedInfo = MultivariateLearning.learnFunction( function, testPolynomialOrder);
+        SimplePolynomialFunction learned = learnedInfo.getLeft();
+        List<BitVector> inputs = learnedInfo.getRight();
+        
+        Assert.assertEquals( function.apply( inputs.get( 25 ) ) , learned.apply( inputs.get( 25 ) ) );
+        
+        BitVector input = BitUtils.randomVector(testPolynomialInputLength);
+        
+        Assert.assertEquals( function.apply( input ) , learned.apply( input ) );
+    }
 }
