@@ -54,27 +54,38 @@ public class MonomialTests {
     }
     
     @Test
-    public void testSubsetsOfSize() {
-    	Monomial m = new Monomial( 4 );
+    public void testAllMonomials() {
+    	Set<Monomial> allMonomials = Sets.newHashSet();
+    	allMonomials.add( new Monomial( 4 ).chainSet(0) );
+    	allMonomials.add( new Monomial( 4 ).chainSet(1) );
+    	allMonomials.add( new Monomial( 4 ).chainSet(2) );
+    	allMonomials.add( new Monomial( 4 ).chainSet(3) );
+    	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(1) );
+    	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(2) );
+    	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(3) );
+    	allMonomials.add( new Monomial( 4 ).chainSet(1).chainSet(2) );
+    	allMonomials.add( new Monomial( 4 ).chainSet(1).chainSet(3) );
+    	allMonomials.add( new Monomial( 4 ).chainSet(2).chainSet(3) );	
+    	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(1).chainSet(2) );
+    	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(1).chainSet(3) );
+    	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(2).chainSet(3) );
+    	allMonomials.add( new Monomial( 4 ).chainSet(1).chainSet(2).chainSet(3) );
+    	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(1).chainSet(2).chainSet(3) );
     	
-    	Set<Monomial> monomials = Sets.newHashSet();
-    	monomials.add( new Monomial( 4 ).chainSet(0) );
-    	monomials.add( new Monomial( 4 ).chainSet(1) );
-    	monomials.add( new Monomial( 4 ).chainSet(2) );
-    	monomials.add( new Monomial( 4 ).chainSet(3) );
-    	monomials.add( new Monomial( 4 ).chainSet(0).chainSet(1) );
-    	monomials.add( new Monomial( 4 ).chainSet(0).chainSet(2) );
-    	monomials.add( new Monomial( 4 ).chainSet(0).chainSet(3) );
-    	monomials.add( new Monomial( 4 ).chainSet(1).chainSet(2) );
-    	monomials.add( new Monomial( 4 ).chainSet(1).chainSet(3) );
-    	monomials.add( new Monomial( 4 ).chainSet(2).chainSet(3) );	
-    	monomials.add( new Monomial( 4 ).chainSet(0).chainSet(1).chainSet(2) );
-    	monomials.add( new Monomial( 4 ).chainSet(0).chainSet(1).chainSet(3) );
-    	monomials.add( new Monomial( 4 ).chainSet(0).chainSet(2).chainSet(3) );
-    	monomials.add( new Monomial( 4 ).chainSet(1).chainSet(2).chainSet(3) );
-    	monomials.add( new Monomial( 4 ).chainSet(0).chainSet(1).chainSet(2).chainSet(3) );
+    	Set<Monomial> order2AndLessMonomials = Sets.newHashSet();
+    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(0) );
+    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(1) );
+    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(2) );
+    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(3) );
+    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(1) );
+    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(2) );
+    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(3) );
+    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(1).chainSet(2) );
+    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(1).chainSet(3) );
+    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(2).chainSet(3) );
     	
-    	Assert.assertEquals( monomials, m.subsetsOfSize());
+    	Assert.assertEquals( allMonomials, Monomial.allMonomials(4, 4));
+    	Assert.assertEquals( order2AndLessMonomials, Monomial.allMonomials(4, 2));
     }
     
     @Test
