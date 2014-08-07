@@ -123,6 +123,12 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     public SimplePolynomialFunction and( SimplePolynomialFunction rhs ) {
         Preconditions.checkArgument( inputLength == rhs.getInputLength() , "Functions must have the same input length." );
         Preconditions.checkArgument( outputLength == rhs.getOutputLength() , "Functions must have the same output length." );
+        
+        //TODO: Unit test and for parameterized functions.
+        if( isParameterized() || rhs.isParameterized() ) {
+            return ParameterizedPolynomialFunctions.and( this , rhs );
+        }
+        
         Map<Monomial, BitVector> results = Maps.newHashMap();
         Monomial[] rhsMonomials = rhs.getMonomials();
         BitVector[] rhsContributions = rhs.getContributions();
