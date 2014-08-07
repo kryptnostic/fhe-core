@@ -22,8 +22,8 @@ public class MultivariateLearningTests {
 	@Test
 	public void learnInverseTest() {
 		Integer testPolynomialOrder = 2;
-		Integer testPolynomialInputLength = 64;
-		Integer testPolynomialOutputLength = 128;
+		Integer testPolynomialInputLength = 8;
+		Integer testPolynomialOutputLength = 16;
 		
 		logger.info("Generating function to invert.");
 		PolynomialFunction function =  PolynomialFunctions.randomFunction(testPolynomialInputLength, testPolynomialOutputLength, 4, testPolynomialOrder); // TODO randomly generate number of terms by order

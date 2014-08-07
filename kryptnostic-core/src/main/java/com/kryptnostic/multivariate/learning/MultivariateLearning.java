@@ -26,6 +26,7 @@ import com.kryptnostic.multivariate.gf2.PolynomialFunction;
  */
 public class MultivariateLearning {
 	private static final Logger logger = LoggerFactory.getLogger( MultivariateLearning.class );
+	private static final Integer MAX_INPUT_VECTORS = 1000000;
 
 	/**
 	 * Given a polynomial and an assumed order of that polynomial, computes the inverse.
@@ -34,13 +35,13 @@ public class MultivariateLearning {
 	 * @return
 	 */
 	public static PolynomialFunction learnInverse(PolynomialFunction function, Integer orderOfInverse) {
-		Set<Monomial> monomials = new Monomial( orderOfInverse + 1 ).subsetsOfSize();
+		Set<Monomial> monomials = Monomial.allMonomials( function.getOutputLength() + 1, orderOfInverse);
 		
-		List<BitVector> functionInputs;
-		EnhancedBitMatrix outputs, outputsTransposed;
-		int quantityInputVectors = monomials.size();
-		do {
-			functionInputs = generateInputs( function.getInputLength(), quantityInputVectors );
+		List<BitVector> functionInputs = null;
+		EnhancedBitMatrix outputs, outputsTransposed, generalizedInverse = null;
+		
+		for (int quantityInput = monomials.size(); quantityInput < MAX_INPUT_VECTORS; quantityInput = quantityInput << 1) {
+			functionInputs = generateInputs( function.getInputLength(), quantityInput );
 			List<BitVector> functionOutputs = Lists.newArrayList();
 			for (BitVector input : functionInputs) {
 				functionOutputs.add( function.apply( input ) );
@@ -48,14 +49,14 @@ public class MultivariateLearning {
 			
 			outputs = new EnhancedBitMatrix( functionOutputs );
 			outputsTransposed = outputs.tranpose();
-			quantityInputVectors = quantityInputVectors << 2;
-		} while ( !( outputs.getNullspaceBasis().rows() == 0 ) );
-		
-		EnhancedBitMatrix generalizedInverse = null;
-		try {
-			generalizedInverse = outputsTransposed.rightGeneralizedInverse();
-		} catch (SingularMatrixException e) {
-			logger.error("Error inverting evaluated monomials: " + e.toString());
+			try {
+				generalizedInverse = outputsTransposed.rightGeneralizedInverse();
+			} catch (SingularMatrixException e) {
+				logger.error("Error inverting evaluated monomials: " + e.toString());
+			}
+			if ( generalizedInverse != null) {
+				break;
+			}
 		}
 		
 		// multiply by plaintext to get contributions
