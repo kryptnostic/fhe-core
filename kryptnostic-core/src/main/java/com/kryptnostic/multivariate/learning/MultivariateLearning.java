@@ -34,7 +34,7 @@ public class MultivariateLearning {
 	 * @param order
 	 * @return Pair of inverse function and training data over which it was valid
 	 */
-	public static Pair<SimplePolynomialFunction,List<BitVector>> learnInverse(PolynomialFunction function, Integer orderOfInverse) {
+	public static Pair<SimplePolynomialFunction, List <BitVector>> learnInverse(PolynomialFunction function, Integer orderOfInverse) {
 		Set<Monomial> monomials = Monomial.allMonomials( function.getOutputLength() , orderOfInverse);
 		SimplePolynomialFunction monomialsFunction = functionFromMonomials( monomials );
 		
