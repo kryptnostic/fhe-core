@@ -64,7 +64,10 @@ public class EnhancedBitMatrix {
     }
     
     public int cols() {
-        return rows.iterator().next().size();
+    	if ( rows.size() != 0) {
+    		return rows.iterator().next().size();
+    	}
+        return 0;
     }
     
     public boolean get( int row , int col ) {
@@ -88,6 +91,9 @@ public class EnhancedBitMatrix {
         return true;
     }
     
+    public List<BitVector> getRows() {
+    	return rows;
+    }
     //TODO: Add unit test
     public EnhancedBitMatrix add( EnhancedBitMatrix rhs ) {
         Preconditions.checkArgument( rows()==rhs.rows() , "Matrices being added must have the same number of rows.");

@@ -35,7 +35,9 @@ public class ParameterizedPolynomialFunctionGF2 extends PolynomialFunctionGF2 {
     public ParameterizedPolynomialFunctionGF2(int inputLength, int outputLength,Monomial[] monomials, BitVector[] contributions, Iterable<CompoundPolynomialFunction> pipelines) {
         super( inputLength, outputLength, monomials, contributions);
         Preconditions.checkArgument( !Iterables.isEmpty( pipelines ) ,"There must be a least one function in the provided chain.");
-        Preconditions.checkArgument( pipelines.iterator().next().getInputLength() == inputLength , "The input length to the pipeline must be the same as the input length to the overall function.");
+        for( CompoundPolynomialFunction pipeline : pipelines ) {
+            Preconditions.checkArgument( pipeline.getInputLength() == inputLength , "The input length of each pipeline must be the same as the input length to the overall function.");
+        }
         this.pipelines = ImmutableList.copyOf( pipelines );
     }
     

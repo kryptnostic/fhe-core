@@ -63,6 +63,7 @@ public class HomomorphicFunctions {
     public static SimplePolynomialFunction DirectHomomorphicAnd( PrivateKey privateKey ) {
         /*
          * Doing a direct homomorphic and with parameterized functions requires making sure the pipelines are preserved in the shifting process.
+         * 
          */
         ParameterizedPolynomialFunctionGF2 decryptor = (ParameterizedPolynomialFunctionGF2) privateKey.getDecryptor();
         Monomial [] monomials = decryptor.getMonomials();
@@ -70,11 +71,17 @@ public class HomomorphicFunctions {
         Monomial [] rhsMonomials = new Monomial[ monomials.length ];
         int inputLength = decryptor.getInputLength() << 1;
         int outputLength = decryptor.getOutputLength();
+        int newSize = inputLength + (decryptor.getPipelineOutputLength() << 1);
         
         for( int i = 0 ; i < monomials.length ; ++i ) {
             Monomial m = monomials[ i ];
-            Monomial mLHS = m.extendAndShift( inputLength, decryptor.getInputLength() );
-            Monomial mRHS = m.extend( inputLength );
+            
+            /*
+             *  [         decryptor inputLength        ]  ===> [                    newSize                     ]
+             *  [ input monomials | pipeline monomials ]  ===> [ lhsInput| rhsInput | lhsPipeline | rhsPipeline ] 
+             */
+            Monomial mLHS = m.extendAndShift( newSize , decryptor.getInputLength(), decryptor.getInputLength() );
+            Monomial mRHS = m.extendAndShift( newSize , 0 , inputLength );
             lhsMonomials[ i ] = mLHS;
             rhsMonomials[ i ] = mRHS;
         }

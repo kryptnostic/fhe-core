@@ -1,6 +1,5 @@
 package com.kryptnostic.multivariate.gf2;
 
-import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.Set;
@@ -86,6 +85,11 @@ public class Monomial extends BitVector {
         return this;
     }
     
+    /**
+     * Creates a list of N choose K monomials, where N is the order of this monomial and K is a chosen order < N.
+     * @param order
+     * @return
+     */
     public Set<Monomial> subsets( int order ) {
         int len = size();
         Set<Monomial> subsets = Sets.newHashSet( Monomial.constantMonomial( len ) );
@@ -100,6 +104,32 @@ public class Monomial extends BitVector {
             }
             subsets = nextSubsets;
         }
+        if (order == 0) {
+            subsets.add( Monomial.constantMonomial( len ));
+        }
+        return subsets;
+    }
+    
+    /**
+     * Generate a list of monomials corresponding to every unique term possible for monomials of this order, at 
+     * or below the order given.
+     * @param order
+     * @return
+     */
+    public static Set<Monomial> allMonomials(int size, int maxOrder) {
+    	Set<Monomial> subsets = Sets.newHashSet( Monomial.constantMonomial( size ) );
+        for( int ss = 0 ; ss < maxOrder ; ++ss ) {
+            Set<Monomial> nextSubsets = Sets.newHashSet();
+            for( Monomial m : subsets ) {
+                for( int i = 0 ; i < size ; ++i ) {
+                    if( !m.get( i ) ) {
+                        nextSubsets.add( m.clone().chainSet( i ) );
+                    }
+                }
+            }
+            subsets.addAll( nextSubsets );
+        }
+        
         return subsets;
     }
     

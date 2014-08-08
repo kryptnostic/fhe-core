@@ -105,6 +105,7 @@ public final class ParameterizedPolynomialFunctions {
         return null;
     }
     
+    //TODO: Figure out a way to merge with XOR extension logic.
     public static SimplePolynomialFunction and( SimplePolynomialFunction f, SimplePolynomialFunction g ) {
         Preconditions.checkArgument( f.isParameterized() || g.isParameterized() , "At least one of the functions should be parameterized!" );
         Preconditions.checkArgument( f.getInputLength() == g.getInputLength() , "Input lengths must match in order to compute the XOR of two functions.");
