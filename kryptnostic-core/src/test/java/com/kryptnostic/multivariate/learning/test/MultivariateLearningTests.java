@@ -20,6 +20,7 @@ import com.kryptnostic.multivariate.learning.MultivariateLearning;
 
 public class MultivariateLearningTests {
 	private static final Logger logger = LoggerFactory.getLogger( MultivariateLearningTests.class );
+	
 	/**
 	 * Tests that learning is accurate when the learning function is given an accurate test polynomial order. 
 	 */
@@ -62,17 +63,53 @@ public class MultivariateLearningTests {
 	/**
 	 * STATISTICAL TESTING
 	 */
-	@Test
-	public void learnFunctionVarySize() {
+	
+	public void learnFunctionVarySize( boolean learnInverse ) {
 		Integer testPolynomialOrder = 2;
-        
-		for (int inputLength = 8; inputLength <= 32; inputLength = inputLength << 1) {
-        	logger.info("Testing function of input length: " + inputLength);
+        Integer minSize = 8;
+        Integer maxSize = 16;
+        Integer samplingPercent = 10;
+		for (int inputLength = minSize; inputLength <= maxSize; inputLength = inputLength << 1) {
+			logger.info("Testing inverse:" + learnInverse);
+			logger.info("Testing learnInverse for function of input length: " + inputLength);
         	int outputLength = inputLength << 1;
-        	PolynomialFunction function =  PolynomialFunctions.randomFunction( inputLength, outputLength, inputLength, testPolynomialOrder); 
-			Pair<SimplePolynomialFunction, List<BitVector>> learnedInfo = MultivariateLearning.learnFunction( function, testPolynomialOrder);
-			
-			SummaryStatistics stats = measureFunctionAccuracy(function, learnedInfo.getLeft(), 10);
+        	PolynomialFunction function =  PolynomialFunctions.randomFunction( inputLength, outputLength, inputLength, testPolynomialOrder);
+        	
+        	Pair<SimplePolynomialFunction, List<BitVector>> learnedInfo;
+        	SummaryStatistics stats;
+        	if ( learnInverse ) {
+    			learnedInfo = MultivariateLearning.learnInverse( function, testPolynomialOrder);
+    			stats = measureInverseAccuracy(function, learnedInfo.getLeft(), samplingPercent);
+        	} else {
+        		learnedInfo = MultivariateLearning.learnFunction( function, testPolynomialOrder);
+        		stats = measureFunctionAccuracy(function, learnedInfo.getLeft(), samplingPercent);
+        	} 
+			logger.info(stats.toString());
+        }
+	}
+	
+	public void learnFunctionVaryOrder( boolean learnInverse ) {
+		Integer minOrder = 1;
+		Integer maxOrder = 3;
+		Integer actualOrder = 2;
+		
+        Integer inputLength = 8;
+        Integer outputLength = 16;
+        Integer samplingPercent = 10;
+		for (int order = minOrder; order <= maxOrder; order++) {
+			logger.info("Testing inverse:" + learnInverse);
+        	logger.info("Testing for function of order" + order);
+        	PolynomialFunction function =  PolynomialFunctions.randomFunction( inputLength, outputLength, inputLength, actualOrder);
+        	
+        	Pair<SimplePolynomialFunction, List<BitVector>> learnedInfo;
+        	SummaryStatistics stats;
+        	if ( learnInverse ) {
+    			learnedInfo = MultivariateLearning.learnInverse( function, order);
+    			stats = measureInverseAccuracy(function, learnedInfo.getLeft(), samplingPercent);
+        	} else {
+        		learnedInfo = MultivariateLearning.learnFunction( function, order);
+        		stats = measureFunctionAccuracy(function, learnedInfo.getLeft(), samplingPercent);
+        	} 
 			logger.info(stats.toString());
         }
 	}
