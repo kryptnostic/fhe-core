@@ -600,6 +600,16 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         return result.mostFrequentMonomial;
     }
     
+    /**
+     * Given BitVector representation of contributions of two polynomials using the same
+     * list of monomials, computes the product, updating the list of monomials, the map
+     * of monomials and creating a new contribution 
+     * @param lhs
+     * @param rhs
+     * @param monomials
+     * @param indices
+     * @return
+     */
     public static BitVector product( BitVector lhs, BitVector rhs , List<Monomial> monomials , Map<Monomial,Integer> indices ) {
         BitVector result = new BitVector( monomials.size() );
         for(int i = 0; i <  lhs.size(); ++i ) {
