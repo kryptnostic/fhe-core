@@ -187,7 +187,8 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     
     @Override
     public SimplePolynomialFunction compose( SimplePolynomialFunction inner ) {
-        //Verify the functions are composable
+        long startTime = System.currentTimeMillis();
+    	//Verify the functions are composable
         Preconditions.checkArgument( 
                 inputLength == inner.getOutputLength() ,
                 "Input length of outer function must match output length of inner function it is being composed with"
@@ -218,24 +219,29 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             indicesResults.put( monomials[ i ] , i );
         }
   
-            for( int k = 0; k < monomials.length ; ++k ) {
-                Monomial m = monomials[ k ];
-                BitVector lhs = null; 
-                if( m.isZero() ) {
-                    lhs = new BitVector( mList.size() );
-                } else {
-                    for( int i = Long.numberOfTrailingZeros( m.elements()[0] ); i < inputLength ; ++i ) {
-                        if( m.get( i ) ) {  
-                            if( lhs == null ) {
-                                lhs = innerRows[ i ];
-                            } else  {
-                                lhs = product( lhs , innerRows[ i ] , mList , indices );
-                            }
+        long expandStart = System.currentTimeMillis();
+        
+        for( int k = 0; k < monomials.length ; ++k ) {
+            Monomial m = monomials[ k ];
+            BitVector lhs = null; 
+            if( m.isZero() ) {
+                lhs = new BitVector( mList.size() );
+            } else {
+                for( int i = Long.numberOfTrailingZeros( m.elements()[0] ); i < inputLength ; ++i ) {
+                    if( m.get( i ) ) {  
+                        if( lhs == null ) {
+                            lhs = innerRows[ i ];
+                        } else  {
+                            lhs = product( lhs , innerRows[ i ] , mList , indices );
                         }
                     }
-                } 
-                results[ k ] = lhs;
-            }
+                }
+            } 
+            results[ k ] = lhs;
+        }
+        
+        long expandEnd = System.currentTimeMillis();
+        System.out.println("Expansion time:" + (expandEnd - expandStart));
         
         //Now lets fix the contributions so they're all the same length.
         for( int i = 0 ; i < results.length ; ++i ) {
@@ -308,7 +314,8 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             ParameterizedPolynomialFunctionGF2 ppf = (ParameterizedPolynomialFunctionGF2) inner;
             return new ParameterizedPolynomialFunctionGF2( inner.getInputLength() , outputLength , filteredMonomials.toArray( new Monomial[0] ),  filteredContributions.toArray( new BitVector[0] ) , ppf.getPipelines() );
         }
-        
+        long endTime = System.currentTimeMillis();
+        System.out.println("Total time:" + (endTime - startTime));
         return new PolynomialFunctionGF2( 
                     inner.getInputLength(), 
                     outputLength, 
