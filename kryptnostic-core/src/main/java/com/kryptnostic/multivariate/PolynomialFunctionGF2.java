@@ -213,25 +213,11 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             Monomial linearMonomial = Monomial.linearMonomial( inputLength , i );
             linearMonomials[ i ] = linearMonomial;
             innerRows[ i ] = contributionRows.getRow( i );
-//            productCache.put( linearMonomial , contributionRows.getRow( i ) );
         }
         for( int i = 0 ; i < monomials.length ; ++i ) {
             indicesResults.put( monomials[ i ] , i );
         }
-        
-//        if( maxMonomialOrder <= 2 ) {
-//            for( int i = 0; i< linearMonomials.length;++i) {
-//                final CountDownLatch latch = new CountDownLatch( linearMonomials.length );
-//                for( int j = i+1; j<linearMonomials.length;++j) {
-//                    Monomial p = linearMonomials[i].product( linearMonomials[j] );
-//                    if( stoppingMonomials.contains( p ) ) {
-//                        BitVector result = product( innerRows[ i ] , innerRows[ j ] , mList , indices );
-//                        results[ indicesResults.get( p ) ] = result;
-////                        productCache.put( p , result );
-//                    }
-//                }
-//            } 
-//        } else {
+  
             for( int k = 0; k < monomials.length ; ++k ) {
                 Monomial m = monomials[ k ];
                 BitVector lhs = null; 
@@ -250,7 +236,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                 } 
                 results[ k ] = lhs;
             }
-//        }
         
         //Now lets fix the contributions so they're all the same length.
         for( int i = 0 ; i < results.length ; ++i ) {
@@ -329,39 +314,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                     outputLength, 
                     filteredMonomials.toArray( new Monomial[0] ) ,
                     filteredContributions.toArray( new BitVector[0] )
-                    );
-                    
-        
-        /*
-        for( int row = 0; row < outputLength ; ++row ) {
-            Set<Monomial> monomialsForOutputRow = ImmutableSet.of();
-            for( int i = 0 ; i < contributions.length; ++i ) {
-                if( contributions[ i ].get( row ) ) {
-                    //Symmetric difference, is equivalently to repeatedly xoring the sets together
-                    monomialsForOutputRow = Sets.symmetricDifference( 
-                            monomialsForOutputRow , 
-                            Preconditions.checkNotNull(
-                                    memoizedComputations.get( monomials[ i ] ) ,
-                                    "Monomial contributions cannot be null for a required monomial"
-                                    ) 
-                            );
-                }
-            }
-            
-            //For each monomial contributing to the output, set the contribution bit in the new contribution vectors.
-            for( Monomial monomial : monomialsForOutputRow ){
-                BitVector contribution = composedFunction.get( monomial );
-                if( contribution == null ) {
-                    contribution = new BitVector( outputLength );
-                    composedFunction.put( monomial , contribution );
-                }
-                contribution.set( row );
-            }
-            
-        }
-        */
-        
-//        return PolynomialFunctions.fromMonomialContributionMap( inner.getInputLength() , outputLength , composedFunction );  
+                    );       
     }
     
 
