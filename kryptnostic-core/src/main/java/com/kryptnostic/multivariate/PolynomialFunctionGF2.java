@@ -29,7 +29,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.Monomial;
-import com.kryptnostic.multivariate.gf2.PolynomialFunctionRepresentationGF2;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
