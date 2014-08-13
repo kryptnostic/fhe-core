@@ -5,13 +5,17 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.log4j.Logger;
 
 import cern.colt.bitvector.BitVector;
 
+import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
@@ -22,6 +26,7 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
  * @author Matthew Tamayo-Rios
  */
 public final class PolynomialFunctions {
+    private static final Logger logger = Logger.getLogger(PolynomialFunctions.class);
     private PolynomialFunctions(){}
     
     public static SimplePolynomialFunction XOR( int xorLength ) {
@@ -201,28 +206,71 @@ public final class PolynomialFunctions {
     }
 
     /**
+     * Useful for constructing an Gf(2)^2n -> GF(2)^n function that takes the upper identity.
+     * 
+     * @param inputLength
+     * @return A polynomial function the takes the upper inputLength / 2 bits and outputs them without modifying them
+     */
+    public static SimplePolynomialFunction upperIdentity( int monomialOrder ) {
+        int baseIndex = monomialOrder >>> 1;
+        Monomial[] monomials = new Monomial[ baseIndex ];
+        BitVector[] contributions = new BitVector[ baseIndex ];
+        
+        for( int i = baseIndex ; i < monomialOrder ; ++i ) {
+            int adjustedIndex = i - baseIndex;
+            monomials[ adjustedIndex ] = Monomial.linearMonomial( monomialOrder , i );
+            BitVector contribution = new BitVector( baseIndex );
+            contribution.set( i - baseIndex );
+            contributions[ adjustedIndex ] = contribution;
+        }
+        
+        return new PolynomialFunctionGF2( monomialOrder , baseIndex , monomials , contributions);
+    }
+    
+    /**
      * Static factory method for building identity functions that extract the lower half of the input.
      * These are useful when dealing with functions that operate on two ciphertext inputs of equal length.
      * 
      * For example computing the XOR of two 64 bit ciphertexts, where the inputs are concatenated.  
      * f(x,y) = x+y = lowerBinaryIdentity( 128 ).xor( upperBinaryIdentity( 128 ).
      * 
-     * @param monomialOrder The number of inputs bits for the SimplePolynomialFunction.
+     * @param inputLength The number of inputs bits for the SimplePolynomialFunction.
      * @return A SimplePolynomialFunction that passes through only the lower half of its input bits.
      */
-    public static SimplePolynomialFunction lowerBinaryIdentity( int monomialOrder ) {
-        int maxIndex = monomialOrder >>> 1;
+    public static SimplePolynomialFunction lowerBinaryIdentity( int inputLength ) {
+        int maxIndex = inputLength >>> 1;
         Monomial[] monomials = new Monomial[ maxIndex ];
         BitVector[] contributions = new BitVector[ maxIndex ];
         for( int i = 0 ; i < maxIndex ; ++i ) {
-            monomials[i] = Monomial.linearMonomial( monomialOrder , i);
-            BitVector contribution = new BitVector( monomialOrder );
+            monomials[i] = Monomial.linearMonomial( inputLength , i);
+            BitVector contribution = new BitVector( inputLength );
             contribution.set( i );
             contributions[i] = contribution;
         }
         
         //No need to use 
-        return new PolynomialFunctionGF2( monomialOrder , monomialOrder , monomials , contributions);
+        return new PolynomialFunctionGF2( inputLength , inputLength , monomials , contributions);
+    }
+    
+    /**
+     * Useful for constructing an Gf(2)^2n -> GF(2)^n function that takes the lower identity.
+     * 
+     * @param inputLength
+     * @return A polynomial function the takes the lower inputLength / 2 bits and outputs them without modifying them
+     */
+    public static SimplePolynomialFunction lowerIdentity( int inputLength ) {
+        int maxIndex = inputLength >>> 1;
+        Monomial[] monomials = new Monomial[ maxIndex ];
+        BitVector[] contributions = new BitVector[ maxIndex ];
+        for( int i = 0 ; i < maxIndex ; ++i ) {
+            monomials[i] = Monomial.linearMonomial( inputLength , i);
+            BitVector contribution = new BitVector( maxIndex );
+            contribution.set( i );
+            contributions[i] = contribution;
+        }
+        
+        //No need to use 
+        return new PolynomialFunctionGF2( inputLength , maxIndex , monomials , contributions);
     }
 
     /**
@@ -318,15 +366,20 @@ public final class PolynomialFunctions {
     }
     
     /**
-     * @TODO
+     * Static factory method for many-to-one functions that mix the upper and lower half of the inputs.   
      * @param inputLength
      * @param outputLength
-     * @return
+     * @return Returns random linear combination of the upper half and lower half of the inputs.
      */
-    public static SimplePolynomialFunction randomLinearCombination( int inputLength, int outputLength ) {
-    	return null;
+    public static SimplePolynomialFunction randomManyToOneLinearCombination( int inputLength ) {
+        return linearCombination(  EnhancedBitMatrix.randomInvertibleMatrix( inputLength ) , EnhancedBitMatrix.randomInvertibleMatrix( inputLength ) );
     }
-
+    
+    public static SimplePolynomialFunction linearCombination( EnhancedBitMatrix c1 , EnhancedBitMatrix c2 ) {
+        return c1.multiply( lowerIdentity( c1.cols() << 1) )
+                .xor( c2.multiply( upperIdentity( c2.cols() << 1 ) ) );
+    }
+    
 	public static SimplePolynomialFunction fromMonomialContributionMap( int inputLength , int outputLength , Map<Monomial,BitVector> monomialContributionsMap) {
 	    PolynomialFunctionGF2.removeNilContributions(monomialContributionsMap);
 	    Monomial[] newMonomials = new Monomial[ monomialContributionsMap.size() ];
@@ -358,26 +411,15 @@ public final class PolynomialFunctions {
 	    Map<Monomial, BitVector> rhsMap =
 	            FunctionUtils.mapViewFromMonomialsAndContributions( second.getMonomials() , second.getContributions() );
 	    Map<Monomial, BitVector> monomialContributionMap = Maps.newHashMap();
+	    BitVector lhsZero = new BitVector( lhsOutputLength );
+	    BitVector rhsZero = new BitVector( rhsOutputLength );
 	    
 	    Set<Monomial> monomials = Sets.union( lhsMap.keySet() , rhsMap.keySet() );
 	    for( Monomial monomial : monomials ) {
-	        BitVector lhsContribution = lhsMap.get( monomial );
-	        BitVector rhsContribution = rhsMap.get( monomial );
-	        long[] newElements = new long[ combinedOutputLength >>> 6 ];
-	        
-	        if( lhsContribution != null ) { 
-	            for( int i = 0 ; i < lhsOutputLength >>> 6; ++i ) {
-	                newElements[ i ] = lhsContribution.elements()[ i ];
-	            }
-	        }
-	        
-	        if( rhsContribution != null ) { 
-	            for( int i = 0 ; i < rhsOutputLength >>> 6; ++i ) {
-	                newElements[ i + lhsOutputLength>>>6 ] = rhsContribution.elements()[ i ];
-	            }
-	        }
-	        
-	        monomialContributionMap.put( monomial , new BitVector( newElements , combinedOutputLength ) );
+	        BitVector lhsContribution = Objects.firstNonNull( lhsMap.get( monomial ) , lhsZero );
+	        BitVector rhsContribution = Objects.firstNonNull( rhsMap.get( monomial ) , rhsZero );
+	        	        
+	        monomialContributionMap.put( monomial , FunctionUtils.concatenate( lhsContribution , rhsContribution ) );
 	    }
 	    
 	    return fromMonomialContributionMap( 
@@ -395,4 +437,74 @@ public final class PolynomialFunctions {
 	    
 	    return Pair.of(g, h);
 	}
+
+    public static SimplePolynomialFunction identity( int monomialCount ) {
+        Monomial[] monomials = new Monomial[ monomialCount ];
+        BitVector[] contributions = new BitVector[ monomialCount ];
+        
+        for( int i = 0 ; i < monomialCount ; ++i ) {
+            monomials[i] = Monomial.linearMonomial( monomialCount , i);
+            BitVector contribution = new BitVector( monomialCount );
+            contribution.set( i );
+            contributions[i] = contribution;
+        }
+        
+        return new PolynomialFunctionGF2( monomialCount , monomialCount , monomials , contributions);
+    }
+    
+    /**
+     * Builds a non-linear sequence of functions that has the same output as another given sequence of functions,
+     * but with a unique non-linear partitioning applied at each stage.
+     *      *   
+     * @param inner The initial internal basis for using in the partition of the first function.
+     * @param innerSecond The initial internal basis for using in the partition of the second function.
+     * @param functions The sequence of functions to convert into a pipeline of partitioned functions 
+     * @return a sequences of functions that evaluations to the same {@code functions}.
+     */
+    
+    public static Pair<SimplePolynomialFunction,SimplePolynomialFunction[]> buildNonlinearPipeline( SimplePolynomialFunction inner, SimplePolynomialFunction [] functions ) {
+        Preconditions.checkArgument( functions.length > 0 , "Pipeline must contain at least one function.");
+        SimplePolynomialFunction [] pipeline = new SimplePolynomialFunction[ functions.length ];
+        SimplePolynomialFunction innerCombination = inner;
+        /*
+         * functions = h_i( s )
+         * 
+         * pair = <h[0]_i,h[1]_i> satisfying the recurrence relationship 
+         * h_i[s] = c1_i*h[0]_{i}( c1_{i-1}*h[0]_{i-1} + c_2*h[1]_{i-1}  ) + c_2*h[1]_{i-1}( c1_{i-1}*h[0]_{i-1} + c_2*h[1]_{i-1} ) 
+         */
+        for( int i = 0 ; i < pipeline.length ; ++i ) {
+            PolynomialFunctionPipelineStage stage = PolynomialFunctionPipelineStage.build( functions[i] , innerCombination );
+            //            try {
+            /*
+             * Prepare the function so that partitioned outputs are passed to the next function in the chain the the
+             * inner compose applies the appropriate combination. An unstated assumpt here is that linearCombination
+             * treats the first half as corresponding to c1 and the second half as corresponding to c2.
+             * 
+             *  Unit tests should catch any violations of that.  
+             */
+            pipeline[i] = stage.getStep();
+            innerCombination = stage.getCombination();
+        }
+        
+        return Pair.of( innerCombination , pipeline );
+    }
+    
+
+    public static Function<SimplePolynomialFunction,SimplePolynomialFunction> getComposer( final SimplePolynomialFunction inner ) {
+        return new Function<SimplePolynomialFunction,SimplePolynomialFunction>() {
+            @Override
+            public SimplePolynomialFunction apply(SimplePolynomialFunction input) {
+                Pair<SimplePolynomialFunction, SimplePolynomialFunction> pair = PolynomialFunctions.randomlyPartitionMVQ( input );
+                return PolynomialFunctions.concatenate(pair.getLeft().compose( inner ), pair.getRight().compose( inner ));
+            }
+        }; 
+    }
+
+    public static Map<Monomial, BitVector> mapCopyFromMonomialsAndContributions( Monomial[] monomials, BitVector[] contributions ) {
+        Map<Monomial, BitVector> result = Maps.newHashMapWithExpectedSize( monomials.length );
+        for( int i = 0 ; i < monomials.length ; ++i  ) {
+            result.put( monomials[ i ].clone() , contributions[ i ].copy() );
+        }
+        return result;
+    }
 }

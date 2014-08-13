@@ -20,6 +20,7 @@ import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
 
 import cern.colt.bitvector.BitVector;
 
@@ -47,7 +48,7 @@ public class EnhancedBitMatrix {
         this( m.rows );
     }
     
-    public EnhancedBitMatrix( List<BitVector> rows ) {
+    public EnhancedBitMatrix( Iterable<BitVector> rows ) {
         this.rows = 
                 Lists.newArrayList(
                         Iterables.transform( rows , new Function<BitVector,BitVector>() {
@@ -63,7 +64,10 @@ public class EnhancedBitMatrix {
     }
     
     public int cols() {
-        return rows.iterator().next().size();
+    	if ( rows.size() != 0) {
+    		return rows.iterator().next().size();
+    	}
+        return 0;
     }
     
     public boolean get( int row , int col ) {
@@ -87,6 +91,9 @@ public class EnhancedBitMatrix {
         return true;
     }
     
+    public List<BitVector> getRows() {
+    	return rows;
+    }
     //TODO: Add unit test
     public EnhancedBitMatrix add( EnhancedBitMatrix rhs ) {
         Preconditions.checkArgument( rows()==rhs.rows() , "Matrices being added must have the same number of rows.");
@@ -229,7 +236,12 @@ public class EnhancedBitMatrix {
             newContributions[ index ] = result.getValue();
             ++index;
         }
-        ;
+        
+        if( f.isParameterized() ) {
+            ParameterizedPolynomialFunctionGF2 ppf = (ParameterizedPolynomialFunctionGF2)f;
+            return new ParameterizedPolynomialFunctionGF2( f.getInputLength() , rows() , newMonomials , newContributions , ppf.getPipelines() );
+        }
+        
         return PolynomialFunctions.fromMonomialContributionMap(
                 f.getInputLength() , 
                 rows() , 
@@ -478,6 +490,10 @@ public class EnhancedBitMatrix {
         public NonSquareMatrixException( String message ) {
             super( message );
         }
+    }
+
+    public BitVector getRow(int i) {
+        return rows.get( i ).copy();
     }
     
 }

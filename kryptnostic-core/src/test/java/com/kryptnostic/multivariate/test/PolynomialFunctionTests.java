@@ -3,6 +3,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
@@ -14,11 +15,17 @@ import cern.colt.bitvector.BitVector;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.linear.EnhancedBitMatrix;
+import com.kryptnostic.multivariate.CompoundPolynomialFunctions;
 import com.kryptnostic.multivariate.FunctionUtils;
+import com.kryptnostic.multivariate.Monomials;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.PolynomialFunctionPipelineStage;
 import com.kryptnostic.multivariate.PolynomialFunctions;
+import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
@@ -74,7 +81,7 @@ public class PolynomialFunctionTests {
     
    @Test
    public void identityTest() {
-       PolynomialFunctionGF2 f = PolynomialFunctionGF2.identity( 256 );
+       SimplePolynomialFunction f = PolynomialFunctions.identity( 256 );
        BitVector input = BitUtils.randomVector( 256 );
        
        Assert.assertEquals( input , f.apply( input ) );
@@ -132,12 +139,46 @@ public class PolynomialFunctionTests {
    
    @Test
    public void productTest() {
-       SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction(256, 256);
-       SimplePolynomialFunction rhs = PolynomialFunctions.randomFunction(256, 256);
+       SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction(256, 256, 10, 2);
+       SimplePolynomialFunction rhs = PolynomialFunctions.randomFunction(256, 256, 10, 2);
        BitVector val = BitUtils.randomVector( 256 ) ;
        BitVector expected = lhs.apply( val );
        expected.and( rhs.apply( val ) );
        Assert.assertEquals( expected, lhs.and( rhs ).apply( val ) );
+   }
+   
+   @Test 
+   public void testRowProduct() {
+       SimplePolynomialFunction f = PolynomialFunctions.randomManyToOneLinearCombination( 256 );
+       Monomial[] monomials = f.getMonomials();
+       List<BitVector> contribs = Lists.newArrayList( f.getContributions() );
+       Map<Monomial,Integer> indices = Maps.newHashMapWithExpectedSize( f.getMonomials().length );
+       
+       for( int i = 0; i < monomials.length ; ++i ) {
+           indices.put( monomials[ i ] , i );
+       }
+       
+       EnhancedBitMatrix.transpose( contribs , f.getContributions().length );
+       
+       BitVector lhs = contribs.get( 110 );
+       BitVector rhs = contribs.get( 100 );
+       List<Monomial> mList = Lists.newArrayList( monomials );
+       BitVector p = PolynomialFunctionGF2.product( lhs , rhs , mList , indices );
+       
+       for( int i = 0 ; i < lhs.size() ; ++i ) {
+           if( lhs.get( i ) ) {
+               for( int j = 0 ; j < rhs.size(); j++ ) {
+                   if( rhs.get( j ) ) {
+                       Assert.assertNotNull( indices.get( mList.get( i ).product( mList.get( j ) ) ) );
+                   }
+                   
+                   if( i!=j && lhs.get( i ) && rhs.get( j ) && lhs.get( j ) && rhs.get( i ) ) {
+                       Assert.assertFalse( p.get( indices.get( mList.get( i ).product( mList.get( j ) ) ) ) );
+                   }
+               }
+           }
+       }
+       
    }
    
    @Test 
@@ -163,15 +204,129 @@ public class PolynomialFunctionTests {
        Assert.assertEquals( new Monomial( 256 ).chainSet( 0 ).chainSet( 1 ) , mostFrequent );
    }
    
+   //@Test 
+   public void benchmarkAllPossibleProduct() {
+       final int ROUNDS = 2;
+       final int INPUT_LENGTH = 256;
+       final int OUTPUT_LENGTH = 256;
+       long totalNanos = 0,
+            start = 0,
+            stop = 0;
+       double mu=0D, sigma=0D;
+       long[] timings = new long[ ROUNDS ];
+       
+       for( int i = 0 ; i < timings.length ; ++i ) {
+           SimplePolynomialFunction mvq = PolynomialFunctions.denseRandomMultivariateQuadratic( INPUT_LENGTH, OUTPUT_LENGTH );
+           Map<Monomial, Set<Monomial>> memoizedComputations = PolynomialFunctionGF2.initializeMemoMap( INPUT_LENGTH , mvq.getMonomials() , mvq.getContributions() );
+           start = System.nanoTime();
+           Map<Monomial, List<Monomial>> possibleProducts = PolynomialFunctionGF2.allPossibleProduct( memoizedComputations.keySet() ); 
+           stop = System.nanoTime();
+           timings[ i ] = stop - start;
+           totalNanos += timings[ i ];
+       }
+       
+       mu = Double.valueOf( TimeUnit.MILLISECONDS.convert( totalNanos , TimeUnit.NANOSECONDS ) ) / ROUNDS;
+       for( long timing : timings ) {
+           double d = TimeUnit.MILLISECONDS.convert( timing , TimeUnit.NANOSECONDS )  - mu;
+           sigma += d*d;
+       }
+       sigma /= (ROUNDS-1);
+       sigma = Math.sqrt( sigma );
+       
+       logger.info( "Sequential mu = {} ms, sigma = {} ms, bits = {}" , mu , sigma , INPUT_LENGTH );
+       totalNanos = 0;
+       for( int i = 0 ; i < timings.length ; ++i ) {
+           SimplePolynomialFunction mvq = PolynomialFunctions.denseRandomMultivariateQuadratic( INPUT_LENGTH, OUTPUT_LENGTH );
+           Map<Monomial, Set<Monomial>> memoizedComputations = PolynomialFunctionGF2.initializeMemoMap( INPUT_LENGTH , mvq.getMonomials() , mvq.getContributions() );
+           start = System.nanoTime();
+//           Map<Monomial, List<Monomial>> possibleProducts = PolynomialFunctionGF2.allPossibleProductParallelEx2( memoizedComputations.keySet() , memoizedComputations.keySet() ,Monomials.deepCloneToImmutableSet( mvq.getMonomials() ) , 2); 
+           stop = System.nanoTime();
+           timings[ i ] = stop - start;
+           totalNanos += timings[ i ];
+       }
+       
+       mu = Double.valueOf( TimeUnit.MILLISECONDS.convert( totalNanos , TimeUnit.NANOSECONDS ) ) / ROUNDS;
+       for( long timing : timings ) {
+           double d = TimeUnit.MILLISECONDS.convert( timing , TimeUnit.NANOSECONDS )  - mu;
+           sigma += d*d;
+       }
+       sigma /= (ROUNDS-1);
+       sigma = Math.sqrt( sigma );
+       
+       logger.info( "Parallel mu = {} ms, sigma = {} ms, bits = {}" , mu , sigma , INPUT_LENGTH );
+       
+   }
+   
+   //@Test 
+   public void benchmarkMostFrequentFactor() {
+       final int ROUNDS = 100;
+       final int INPUT_LENGTH = 128;
+       final int OUTPUT_LENGTH = 128;
+       long totalNanos = 0,
+            start = 0,
+            stop = 0;
+       double mu=0D, sigma=0D;
+       long[] timings = new long[ ROUNDS ];
+       
+       for( int i = 0 ; i < timings.length ; ++i ) {
+           SimplePolynomialFunction mvq = PolynomialFunctions.denseRandomMultivariateQuadratic( INPUT_LENGTH, OUTPUT_LENGTH );
+           Map<Monomial, Set<Monomial>> memoizedComputations = PolynomialFunctionGF2.initializeMemoMap( INPUT_LENGTH , mvq.getMonomials() , mvq.getContributions() );
+           Map<Monomial, List<Monomial>> possibleProducts = PolynomialFunctionGF2.allPossibleProduct( memoizedComputations.keySet() ); 
+           start = System.nanoTime();
+           Monomial mostFreq = PolynomialFunctionGF2.mostFrequentFactor( mvq.getMonomials() , possibleProducts.keySet() , memoizedComputations.keySet() );
+           stop = System.nanoTime();
+           timings[ i ] = stop - start;
+           totalNanos += timings[ i ];
+       }
+       
+       mu = Double.valueOf( TimeUnit.MILLISECONDS.convert( totalNanos , TimeUnit.NANOSECONDS ) ) / ROUNDS;
+       for( long timing : timings ) {
+           double d = TimeUnit.MILLISECONDS.convert( timing , TimeUnit.NANOSECONDS )  - mu;
+           sigma += d*d;
+       }
+       sigma /= (ROUNDS-1);
+       sigma = Math.sqrt( sigma );
+       
+       logger.info( "Sequential mu = {} ms, sigma = {} ms, bits = {}" , mu , sigma , INPUT_LENGTH );
+       
+       totalNanos = 0;
+       for( int i = 0 ; i < timings.length ; ++i ) {
+           SimplePolynomialFunction mvq = PolynomialFunctions.denseRandomMultivariateQuadratic( INPUT_LENGTH, OUTPUT_LENGTH );
+           Set<Monomial> remaining = Monomials.deepCloneToImmutableSet( mvq.getMonomials() );
+           Map<Monomial, Set<Monomial>> memoizedComputations = PolynomialFunctionGF2.initializeMemoMap( INPUT_LENGTH , mvq.getMonomials() , mvq.getContributions() );
+//           Map<Monomial, List<Monomial>> possibleProducts = PolynomialFunctionGF2.allPossibleProductParallelEx2( memoizedComputations.keySet() , memoizedComputations.keySet() , remaining , 2); 
+           start = System.nanoTime();
+//           Monomial mostFreq = PolynomialFunctionGF2.mostFrequentFactorParallel( possibleProducts.keySet() , remaining );
+           stop = System.nanoTime();
+           timings[ i ] = stop - start;
+           totalNanos += timings[ i ];
+       }
+       
+       mu = Double.valueOf( TimeUnit.MILLISECONDS.convert( totalNanos , TimeUnit.NANOSECONDS ) ) / ROUNDS;
+       for( long timing : timings ) {
+           double d = TimeUnit.MILLISECONDS.convert( timing , TimeUnit.NANOSECONDS )  - mu;
+           sigma += d*d;
+       }
+       sigma /= (ROUNDS-1);
+       sigma = Math.sqrt( sigma );
+       
+       logger.info( "Parallel mu = {} ms, sigma = {} ms, bits = {}" , mu , sigma , INPUT_LENGTH );
+       
+   }
+   
    @Test
    public void composeTest() {
-	   final int BIT_SIZE = 256;
-       SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(BIT_SIZE, BIT_SIZE, 10, 2);
-       SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(BIT_SIZE, BIT_SIZE, 10, 2);
+	   final int BIT_SIZE = 128;
+//       SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(BIT_SIZE, BIT_SIZE, 10, 3);
+//       SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(BIT_SIZE, BIT_SIZE, 10, 2);
+	   SimplePolynomialFunction outer = PolynomialFunctions.denseRandomMultivariateQuadratic( BIT_SIZE, BIT_SIZE );
+	   SimplePolynomialFunction inner = PolynomialFunctions.randomManyToOneLinearCombination( BIT_SIZE );
+       long start = System.nanoTime();
        SimplePolynomialFunction composed = outer.compose( inner );
-       
+       long millis = TimeUnit.MILLISECONDS.convert( System.nanoTime() - start , TimeUnit.NANOSECONDS ); 
+       logger.info( "Compose took {} ms." , millis );
        for( int i = 0 ; i < 25 ; ++i ) {
-           BitVector randomInput = BitUtils.randomVector( BIT_SIZE );
+           BitVector randomInput = BitUtils.randomVector( BIT_SIZE << 1);
            BitVector innerResult = inner.apply( randomInput );
            BitVector outerResult = outer.apply( innerResult );
            BitVector composedResult = composed.apply( randomInput );
@@ -205,6 +360,25 @@ public class PolynomialFunctionTests {
    }
    
    @Test
+   public void testConcatenateOutputs() {
+       int inputLength = 256;
+       int outputLength = 128;
+       SimplePolynomialFunction lhs = PolynomialFunctions.denseRandomMultivariateQuadratic( inputLength, outputLength );
+       SimplePolynomialFunction rhs = PolynomialFunctions.denseRandomMultivariateQuadratic( inputLength, outputLength );
+       
+       SimplePolynomialFunction concatenated = PolynomialFunctions.concatenate( lhs , rhs);
+       
+       BitVector input = BitUtils.randomVector( inputLength );
+       
+       BitVector concatenatedResult = concatenated.apply( input );
+       BitVector lhsResult = lhs.apply( input );
+       BitVector rhsResult = rhs.apply( input );
+       BitVector expected = FunctionUtils.concatenate( lhsResult , rhsResult );
+       
+       Assert.assertEquals( expected , concatenatedResult ); 
+   }
+   
+   @Test
    public void testToFromString() {
        SimplePolynomialFunction f = PolynomialFunctions.randomFunction( 256 , 128 );
        String fString = f.toString();
@@ -229,5 +403,138 @@ public class PolynomialFunctionTests {
        result.xor( h.apply(input) );
        
        Assert.assertEquals( expected , result );
+   }
+   
+   @Test 
+   public void testPipelineStage() {
+       final int inputLength = 128;
+       final int outputLength = 128;
+       
+       long start = System.currentTimeMillis();
+       SimplePolynomialFunction f = PolynomialFunctions.denseRandomMultivariateQuadratic( inputLength , outputLength );
+       SimplePolynomialFunction inner = 
+                   PolynomialFunctions
+                       .randomManyToOneLinearCombination( inputLength  );
+       PolynomialFunctionPipelineStage stage = PolynomialFunctionPipelineStage.build( f , inner );
+       long stop = System.currentTimeMillis();
+       long millis = stop - start;
+       logger.info( "Non-linear pipeline stage generation took {} ms" , millis );
+
+       BitVector input = BitUtils.randomVector( inputLength<<1 );
+       BitVector inputLower = stage.getLower().apply( inner.apply( input ) );
+       BitVector inputUpper = stage.getUpper().apply( inner.apply( input ) );        
+       BitVector expected = f.apply( inner.apply( input ) );
+       
+       BitVector actual = 
+               stage.getC1().multiply( inputLower );
+       actual.xor( stage.getC2().multiply( inputUpper ) );
+       Assert.assertEquals( expected, actual );
+       
+       BitVector concatenatedInput = FunctionUtils.concatenate( inputLower, inputUpper );
+       
+       Assert.assertEquals( inputLower, PolynomialFunctions.lowerIdentity( inputLength << 1 ).apply( concatenatedInput ) );
+       Assert.assertEquals( inputUpper, PolynomialFunctions.upperIdentity( inputLength << 1 ).apply( concatenatedInput ) );
+       
+       BitVector combinationActual = stage.getCombination().apply( concatenatedInput );
+       Assert.assertEquals( expected, combinationActual );
+        
+       BitVector overallActual = stage.getCombination().apply( stage.getStep().apply( input ) );
+       Assert.assertEquals( concatenatedInput , stage.getStep().apply( input ) );   
+       Assert.assertEquals( expected , overallActual );
+   }
+   
+   @Test
+   public void testCombination() {
+       int inputLength = 128;
+       BitVector inputLower = BitUtils.randomVector( inputLength );
+       BitVector inputUpper = BitUtils.randomVector( inputLength );
+       
+       EnhancedBitMatrix c1 = EnhancedBitMatrix.randomInvertibleMatrix( inputLength );
+       EnhancedBitMatrix c2 = EnhancedBitMatrix.randomInvertibleMatrix( inputLength );
+       
+       SimplePolynomialFunction combination = PolynomialFunctions.linearCombination( c1 , c2 );
+       
+       BitVector expected = c1.multiply( inputLower );
+       expected.xor( c2.multiply( inputUpper ) );
+       
+       BitVector concatenatedInput = FunctionUtils.concatenate( inputLower, inputUpper );
+       
+       Assert.assertEquals( inputLower, PolynomialFunctions.lowerIdentity( inputLength << 1 ).apply( concatenatedInput ) );
+       Assert.assertEquals( inputUpper, PolynomialFunctions.upperIdentity( inputLength << 1 ).apply( concatenatedInput ) );
+       
+       SimplePolynomialFunction f = c1.multiply( PolynomialFunctions.lowerIdentity( inputLength << 1 ) );
+       SimplePolynomialFunction g = c2.multiply( PolynomialFunctions.upperIdentity( inputLength << 1 ) );
+       
+       Assert.assertEquals( c1.multiply( inputLower ) , f.apply( concatenatedInput ) );
+       Assert.assertEquals( c2.multiply( inputUpper ) , g.apply( concatenatedInput ) );
+       
+       SimplePolynomialFunction fg = f.xor( g );
+       Assert.assertEquals( expected, fg.apply( concatenatedInput ) ); 
+       Assert.assertEquals( expected , combination.apply( concatenatedInput ) );
+   }
+   
+   @Test
+   public void testUnitPipeline() {
+       final int inputLength = 128;
+       final int outputLength = 128;
+       int totalMillis = 0;
+       long start = System.currentTimeMillis();
+
+       SimplePolynomialFunction[] functions = 
+               PolynomialFunctions
+                   .arrayOfRandomMultivariateQuadratics( inputLength , outputLength , 1 );
+
+       SimplePolynomialFunction inner =
+               PolynomialFunctions
+                   .randomManyToOneLinearCombination( inputLength  );
+
+       Pair<SimplePolynomialFunction, SimplePolynomialFunction[]> pipelineDescription = PolynomialFunctions.buildNonlinearPipeline( inner , functions );
+       
+       SimplePolynomialFunction fg = pipelineDescription.getRight()[0];
+       
+       long stop = System.currentTimeMillis();
+       long millis = stop - start;
+       logger.info( "Non-linear unit pipeline test took {} ms" , millis );
+       totalMillis+=millis;
+
+       BitVector input = BitUtils.randomVector( inputLength << 1 );
+       BitVector expected = functions[0].apply( inner.apply( input ) );
+       BitVector actual = pipelineDescription.getLeft().apply( fg.apply( input ) );
+       Assert.assertEquals( expected, actual );
+       logger.info( "Non-linear unit pipeline test took a total of {} ms" , totalMillis );
+   }
+   
+   @Test
+   public void testNonlinearPipeline() {
+       final int inputLength = 128;
+       final int outputLength = 128;
+       int totalMillis = 0;
+       for(int i = 1; i < 5; ++i) {
+           long start = System.currentTimeMillis();
+           
+           SimplePolynomialFunction[] functions = 
+               PolynomialFunctions
+                   .arrayOfRandomMultivariateQuadratics( inputLength , outputLength , 1 );
+
+           SimplePolynomialFunction inner =
+                   PolynomialFunctions
+                       .randomManyToOneLinearCombination( inputLength  );
+
+           Pair<SimplePolynomialFunction, SimplePolynomialFunction[]> pipelineDescription = PolynomialFunctions.buildNonlinearPipeline( inner , functions );
+
+           CompoundPolynomialFunction originalPipeline = CompoundPolynomialFunctions.fromFunctions( functions );
+           CompoundPolynomialFunction newPipeline = CompoundPolynomialFunctions.fromFunctions( pipelineDescription.getRight() );
+
+           long stop = System.currentTimeMillis();
+           long millis = stop - start;
+           logger.info( "Non-linear pipeline test of length {} took {} ms" , i , millis );
+           totalMillis+=millis;
+           
+           BitVector input = BitUtils.randomVector( inputLength << 1 );
+           BitVector expected = originalPipeline.apply( inner.apply( input ) );
+           BitVector actual = pipelineDescription.getLeft().apply( newPipeline.apply( input ) );
+           Assert.assertEquals( expected, actual );
+       }
+       logger.info( "Non-linear pipeline test took a total of {} ms" , totalMillis );
    }
 }

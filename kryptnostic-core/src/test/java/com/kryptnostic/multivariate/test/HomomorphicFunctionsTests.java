@@ -7,6 +7,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cern.colt.bitvector.BitVector;
+
 import com.kryptnostic.crypto.PrivateKey;
 import com.kryptnostic.crypto.PublicKey;
 import com.kryptnostic.crypto.fhe.HomomorphicFunctions;
@@ -15,8 +17,6 @@ import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-
-import cern.colt.bitvector.BitVector;
 
 /**
  * Tests for special polynomial function provided as building blocks for more complex functions.
@@ -61,21 +61,40 @@ public class HomomorphicFunctionsTests {
         Assert.assertEquals( hResult, result );
     }
     
-    @Test
+    @Test 
+    public void testUnaryHomomorphicAnd() {
+        SimplePolynomialFunction and = PolynomialFunctions.AND( PLAINTEXT_LENGTH );
+        long start = System.currentTimeMillis();
+        SimplePolynomialFunction homomorphicXor = privateKey.computeHomomorphicFunction( and );
+        long stop = System.currentTimeMillis();
+        logger.trace( "Homomorphic XOR generation took {} ms" , stop - start );
+        logger.trace( "Homomorphic XOR has {} monomials" , homomorphicXor.getMonomials().length );
+        
+        BitVector v = BitUtils.randomVector( CIPHERTEXT_LENGTH );
+        BitVector plaintext = BitUtils.subVector( v , 0 , PLAINTEXT_LENGTH >>> 6 );
+        
+        BitVector cv = pubKey.getEncrypter().apply( v );
+        start = System.currentTimeMillis();
+        BitVector hResult = homomorphicXor.apply( cv ); 
+        stop = System.currentTimeMillis();
+        hResult = privateKey.getDecryptor().apply( hResult );
+        logger.trace( "Homomorphic XOR evaluation took {} ms" , stop - start );
+        BitVector result = and.apply( plaintext );
+        
+        Assert.assertEquals( hResult, result );
+    }
+    
     public void testEfficientHomomorphicAnd() throws SingularMatrixException {
         if( !testNormalAnd ) {
             PolynomialFunction f = HomomorphicFunctions.EfficientAnd( privateKey );
         }
     }
     
-//    @Test 
+//    @Test
     public void testHomomorphicAnd() {
-        if( !testNormalAnd ) {
-            return;
-        }
         SimplePolynomialFunction and = PolynomialFunctions.BINARY_AND( PLAINTEXT_LENGTH );
         long start = System.currentTimeMillis();
-        SimplePolynomialFunction homomorphicAnd = HomomorphicFunctions.DirectHomomorphicAnd(privateKey); //privateKey.computeHomomorphicFunction( and );
+        SimplePolynomialFunction homomorphicAnd = HomomorphicFunctions.DirectHomomorphicAnd( privateKey );//privateKey.computeBinaryHomomorphicFunction( and );
         long stop = System.currentTimeMillis();
         logger.trace( "Homomorphic AND generation took {} ms" , stop - start );
         logger.trace( "Homomorphic AND has {} monomials" , homomorphicAnd.getMonomials().length );

@@ -1,18 +1,23 @@
 package com.kryptnostic.crypto.fhe;
 
-import java.util.Arrays;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.kryptnostic.crypto.PrivateKey;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctions;
+import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
 
 public class HomomorphicFunctions {
     private static final Logger logger = LoggerFactory.getLogger( HomomorphicFunctions.class );
@@ -58,35 +63,59 @@ public class HomomorphicFunctions {
         return PolynomialFunctions.concatenate( xor , carry ); 
     }
     
+    //TODO: Fix this to support parameterized functions
     public static SimplePolynomialFunction DirectHomomorphicAnd( PrivateKey privateKey ) {
-        SimplePolynomialFunction decryptor = privateKey.getDecryptor();
+        /*
+         * Doing a direct homomorphic and with parameterized functions requires making sure the pipelines are preserved in the shifting process.
+         * 
+         */
+        ParameterizedPolynomialFunctionGF2 decryptor = (ParameterizedPolynomialFunctionGF2) privateKey.getDecryptor();
         Monomial [] monomials = decryptor.getMonomials();
         Monomial [] lhsMonomials = new Monomial[ monomials.length ];
         Monomial [] rhsMonomials = new Monomial[ monomials.length ];
-        int inputLength = monomials[ 0 ].size() << 1;
-        int outputLength = decryptor.getContributions()[ 0 ].size();
+        int input = decryptor.getInputLength();
+        int pipeline = input+decryptor.getPipelineOutputLength();
+        
+        int lhsInput = input;
+        int rhsInput = lhsInput << 1;
+        int lhsPipeline = rhsInput + decryptor.getPipelineOutputLength();
+        int rhsPipeline = lhsPipeline + decryptor.getPipelineOutputLength();
+        
+        /*
+         *  [         decryptor inputLength        ]  ===> [                    newSize                     ]
+         *  [ input monomials | pipeline monomials ]  ===> [ lhsInput| rhsInput | lhsPipeline | rhsPipeline ] 
+         */
+        int [][] srcRanges = new int[][] {{ 0 , input } , { input, pipeline } };
+        int [][] lhsDstRanges = new int[][] {{ 0 , lhsInput } , { rhsInput, lhsPipeline } };
+        int [][] rhsDstRanges = new int[][] {{ lhsInput , rhsInput } , { lhsPipeline , rhsPipeline } };
+        
+        List<CompoundPolynomialFunction> newLhsPipeline = Lists.newArrayListWithCapacity( decryptor.getPipelines().size() );
+        List<CompoundPolynomialFunction> newRhsPipeline = Lists.newArrayListWithCapacity( decryptor.getPipelines().size() );
+        
+        for( CompoundPolynomialFunction f : decryptor.getPipelines() ) {
+            newLhsPipeline.add( ParameterizedPolynomialFunctions.extendAndMap( rhsInput , new int[][] {{ 0 , input }}  ,  new int[][] {{ 0 , lhsInput }} , f ) );
+            newRhsPipeline.add( ParameterizedPolynomialFunctions.extendAndMap( rhsInput , new int[][] {{ 0 , input }} , new int[][] {{ lhsInput , rhsInput }} , f ) );
+        }
         
         for( int i = 0 ; i < monomials.length ; ++i ) {
             Monomial m = monomials[ i ];
-            Monomial mLHS = new Monomial( Arrays.copyOf( m.elements() , m.elements().length << 1 ) , inputLength );
-            Monomial mRHS = new Monomial( inputLength );
-            long[] srcArray = m.elements();
-            long[] destArray = mRHS.elements();
-            for( int j = 0 ; j < srcArray.length ; ++j ) {
-                destArray[ j + srcArray.length ] = srcArray[ j ];
-            }
+            
+            Monomial mLHS = m.extendAndMapRanges( rhsPipeline , srcRanges , lhsDstRanges );
+            Monomial mRHS = m.extendAndMapRanges( rhsPipeline , srcRanges , rhsDstRanges );
             lhsMonomials[ i ] = mLHS;
             rhsMonomials[ i ] = mRHS;
         }
         
         
-        SimplePolynomialFunction X = new PolynomialFunctionGF2( inputLength , outputLength , lhsMonomials , decryptor.getContributions() );
-        SimplePolynomialFunction Y = new PolynomialFunctionGF2( inputLength , outputLength , rhsMonomials , decryptor.getContributions() );
+        SimplePolynomialFunction X = new PolynomialFunctionGF2( rhsInput , decryptor.getOutputLength() , lhsMonomials , decryptor.getContributions() );
+        SimplePolynomialFunction Y = new PolynomialFunctionGF2( rhsInput , decryptor.getOutputLength() , rhsMonomials , decryptor.getContributions() );
         logger.info("Generated functions for producting.");
         SimplePolynomialFunction XY = X.and( Y );
         logger.info("Computed product of decryption functons");
         
-        return privateKey.encryptBinary( XY );
+        
+        
+        return privateKey.encryptBinary( new ParameterizedPolynomialFunctionGF2( rhsInput , decryptor.getOutputLength() , XY.getMonomials() , XY.getContributions() , Iterables.concat( newLhsPipeline , newRhsPipeline ) ) );
     }
     
     public static PolynomialFunction EfficientAnd( PrivateKey privateKey ) throws SingularMatrixException {
@@ -131,10 +160,10 @@ public class HomomorphicFunctions {
         SimplePolynomialFunction Lx = L.multiply( X );
         SimplePolynomialFunction Ly = L.multiply( Y );
         
-        SimplePolynomialFunction PLL =
-                E1
-                    .multiply( Lx.and( Ly ).xor( privateKey.getF().compose( DXplusY ) ) ) 
-                    .xor( E2.multiply( DX ) );
+//        SimplePolynomialFunction PLL =
+//                E1
+//                    .multiply( Lx.and( Ly ).xor( privateKey.getF().compose( DXplusY ) ) ) 
+//                    .xor( E2.multiply( DX ) );
         
         return null;
     }

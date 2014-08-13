@@ -1,17 +1,17 @@
 package com.kryptnostic.multivariate;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+
+import cern.colt.bitvector.BitVector;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
-
-import cern.colt.bitvector.BitVector;
+import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 /**
  * Basic implementation of CompoundPolynomialFunction over GF2, consisting of a linked list of functions.
@@ -29,7 +29,7 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
         this( ImmutableList.<PolynomialFunction>of() );
     }
     
-    public CompoundPolynomialFunctionGF2( List<PolynomialFunction> functions ) {
+    public CompoundPolynomialFunctionGF2( List<? extends PolynomialFunction> functions ) {
         this.functions = Lists.newLinkedList( functions );
     }
     
@@ -115,16 +115,20 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
         }
     }
 
-    public static CompoundPolynomialFunctionGF2 fromFunctions( PolynomialFunction ... functions ) {
-        if( functions.length == 0 ) { 
-            return new CompoundPolynomialFunctionGF2();
-        } else {
-            return new CompoundPolynomialFunctionGF2( Arrays.asList( functions ) );
-        }
-    }
-
     @Override
     public List<PolynomialFunction> getFunctions() {
         return Collections.unmodifiableList( functions );
+    }
+    
+    @Override
+    public int count() {
+        return functions.size();
+    }
+
+    @Override
+    public void composeHeadDirectly(SimplePolynomialFunction inner) {
+        Preconditions.checkArgument( functions.getFirst() instanceof SimplePolynomialFunction , "Cannot compose function that isn't of type SimplePolynomialFunction." );
+        SimplePolynomialFunction outer = (SimplePolynomialFunction) functions.getFirst();
+        functions.set( 0 , outer.compose( inner ) );
     }
 }
