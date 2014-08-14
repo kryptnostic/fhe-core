@@ -88,7 +88,7 @@ dependencies {
      * GUAVA 
      * EventBus, FluentIterables, ListenableFutures and more
      */
-    compile 'com.google.guava:guava:15.0'
+    compile 'com.google.guava:guava:17.0'
 
     /*
      JODA TIME - A better datetime class.
