@@ -581,7 +581,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
      */
     @Override
     public SimplePolynomialFunction compose( SimplePolynomialFunction inner ) {
-        long startTime = System.currentTimeMillis();
     	//Verify the functions are composable
         Preconditions.checkArgument( 
                 inputLength == inner.getOutputLength() ,
@@ -609,8 +608,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             innerRows[ i ] = contributionRows.getRow( i );
         }
   
-        long expandStart = System.currentTimeMillis();
-        
         // Expand the outer monomials concurrently
         List< ListenableFuture<BitVector> > futures = Lists.newArrayList();
         for (Monomial m : monomials) {
@@ -629,9 +626,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
 				e.printStackTrace();
 			}
         }
-        
-        long expandEnd = System.currentTimeMillis();
-        System.out.println("Expansion time:" + (expandEnd - expandStart));
         
         //Now lets fix the contributions so they're all the same length.
         for( int i = 0 ; i < results.length ; ++i ) {
@@ -696,8 +690,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             return new ParameterizedPolynomialFunctionGF2( inner.getInputLength() , outputLength , filteredMonomials.toArray( new Monomial[0] ),  filteredContributions.toArray( new BitVector[0] ) , ppf.getPipelines() );
         }
         
-        long endTime = System.currentTimeMillis();
-        System.out.println("Total time:" + (endTime - startTime));
         return new PolynomialFunctionGF2( 
                     inner.getInputLength(), 
                     outputLength, 
