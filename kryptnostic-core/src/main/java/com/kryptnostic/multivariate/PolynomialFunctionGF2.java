@@ -425,9 +425,9 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     }
     
     /**
-     * Given BitVector representation of contributions of two polynomials using the same
-     * list of monomials, computes the product, updating the list of monomials, the map
-     * of monomials and creating a new contribution 
+     * Given contributions of outer and inner polynomials as well as the
+     * list of inner monomials, computes the product, updating the list of monomials, the map
+     * of monomials and returning the resultant contributions. 
      * @param lhs
      * @param rhs
      * @param monomials
@@ -440,9 +440,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             if( lhs.get( i ) ) {
                 for( int j = 0 ; j < rhs.size(); ++j ) {
                     if( rhs.get( j ) ) {
-                    	
                         Monomial p = monomials.get( i ).product( monomials.get( j ) );
-                        
                         Integer indexObj = indices.get(p);
                         int index;
                         if( indexObj == null ) {
