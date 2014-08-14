@@ -3,6 +3,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -152,7 +153,7 @@ public class PolynomialFunctionTests {
        SimplePolynomialFunction f = PolynomialFunctions.randomManyToOneLinearCombination( 256 );
        Monomial[] monomials = f.getMonomials();
        List<BitVector> contribs = Lists.newArrayList( f.getContributions() );
-       Map<Monomial,Integer> indices = Maps.newHashMapWithExpectedSize( f.getMonomials().length );
+       ConcurrentMap<Monomial,Integer> indices = Maps.newConcurrentMap();
        
        for( int i = 0; i < monomials.length ; ++i ) {
            indices.put( monomials[ i ] , i );
@@ -163,7 +164,8 @@ public class PolynomialFunctionTests {
        BitVector lhs = contribs.get( 110 );
        BitVector rhs = contribs.get( 100 );
        List<Monomial> mList = Lists.newArrayList( monomials );
-       BitVector p = PolynomialFunctionGF2.product( lhs , rhs , mList , indices );
+       PolynomialFunctionGF2 function = new PolynomialFunctionGF2(0, 0, null, null);
+       BitVector p = function.product( lhs , rhs , mList , indices );
        
        for( int i = 0 ; i < lhs.size() ; ++i ) {
            if( lhs.get( i ) ) {

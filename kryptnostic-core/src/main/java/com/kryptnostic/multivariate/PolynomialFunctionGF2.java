@@ -5,8 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -25,6 +27,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
@@ -47,9 +50,10 @@ import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunc
  * @author Matthew Tamayo-Rios
  */
 public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 implements SimplePolynomialFunction {
-    private static final int CONCURRENCY_LEVEL = 8;
     private static final Logger logger = LoggerFactory.getLogger( PolynomialFunctionGF2.class );
-    private static final ListeningExecutorService executor = MoreExecutors.listeningDecorator( Executors.newFixedThreadPool( 8 ) );
+    private static final int CONCURRENCY_LEVEL = 8; 
+    private static final ListeningExecutorService executor = MoreExecutors.listeningDecorator( Executors.newFixedThreadPool( CONCURRENCY_LEVEL ) );
+    private final Lock productLock = new ReentrantLock();
     private static final Predicate<BitVector> notNilContributionPredicate = new Predicate<BitVector>() {
         @Override
         public boolean apply(BitVector v) {
@@ -184,146 +188,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     public BitVector apply( BitVector lhs , BitVector rhs ) {
         return apply( FunctionUtils.concatenate( lhs , rhs) );
     }
-    
-    @Override
-    public SimplePolynomialFunction compose( SimplePolynomialFunction inner ) {
-        long startTime = System.currentTimeMillis();
-    	//Verify the functions are composable
-        Preconditions.checkArgument( 
-                inputLength == inner.getOutputLength() ,
-                "Input length of outer function must match output length of inner function it is being composed with"
-                );
-        Optional<Integer> constantOuterMonomialIndex = Optional.absent();
-        EnhancedBitMatrix contributionRows = new EnhancedBitMatrix( Arrays.asList( inner.getContributions() ) );
-        EnhancedBitMatrix.transpose( contributionRows );
-        
-        List<Monomial> mList = Lists.newArrayList( inner.getMonomials() );
-        Map<Monomial,Integer> indices = Maps.newHashMapWithExpectedSize( mList.size()*(mList.size() - 1 ) / 2 );
-        Map<Monomial,Integer> indicesResults = Maps.newHashMapWithExpectedSize( mList.size()*(mList.size() - 1 ) / 2 );
-        for( int i = 0 ; i < mList.size() ; ++i ) {
-            indices.put( mList.get( i ) , i );
-        }
-        
-        Optional<Integer> constantInnerMonomialIndex = Optional.fromNullable( indices.get( Monomial.constantMonomial( inner.getInputLength() ) ) );
-
-        Monomial [] linearMonomials = new Monomial[ inputLength ];
-        BitVector [] innerRows = new BitVector[ inputLength ];
-        BitVector[] results = new BitVector[ monomials.length ];
-        
-        for( int i = 0 ; i < inputLength ; ++i ) {
-            Monomial linearMonomial = Monomial.linearMonomial( inputLength , i );
-            linearMonomials[ i ] = linearMonomial;
-            innerRows[ i ] = contributionRows.getRow( i );
-        }
-        for( int i = 0 ; i < monomials.length ; ++i ) {
-            indicesResults.put( monomials[ i ] , i );
-        }
-  
-        long expandStart = System.currentTimeMillis();
-        
-        for( int k = 0; k < monomials.length ; ++k ) {
-            Monomial m = monomials[ k ];
-            BitVector lhs = null; 
-            if( m.isZero() ) {
-                lhs = new BitVector( mList.size() );
-            } else {
-                for( int i = Long.numberOfTrailingZeros( m.elements()[0] ); i < inputLength ; ++i ) {
-                    if( m.get( i ) ) {  
-                        if( lhs == null ) {
-                            lhs = innerRows[ i ];
-                        } else  {
-                            lhs = product( lhs , innerRows[ i ] , mList , indices );
-                        }
-                    }
-                }
-            } 
-            results[ k ] = lhs;
-        }
-        
-        long expandEnd = System.currentTimeMillis();
-        System.out.println("Expansion time:" + (expandEnd - expandStart));
-        
-        //Now lets fix the contributions so they're all the same length.
-        for( int i = 0 ; i < results.length ; ++i ) {
-            BitVector contribution = results [ i ];
-            if ( contribution.size() != mList.size() ) {
-                contribution.setSize(  mList.size() );
-            }
-        }
-        
-        /*
-         * Each monomial that has been computed in terms of the inner function contributes a set of monomials 
-         * to each row of output of the output, i.e proudctCache.get( monomials[ i ] )
-         * 
-         * We have to compute the resulting set of contributions in terms of the new monomial basis for the polynomials ( mList )
-         */
-        
-        BitVector[] outputContributions = new BitVector[ outputLength ];
-        
-        for( int row = 0; row < outputLength ; ++row ) {
-            outputContributions[ row ] = new BitVector( mList.size() );
-            for( int i = 0 ; i < contributions.length; ++i ) {
-                if( contributions[ i ].get( row ) ) {
-                    if( monomials[ i ].isZero() ) {
-                        constantOuterMonomialIndex = Optional.of( i );
-                    } else {
-                        outputContributions[ row ].xor( results[ i ] );
-                    } 
-                }
-            }
-        }
-        
-        /*
-         * After we have computed the contributions in terms of the new monomial basis we transform from row 
-         * to column form of contributions to match up with each monomial in mList
-         */
-        List<BitVector> unfilteredContributions = Lists.newArrayList( outputContributions );
-        EnhancedBitMatrix.transpose( unfilteredContributions , mList.size() );
-
-        /*
-         * If the outer monomial has constant terms and the unfiltered contributions have 
-         * a constant term, than we xor them together to get the overall constant contributions.
-         */
-        
-        if( constantOuterMonomialIndex.isPresent() ){
-            if( constantInnerMonomialIndex.isPresent() ) {
-                unfilteredContributions.get( constantInnerMonomialIndex.get() ).xor( contributions[ constantOuterMonomialIndex.get() ] );
-            } else {
-                //Don't use the outer monomial directly since it maybe the wrong size.
-                //mList.add( monomials[ constantOuterMonomialIndex.get() ] );
-                mList.add( Monomial.constantMonomial( inner.getInputLength() ) ); 
-                unfilteredContributions.add( contributions[ constantOuterMonomialIndex.get() ] );
-            }
-        }
-        
-        /*
-         * Now we filter out any monomials, which have nil contributions.
-         */
-        
-        List<BitVector> filteredContributions = Lists.newArrayListWithCapacity( unfilteredContributions.size() );
-        List<BitVector> filteredMonomials = Lists.newArrayListWithCapacity( mList.size() );
-        for( int i = 0; i < mList.size() ; ++i ) {
-            BitVector contrib = unfilteredContributions.get( i );
-            if( notNilContributionPredicate.apply( contrib ) ) {
-                filteredContributions.add( contrib  );
-                filteredMonomials.add( mList.get( i ) );
-            } 
-        }
-        
-        if( inner.isParameterized() ) {
-            ParameterizedPolynomialFunctionGF2 ppf = (ParameterizedPolynomialFunctionGF2) inner;
-            return new ParameterizedPolynomialFunctionGF2( inner.getInputLength() , outputLength , filteredMonomials.toArray( new Monomial[0] ),  filteredContributions.toArray( new BitVector[0] ) , ppf.getPipelines() );
-        }
-        long endTime = System.currentTimeMillis();
-        System.out.println("Total time:" + (endTime - startTime));
-        return new PolynomialFunctionGF2( 
-                    inner.getInputLength(), 
-                    outputLength, 
-                    filteredMonomials.toArray( new Monomial[0] ) ,
-                    filteredContributions.toArray( new BitVector[0] )
-                    );       
-    }
-    
 
     @Override
     public SimplePolynomialFunction compose( SimplePolynomialFunction lhs, SimplePolynomialFunction rhs) {
@@ -570,24 +434,30 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
      * @param indices
      * @return
      */
-    public static BitVector product( BitVector lhs, BitVector rhs , List<Monomial> monomials , Map<Monomial,Integer> indices ) {
+    public BitVector product( BitVector lhs, BitVector rhs , List<Monomial> monomials , ConcurrentMap<Monomial,Integer> indices ) {
         BitVector result = new BitVector( monomials.size() );
         for(int i = 0; i <  lhs.size(); ++i ) {
             if( lhs.get( i ) ) {
                 for( int j = 0 ; j < rhs.size(); ++j ) {
                     if( rhs.get( j ) ) {
+                    	
                         Monomial p = monomials.get( i ).product( monomials.get( j ) );
-                        Integer indexObj = indices.get( p );
-                        int index = 0;
+                        
+                        Integer indexObj = indices.get(p);
+                        int index;
                         if( indexObj == null ) {
-                            index = monomials.size();
+                        	productLock.lock();
+                        	index = monomials.size();
                             monomials.add( p );
-                            int newsize = monomials.size();
-                            
-                            result.setSize( newsize );
-                            indices.put( p , index );
+                            indices.put(p, index);
+                            productLock.unlock();
+                            result.setSize( index );
                         } else {
-                            index = indexObj;
+                        	index = indexObj;
+                        }
+                        
+                        if (monomials.size() >= result.size()) {
+                        	result.setSize( monomials.size() );
                         }
                         
                         if( result.get( index ) ) {
@@ -703,5 +573,206 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     @Override
     public boolean isParameterized() {
         return false;
+    }
+    
+    /**
+     * Composes an outer function with the inner function.
+     * 
+     */
+    @Override
+    public SimplePolynomialFunction compose( SimplePolynomialFunction inner ) {
+        long startTime = System.currentTimeMillis();
+    	//Verify the functions are composable
+        Preconditions.checkArgument( 
+                inputLength == inner.getOutputLength() ,
+                "Input length of outer function must match output length of inner function it is being composed with"
+                );
+        
+        
+        Optional<Integer> constantOuterMonomialIndex = Optional.absent();
+        EnhancedBitMatrix contributionRows = new EnhancedBitMatrix( Arrays.asList( inner.getContributions() ) );
+        EnhancedBitMatrix.transpose( contributionRows );
+        
+        List<Monomial> mList = Lists.newArrayList( inner.getMonomials() );
+        ConcurrentMap<Monomial,Integer> indices = Maps.newConcurrentMap();
+        
+        for( int i = 0 ; i < mList.size() ; ++i ) {
+            indices.put( mList.get( i ) , i );
+        }
+        
+        Optional<Integer> constantInnerMonomialIndex = Optional.fromNullable( indices.get( Monomial.constantMonomial( inner.getInputLength() ) ) );
+    
+        BitVector [] innerRows = new BitVector[ inputLength ];
+        BitVector[] results = new BitVector[ monomials.length ];
+        
+        for( int i = 0 ; i < inputLength ; ++i ) {
+            innerRows[ i ] = contributionRows.getRow( i );
+        }
+  
+        long expandStart = System.currentTimeMillis();
+        
+        // Expand the outer monomials concurrently
+        List< ListenableFuture<BitVector> > futures = Lists.newArrayList();
+        for (Monomial m : monomials) {
+        	Callable<BitVector> expandableMonomial = new ExpandableMonomial(m, innerRows, mList, indices);
+        	ListenableFuture< BitVector> future = executor.submit( expandableMonomial );
+        	futures.add(future);
+        }
+        
+        // extract all of the contributions into an array
+        for (int i = 0; i < monomials.length; i++) {
+        	try {
+				results[i] = futures.get(i).get();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+			}
+        }
+        
+        long expandEnd = System.currentTimeMillis();
+        System.out.println("Expansion time:" + (expandEnd - expandStart));
+        
+        //Now lets fix the contributions so they're all the same length.
+        for( int i = 0 ; i < results.length ; ++i ) {
+            BitVector contribution = results [ i ];
+            if ( contribution.size() != mList.size() ) {
+                contribution.setSize(  mList.size() );
+            }
+        }
+        
+        /*
+         * Each monomial that has been computed in terms of the inner function contributes a set of monomials 
+         * to each row of output of the output, i.e proudctCache.get( monomials[ i ] )
+         * 
+         * We have to compute the resulting set of contributions in terms of the new monomial basis for the polynomials ( mList )
+         */
+        
+        BitVector[] outputContributions = new BitVector[ outputLength ];
+        
+        for( int row = 0; row < outputLength ; ++row ) {
+            outputContributions[ row ] = new BitVector( mList.size() );
+            for( int i = 0 ; i < contributions.length; ++i ) {
+                if( contributions[ i ].get( row ) ) {
+                    if( monomials[ i ].isZero() ) {
+                        constantOuterMonomialIndex = Optional.of( i );
+                    } else {
+                        outputContributions[ row ].xor( results[ i ] );
+                    } 
+                }
+            }
+        }
+        
+        /*
+         * After we have computed the contributions in terms of the new monomial basis we transform from row 
+         * to column form of contributions to match up with each monomial in mList
+         */
+        List<BitVector> unfilteredContributions = Lists.newArrayList( outputContributions );
+        EnhancedBitMatrix.transpose( unfilteredContributions , mList.size() );
+
+        /*
+         * If the outer monomial has constant terms and the unfiltered contributions have 
+         * a constant term, than we xor them together to get the overall constant contributions.
+         */
+        
+        if( constantOuterMonomialIndex.isPresent() ){
+            if( constantInnerMonomialIndex.isPresent() ) {
+                unfilteredContributions.get( constantInnerMonomialIndex.get() ).xor( contributions[ constantOuterMonomialIndex.get() ] );
+            } else {
+                //Don't use the outer monomial directly since it maybe the wrong size.
+                //mList.add( monomials[ constantOuterMonomialIndex.get() ] );
+                mList.add( Monomial.constantMonomial( inner.getInputLength() ) ); 
+                unfilteredContributions.add( contributions[ constantOuterMonomialIndex.get() ] );
+            }
+        }
+        
+        BitVectorFunction filteredFunction = filterFunction(unfilteredContributions, mList);
+        List<BitVector> filteredContributions = filteredFunction.contributions;
+        List<BitVector> filteredMonomials = filteredFunction.monomials;
+        
+        
+        if( inner.isParameterized() ) {
+            ParameterizedPolynomialFunctionGF2 ppf = (ParameterizedPolynomialFunctionGF2) inner;
+            return new ParameterizedPolynomialFunctionGF2( inner.getInputLength() , outputLength , filteredMonomials.toArray( new Monomial[0] ),  filteredContributions.toArray( new BitVector[0] ) , ppf.getPipelines() );
+        }
+        
+        long endTime = System.currentTimeMillis();
+        System.out.println("Total time:" + (endTime - startTime));
+        return new PolynomialFunctionGF2( 
+                    inner.getInputLength(), 
+                    outputLength, 
+                    filteredMonomials.toArray( new Monomial[0] ) ,
+                    filteredContributions.toArray( new BitVector[0] )
+                    );       
+    }
+    
+    /**
+     * Filter out monomials with empty contributions.
+     * 
+     * @param unfilteredContributions
+     * @param mList
+     * @return
+     */
+    private BitVectorFunction filterFunction(
+			List<BitVector> unfilteredContributions, List<Monomial> mList) {
+    	BitVectorFunction function = new BitVectorFunction();
+    	function.contributions = Lists.newArrayListWithCapacity( unfilteredContributions.size() );
+    	function.monomials = Lists.newArrayListWithCapacity( mList.size() );
+    	
+        for( int i = 0; i < mList.size() ; ++i ) {
+            BitVector contrib = unfilteredContributions.get( i );
+            if( notNilContributionPredicate.apply( contrib ) ) {
+                function.contributions.add( contrib  );
+                function.monomials.add( mList.get( i ) );
+            } 
+        }
+		return function;
+	}
+    
+    /**
+     * Class to package results.
+     *
+     */
+	private class BitVectorFunction {
+    	public List<BitVector> contributions;
+    	public List<BitVector> monomials;
+    }
+    
+    /**
+     * Helper class to concurrently evaluate the expansion of a single outer
+     * monomial during compose.
+     *
+     */
+    private class ExpandableMonomial implements Callable<BitVector> {
+    	private final Monomial outerMonomial;
+    	private final BitVector[] innerRows;
+    	private ConcurrentMap<Monomial, Integer> indices;
+    	private List<Monomial> monomialList;
+    	private BitVector contributions;
+    	
+    	public ExpandableMonomial(Monomial outerMonomial, BitVector[] innerRows, List<Monomial> innerMonomials, ConcurrentMap<Monomial, Integer> indices) {
+    		this.outerMonomial = outerMonomial;
+    		this.innerRows = innerRows;
+    		this.indices = indices;
+    		this.monomialList = innerMonomials;
+    	}
+    	
+		@Override
+		public BitVector call() throws Exception {
+            if( outerMonomial.isZero() ) {
+                contributions = new BitVector( monomialList.size() );
+            } else {
+                for( int i = Long.numberOfTrailingZeros( outerMonomial.elements()[0] ); i < outerMonomial.size() ; ++i ) {
+                    if( outerMonomial.get( i ) ) {  
+                        if( contributions == null ) {
+                            contributions = innerRows[ i ];
+                        } else  {
+                            contributions = product( contributions , innerRows[ i ] , monomialList , indices );
+                        }
+                    }
+                }
+            }
+			return contributions;
+		}	
     }
 }
