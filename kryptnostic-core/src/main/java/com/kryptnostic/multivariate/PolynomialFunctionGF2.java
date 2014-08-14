@@ -441,27 +441,29 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                 for( int j = 0 ; j < rhs.size(); ++j ) {
                     if( rhs.get( j ) ) {
                         Monomial p = monomials.get( i ).product( monomials.get( j ) );
+                        
                         Integer indexObj = indices.get(p);
                         int index;
                         if( indexObj == null ) {
                         	productLock.lock();
                         	index = monomials.size();
-                            monomials.add( p );
-                            indices.put(p, index);
+                        	indexObj = indices.putIfAbsent(p, index);
+                        	if (indexObj == null ) {
+                        		monomials.add( p );
+                        		result.setSize( index );
+                        		indexObj = index;
+                        	}
                             productLock.unlock();
-                            result.setSize( index );
-                        } else {
-                        	index = indexObj;
+                        } 
+                        
+                        if (indexObj >= result.size()) {
+                        	result.setSize( indexObj + 1 );
                         }
                         
-                        if (monomials.size() >= result.size()) {
-                        	result.setSize( monomials.size() );
-                        }
-                        
-                        if( result.get( index ) ) {
-                            result.clear( index );
+                        if ( result.get( indexObj ) ) {
+                            result.clear( indexObj );
                         } else {
-                            result.set( index );
+                            result.set( indexObj );
                         }
                     }
                 }
