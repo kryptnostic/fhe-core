@@ -171,16 +171,43 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         return new PolynomialFunctionGF2( inputLength , outputLength, newMonomials , newContributions);
     }
     
+    /**
+     * Evaluate function for input vector.
+     */
     public BitVector apply( BitVector input ) {
-        BitVector result = new BitVector( outputLength );
-        
+    	
+    	List<ListenableFuture<BitVector>> futures = Lists.newArrayList();
         for( int i = 0 ; i < monomials.length ; ++i ) {
-            Monomial term =  monomials[ i ];
-            if( term.eval( input ) ) {
-                result.xor( contributions[ i ] );
-            }
+        	final int index = i;
+        	final BitVector callableInput = input;
+            ListenableFuture<BitVector> future = executor.submit( new Callable<BitVector> () {
+            	@Override
+        		public BitVector call() throws Exception {
+        			
+        			Monomial term =  monomials[ index ];
+                    if( term.eval( callableInput ) ) {
+                        return contributions[ index ];
+                    }
+        			return null;
+        		}
+            });
+            futures.add(future);
         }
-                
+        BitVector result = new BitVector( outputLength );
+        for (ListenableFuture<BitVector> f : futures) {
+        	BitVector contribution;
+			try {
+				contribution = f.get();
+				if (contribution != null) {
+					result.xor(contribution);
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+			}
+        }
+        
         return result;
     }
     
