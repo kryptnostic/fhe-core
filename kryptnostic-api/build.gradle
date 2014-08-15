@@ -43,9 +43,6 @@ task javadocJar(type: Jar, dependsOn:javadoc) {
   from javadoc.destinationDir
 }*/
 
-ext.sourceCompatibility=JavaVersion.VERSION_1_6
-ext.targetCompatibility=JavaVersion.VERSION_1_8
-
 repositories {
   mavenCentral()  
   mavenLocal()
@@ -161,7 +158,4 @@ dependencies {
 eclipse {
     ext.downloadSources = true
     ext.downloadJavadoc = true
-
-    ext.sourceCompatibility=JavaVersion.VERSION_1_6
-    ext.targetCompatibility=JavaVersion.VERSION_1_6
 }
