@@ -176,8 +176,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
      * Evaluate function for input vector.
      */
     public BitVector apply( final BitVector input ) {
-        long startTime = System.nanoTime();
-    	
+
     	final BitVector result = new BitVector( outputLength );
     	int blocks = (monomials.length / CONCURRENCY_LEVEL);
     	for( int fIndex = 0; fIndex < monomials.length ; fIndex+=blocks ) {
@@ -201,9 +200,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
 
     		executor.execute( r );
     	}
-        
-        long endTime = System.nanoTime();
-        System.out.println("Total time: " + (endTime - startTime) + "ns");
+
         return result;
     }
     
