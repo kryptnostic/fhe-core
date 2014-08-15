@@ -9,7 +9,8 @@ import com.kryptnostic.multivariate.gf2.Monomial;
 import cern.colt.bitvector.BitVector;
 
 public class MultivariateUtils {
-    //TODO: Re-enable seeding.
+    private MultivariateUtils() {}
+	//TODO: Re-enable seeding.
     private static final Random r = new Random( 0 );//System.currentTimeMillis() );
 
     public static Map<Monomial, BitVector> mapViewFromMonomialsAndContributions( Monomial[] monomials, BitVector[] contributions ) {
