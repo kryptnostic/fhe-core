@@ -175,7 +175,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
      * Evaluate function for input vector.
      */
     public BitVector apply( final BitVector input ) {
-    	long start = System.nanoTime();
+    	
     	int nTasks = (monomials.length % CONCURRENCY_LEVEL) > 0 ? CONCURRENCY_LEVEL + 1 : CONCURRENCY_LEVEL;
     	final CountDownLatch latch = new CountDownLatch(nTasks);
     	
@@ -188,14 +188,18 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     		Runnable r = new Runnable() {
     			@Override
     			public void run() {
+    				BitVector intermediary = new BitVector( outputLength);
     				for( int i = fromIndex; i < toIndex ; ++i ) {
 
     					Monomial term =  monomials[ i ];
     					if( term.eval( input ) ){
-    						synchronized( result ) {
-    							result.xor( contributions[ i ] );
-    						}
+    						
+    							intermediary.xor( contributions[ i ] );
+
     					}
+    				}
+    				synchronized (result) {
+    					result.xor(intermediary);
     				}
     				latch.countDown();
     			}
@@ -209,8 +213,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-    	long end = System.nanoTime();
-    	System.out.println(end - start);
+    	
         return result;
     }
     
