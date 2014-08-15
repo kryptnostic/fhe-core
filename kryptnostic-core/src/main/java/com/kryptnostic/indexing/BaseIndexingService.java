@@ -7,6 +7,7 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 import com.kryptnostic.indexing.analysis.Analyzer;
+import com.kryptnostic.indexing.analysis.TokenizingWhitespaceAnalyzer;
 import com.kryptnostic.indexing.metadata.BaseMetadatum;
 import com.kryptnostic.indexing.metadata.Metadatum;
 
@@ -14,7 +15,7 @@ public class BaseIndexingService implements IndexingService {
 	private final Set<Analyzer> analyzers;
 	
 	public BaseIndexingService() {
-		analyzers = Sets.newHashSet();
+		analyzers = Sets.<Analyzer>newHashSet( new TokenizingWhitespaceAnalyzer() );
 	}
 	
 	@Override

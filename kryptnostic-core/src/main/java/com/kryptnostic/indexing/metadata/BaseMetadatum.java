@@ -10,7 +10,7 @@ public class BaseMetadatum implements Metadatum {
 	private final List<Integer> locations;
 	
 	//TODO: Add builder 
-	public BaseMetadatum( String documentId , String token , List<Integer> locations ) {
+	public BaseMetadatum( String documentId , String token , Iterable<Integer> locations ) {
 		this.documentId = documentId;
 		this.token = token;
 		this.locations = ImmutableList.copyOf( locations );
@@ -78,5 +78,10 @@ public class BaseMetadatum implements Metadatum {
 		}
 		return true;
 	}
+
+    @Override
+    public String toString() {
+        return "BaseMetadatum [documentId=" + documentId + ", token=" + token + ", locations=" + locations + "]";
+    }
 
 }

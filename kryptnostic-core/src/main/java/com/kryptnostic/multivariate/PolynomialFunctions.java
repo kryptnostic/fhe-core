@@ -375,6 +375,18 @@ public final class PolynomialFunctions {
         return linearCombination(  EnhancedBitMatrix.randomInvertibleMatrix( inputLength ) , EnhancedBitMatrix.randomInvertibleMatrix( inputLength ) );
     }
     
+    /**
+     * This is a potentially unsafe method for generating liner combinations, where if the linear combination is known,
+     * it maybe possible to find subspace kernels that reaveal information about the remaining variables. It is fine 
+     * for the purposes for generating the hash function for indexing.
+     * @param inputLength
+     * @param outputLength
+     * @return
+     */
+    public static SimplePolynomialFunction unsafeRandomManyToOneLinearCombination( int inputLength, int outputLength ) {
+        return EnhancedBitMatrix.randomMatrix( outputLength , inputLength ).multiply( PolynomialFunctions.identity( inputLength ) );
+    }
+    
     public static SimplePolynomialFunction linearCombination( EnhancedBitMatrix c1 , EnhancedBitMatrix c2 ) {
         return c1.multiply( lowerIdentity( c1.cols() << 1) )
                 .xor( c2.multiply( upperIdentity( c2.cols() << 1 ) ) );
