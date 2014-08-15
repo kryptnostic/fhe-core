@@ -9,7 +9,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -54,7 +53,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     private static final Logger logger = LoggerFactory.getLogger( PolynomialFunctionGF2.class );
     private static final int CONCURRENCY_LEVEL = 8; 
     private static final ListeningExecutorService executor = MoreExecutors.listeningDecorator( Executors.newFixedThreadPool( CONCURRENCY_LEVEL ) );
-    private static final ExecutorCompletionService<Boolean> completionService = new ExecutorCompletionService<Boolean>(executor);
     private final Lock productLock = new ReentrantLock();
     private static final Predicate<BitVector> notNilContributionPredicate = new Predicate<BitVector>() {
         @Override
@@ -177,7 +175,10 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
      * Evaluate function for input vector.
      */
     public BitVector apply( final BitVector input ) {
-
+    	long start = System.nanoTime();
+    	int nTasks = (monomials.length % CONCURRENCY_LEVEL) > 0 ? CONCURRENCY_LEVEL + 1 : CONCURRENCY_LEVEL;
+    	final CountDownLatch latch = new CountDownLatch(nTasks);
+    	
     	final BitVector result = new BitVector( outputLength );
     	int blocks = (monomials.length / CONCURRENCY_LEVEL);
     	for( int fIndex = 0; fIndex < monomials.length ; fIndex+=blocks ) {
@@ -196,22 +197,20 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     						}
     					}
     				}
+    				latch.countDown();
     			}
     		};
     		
-    		completionService.submit(r, true);
+    		executor.execute( r );
     	}
     	
-    	// Await completion of all tasks
-    	int nTasks = (monomials.length % CONCURRENCY_LEVEL) > 0 ? CONCURRENCY_LEVEL + 1 : CONCURRENCY_LEVEL;
-    	for (int i = 0; i < nTasks; ++i) {
-    		try {
-				completionService.take();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-    	}
-    	
+    	try {
+			latch.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+    	long end = System.nanoTime();
+    	System.out.println(end - start);
         return result;
     }
     
