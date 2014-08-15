@@ -80,6 +80,14 @@ public class PolynomialFunctionTests {
         Assert.assertEquals( result.size() ,  256 );
     }
     
+    @Test
+    public void denseEvaluationTest() {
+    	SimplePolynomialFunction f = PolynomialFunctions.denseRandomMultivariateQuadratic( 256 , 256 );
+        BitVector result = f.apply( BitUtils.randomVector( 256 ) );
+        logger.trace( "Result: {}" , result );
+        Assert.assertEquals( result.size() ,  256 );
+    }
+    
    @Test
    public void identityTest() {
        SimplePolynomialFunction f = PolynomialFunctions.identity( 256 );
