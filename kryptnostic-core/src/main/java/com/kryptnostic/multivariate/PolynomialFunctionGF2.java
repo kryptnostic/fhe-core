@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -174,40 +175,32 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     /**
      * Evaluate function for input vector.
      */
-    public BitVector apply( BitVector input ) {
+    public BitVector apply( final BitVector input ) {
         long startTime = System.nanoTime();
     	
-    	List<ListenableFuture<BitVector>> futures = Lists.newArrayList();
-        for( int i = 0 ; i < monomials.length ; ++i ) {
-        	final int index = i;
-        	final BitVector callableInput = input;
-            ListenableFuture<BitVector> future = executor.submit( new Callable<BitVector> () {
-            	@Override
-        		public BitVector call() throws Exception {
-        			
-        			Monomial term =  monomials[ index ];
-                    if( term.eval( callableInput ) ) {
-                        return contributions[ index ];
-                    }
-        			return null;
-        		}
-            });
-            futures.add(future);
-        }
-        BitVector result = new BitVector( outputLength );
-        for (ListenableFuture<BitVector> f : futures) {
-        	BitVector contribution;
-			try {
-				contribution = f.get();
-				if (contribution != null) {
-					result.xor(contribution);
-				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				e.printStackTrace();
-			}
-        }
+    	final BitVector result = new BitVector( outputLength );
+    	int blocks = (monomials.length / CONCURRENCY_LEVEL);
+    	for( int fIndex = 0; fIndex < monomials.length ; fIndex+=blocks ) {
+    		final int fromIndex = fIndex;
+    		final int toIndex = Math.min( fromIndex + blocks , monomials.length );
+    		
+    		Runnable r = new Runnable() {
+    			@Override
+    			public void run() {
+    				for( int i = fromIndex; i < toIndex ; ++i ) {
+
+    					Monomial term =  monomials[ i ];
+    					if( term.eval( input ) ){
+    						synchronized( result ) {
+    							result.xor( contributions[ i ] );
+    						}
+    					}
+    				}
+    			}
+    		};
+
+    		executor.execute( r );
+    	}
         
         long endTime = System.nanoTime();
         System.out.println("Total time: " + (endTime - startTime) + "ns");
