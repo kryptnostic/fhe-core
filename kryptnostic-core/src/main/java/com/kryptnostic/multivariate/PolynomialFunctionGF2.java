@@ -9,8 +9,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -54,6 +54,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     private static final Logger logger = LoggerFactory.getLogger( PolynomialFunctionGF2.class );
     private static final int CONCURRENCY_LEVEL = 8; 
     private static final ListeningExecutorService executor = MoreExecutors.listeningDecorator( Executors.newFixedThreadPool( CONCURRENCY_LEVEL ) );
+    private static final ExecutorCompletionService<Boolean> completionService = new ExecutorCompletionService<Boolean>(executor);
     private final Lock productLock = new ReentrantLock();
     private static final Predicate<BitVector> notNilContributionPredicate = new Predicate<BitVector>() {
         @Override
@@ -197,10 +198,20 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     				}
     			}
     		};
-
-    		executor.execute( r );
+    		
+    		completionService.submit(r, true);
     	}
-
+    	
+    	// Await completion of all tasks
+    	int nTasks = (monomials.length % CONCURRENCY_LEVEL) > 0 ? CONCURRENCY_LEVEL + 1 : CONCURRENCY_LEVEL;
+    	for (int i = 0; i < nTasks; ++i) {
+    		try {
+				completionService.take();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+    	}
+    	
         return result;
     }
     
