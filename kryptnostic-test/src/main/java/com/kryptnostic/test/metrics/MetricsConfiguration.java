@@ -1,6 +1,8 @@
 package com.kryptnostic.test.metrics;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -39,11 +41,11 @@ public class MetricsConfiguration implements MetricsConfigurer {
 		if( graphite.isPresent() ) {
 			GraphiteReporter reporter = 
 					GraphiteReporter
-						.forRegistry(metricRegistry)
-						.prefixedWith("com.kryptnostic.instrumented")
+						.forRegistry( metricRegistry )
+						.prefixedWith( getHostName() )
 						.convertDurationsTo( TimeUnit.MILLISECONDS )
 						.convertRatesTo( TimeUnit.MILLISECONDS )
-						.build(graphite.get());
+						.build( graphite.get() );
 			reporter.start( 1 , TimeUnit.SECONDS );
 			logger.error("Address = {}:{}" , System.getenv("graphite-server") , Integer.parseInt( System.getenv("graphite-port" ) ) );
 		} else {
@@ -65,5 +67,13 @@ public class MetricsConfiguration implements MetricsConfigurer {
 	public HealthCheckRegistry getHealthCheckRegistry() {
 		return new HealthCheckRegistry();
 	}
-
+	
+	private String getHostName() {
+	    try {
+            return InetAddress.getLocalHost().getCanonicalHostName();
+        } catch (UnknownHostException e) {
+            logger.error( "Unable to resolve host name, defaulting to empty prefix." );
+            return "";
+        }
+	}
 }

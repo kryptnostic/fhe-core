@@ -4,11 +4,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class InstrumentationTest extends AbstractInstrumentedTest {
-	
+    
 	@BeforeClass
 	public static void setupContext() {
-		getTestContext().register( TestConfiguration.class );
-		getTestContext().refresh();
+		registerTestConfigurationsForClass( InstrumentationTest.class , TestConfiguration.class );
 	}
 	
 	@Test

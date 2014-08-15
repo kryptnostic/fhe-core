@@ -22,7 +22,7 @@ public class MultivariateUtils {
     }
     
     public static BitVector randomVector( int length ) {
-    	int numLongs = length >>> 6 + ( length % 64 == 0 ? 0 : 1 );
+    	int numLongs = (length >>> 6) + ( length % 64 == 0 ? 0 : 1 );
     	long [] bits = new long[ numLongs ];
     	
     	for( int i = 0 ; i < bits.length ; ++i ) {
