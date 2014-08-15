@@ -190,12 +190,9 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     			public void run() {
     				BitVector intermediary = new BitVector( outputLength);
     				for( int i = fromIndex; i < toIndex ; ++i ) {
-
     					Monomial term =  monomials[ i ];
     					if( term.eval( input ) ){
-    						
-    							intermediary.xor( contributions[ i ] );
-
+    						intermediary.xor( contributions[ i ] );
     					}
     				}
     				synchronized (result) {
@@ -204,16 +201,13 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     				latch.countDown();
     			}
     		};
-    		
     		executor.execute( r );
     	}
-    	
     	try {
 			latch.await();
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			logger.error("Concurrent apply() latch interrupted.");
 		}
-    	
         return result;
     }
     
