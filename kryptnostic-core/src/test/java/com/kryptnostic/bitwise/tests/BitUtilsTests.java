@@ -14,9 +14,16 @@ public class BitUtilsTests {
     private static final Random r = new Random( 0 );
     
     @Test
-    public void testRandomVector() {
+    public void testRandomVectorWithSpecificWeight() {
         int hammingWeight = r.nextInt( 128 );
         BitVector v = BitUtils.randomVector( 128 , hammingWeight );
         Assert.assertEquals( hammingWeight , v.cardinality() );
+    }
+    
+    @Test
+    public void testRandomVectorReturnsCorrectLength() {
+        int length = r.nextInt( 128 );
+        BitVector v = BitUtils.randomVector( length );
+        Assert.assertEquals( length , v.size() );
     }
 }
