@@ -68,16 +68,26 @@ public class PolynomialFunctionTests {
     
     @Test
     public void evaluationTest() {
-        PolynomialFunctionGF2.Builder builder = PolynomialFunctionGF2.builder( 256 , 256 );
+    	int nTrials = 5000;
+    	long time = 0;
+    	PolynomialFunctionGF2.Builder builder = PolynomialFunctionGF2.builder( 256 , 256 );
         for( int i = 0 ; i < 1024 ; ++i ) {
             BitVector contribution = BitUtils.randomVector( 256 );
             builder.setMonomialContribution( Monomial.randomMonomial( 256 , 4 ) , contribution);
         }
         
         PolynomialFunctionGF2 f = builder.build();
-        BitVector result = f.apply( BitUtils.randomVector( 256 ) );
-        logger.trace( "Result: {}" , result );
-        Assert.assertEquals( result.size() ,  256 );
+        for (int j = 0; j < nTrials; j++) {
+	        BitVector input = BitUtils.randomVector( 256 );
+	        long start = System.nanoTime();
+	        BitVector result = f.apply( input );
+	        long end = System.nanoTime();
+	        logger.trace( "Result: {}" , result );
+	        Assert.assertEquals( result.size() ,  256 );
+	        
+	        time += TimeUnit.MILLISECONDS.convert((end - start), TimeUnit.NANOSECONDS);
+        }
+    	logger.info("Function evaluation test took an average: {} ms.",((double)time) / ((double)nTrials));
     }
     
     @Test
@@ -90,10 +100,13 @@ public class PolynomialFunctionTests {
     
    @Test
    public void identityTest() {
-       SimplePolynomialFunction f = PolynomialFunctions.identity( 256 );
-       BitVector input = BitUtils.randomVector( 256 );
+	   for (int i = 0; i < 500000; i++) {
+		   SimplePolynomialFunction f = PolynomialFunctions.identity( 256 );
+	       BitVector input = BitUtils.randomVector( 256 );
+	       
+	       Assert.assertEquals( input , f.apply( input ) );
+	   }
        
-       Assert.assertEquals( input , f.apply( input ) );
    }
    
    @Test
