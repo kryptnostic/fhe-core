@@ -28,7 +28,7 @@ public class MetricsConfiguration implements MetricsConfigurer {
 	
 	static {
 		String host = System.getenv("graphite-server");
-		int port = Objects.firstNonNull( Integer.parseInt( System.getenv("graphite-port" ) ) , 2003 );
+		int port = Integer.parseInt( Optional.fromNullable( System.getenv("graphite-port" ) ).or( "2003" ) );
 		if( host == null )  {
 			graphite = Optional.absent();
 		} else {
