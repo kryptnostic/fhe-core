@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import com.kryptnostic.linear.BitUtils;
 
 import cern.colt.bitvector.BitVector;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 public class VectorTests {
     private static Logger logger = LoggerFactory.getLogger( VectorTests.class );
@@ -18,10 +18,10 @@ public class VectorTests {
         
         v.set(63);
         Assert.assertEquals( v.elements()[0] , 1L << 63 );
-        logger.info( "Actual representation: {}" , v.elements()[0] );
+        logger.trace( "Actual representation: {}" , v.elements()[0] );
         v.set(0);
         Assert.assertEquals( v.elements()[0], (1L<<63) | 1L );
-        logger.info( "Actual representation: {}" , v.elements()[0] );
+        logger.trace( "Actual representation: {}" , v.elements()[0] );
 
     }
     

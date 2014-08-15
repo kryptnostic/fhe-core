@@ -4,43 +4,63 @@ import java.nio.ByteBuffer;
 import java.security.InvalidParameterException;
 import java.util.Arrays;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import cern.colt.bitvector.BitVector;
+
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.kryptnostic.linear.EnhancedBitMatrix;
+import com.kryptnostic.linear.EnhancedBitMatrix.NonSquareMatrixException;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
-import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.FunctionUtils;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-
-import cern.colt.bitvector.BitVector;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
 
 /**
  * Private key class for decrypting data.
  * @author Matthew Tamayo-Rios
  */
 public class PrivateKey {
+	private static final int DEFAULT_CHAIN_LENGTH = 2; //The value of this constant is fairly arbitrary.
     private static final Logger logger = LoggerFactory.getLogger( PrivateKey.class );
-    private static ObjectMapper mapper = new ObjectMapper();
+//    private static ObjectMapper mapper = new ObjectMapper();
     private final EnhancedBitMatrix D;
-//    private final EnhancedBitMatrix L;
+    private final EnhancedBitMatrix L;
     private final EnhancedBitMatrix E1;
     private final EnhancedBitMatrix E2;
-    private final PolynomialFunctionGF2 F;
+    
+    private final EnhancedBitMatrix A;
+    private final EnhancedBitMatrix B;
+    
+    private final SimplePolynomialFunction F;
+    private final SimplePolynomialFunction G;
     private final SimplePolynomialFunction decryptor;
+    private final SimplePolynomialFunction[] complexityChain;
+    private final Function<SimplePolynomialFunction, SimplePolynomialFunction> composer;
     private final int longsPerBlock;
     
+    public PrivateKey( int cipherTextBlockLength, int plainTextBlockLength) {
+    	this( cipherTextBlockLength, plainTextBlockLength, DEFAULT_CHAIN_LENGTH );
+    }
     /**
      * Construct a private key instance that can be used for decrypting data encrypted with the public key.
-     * @param cipherTextBlockLength Length of the ciphertext output block, should be multiples of 64 bits 
-     * @param plainTextBlockLength Length of the ciphertext output block, should be multiples of 64 bits
+     * @param cipherTextBlockLength Length of the ciphertext output block, should be multiples of 64 bits. 
+     * @param plainTextBlockLength Length of the ciphertext output block, should be multiples of 64 bits.
+     * @param complexityChainLength Number of multivariate quadratic equations in the complexity chain.
      * @throws SingularMatrixException 
      */
-    public PrivateKey( int cipherTextBlockLength , int plainTextBlockLength ) {
+    public PrivateKey( int cipherTextBlockLength , int plainTextBlockLength , int complexityChainLength ) {
+        Preconditions.checkArgument( 
+                cipherTextBlockLength > plainTextBlockLength , 
+                "Ciphertext block length must be greater than plaintext block length." );
         boolean initialized = false;
         int rounds = 100000;
-        EnhancedBitMatrix e2gen = null ,dgen = null , e1gen = null , lgen = null;
+        EnhancedBitMatrix e2gen = null ,dgen = null , e1gen = null,lgen = null;
         while( !initialized && ( (--rounds)!=0 ) ) {
             
             /*
@@ -50,13 +70,13 @@ public class PrivateKey {
                 e1gen = EnhancedBitMatrix.randomMatrix( cipherTextBlockLength , plainTextBlockLength );
                 dgen = e1gen.getLeftNullifyingMatrix();
                 e2gen = dgen.rightGeneralizedInverse();
-//                lgen = e2gen.getLeftNullifyingMatrix();
-//                lgen = lgen.multiply( e1gen ).inverse().multiply( lgen );  //Normalize
+                lgen = e2gen.getLeftNullifyingMatrix();
+                lgen = lgen.multiply( e1gen ).inverse().multiply( lgen );  //Normalize
                 
                 Preconditions.checkState( dgen.multiply( e1gen ).isZero() , "Generated D matrix must nullify E1." );
-//                Preconditions.checkState( lgen.multiply( e2gen ).isZero() , "Generated L matrix must nullify E2." );
+                Preconditions.checkState( lgen.multiply( e2gen ).isZero() , "Generated L matrix must nullify E2." );
                 Preconditions.checkState( dgen.multiply( e2gen ).isIdentity(), "Generated D matrix must be left generalized inverse of E2." );
-//                Preconditions.checkState( lgen.multiply( e1gen ).isIdentity(), "Generated D matrix must be left generalized inverse of E2." );
+                Preconditions.checkState( lgen.multiply( e1gen ).isIdentity(), "Generated D matrix must be left generalized inverse of E2." );
                 
                 initialized = true;
                 
@@ -68,16 +88,36 @@ public class PrivateKey {
                 continue;
             }
         }
-
-        if( !initialized ) {
-            throw new InvalidParameterException("Unable to generate private key. Make sure cipherTextBlockLength > plainTextBlockLength ");
-        }
+        
+        Preconditions.checkState( initialized, "Unable to generate private key. Make sure cipherTextBlockLength > plainTextBlockLength " );
         
         D = dgen;
-//        L = lgen;
+        L = lgen;
         E1 = e1gen;
         E2 = e2gen;
-        F = PolynomialFunctionGF2.randomFunction( plainTextBlockLength , plainTextBlockLength );
+        
+        EnhancedBitMatrix Agen;
+        EnhancedBitMatrix Bgen;
+        
+        try {
+            do {
+                Agen = EnhancedBitMatrix.randomInvertibleMatrix( plainTextBlockLength );
+                Bgen = EnhancedBitMatrix.randomInvertibleMatrix( plainTextBlockLength );
+            } while ( !EnhancedBitMatrix.determinant( Agen.add(Bgen) ) );
+        } catch (NonSquareMatrixException e) {
+            //This should never happen.
+            throw new Error("Encountered non-square matrix, where non-should exist.");
+        } 
+        
+        A = Agen;
+        B = Bgen;
+        complexityChain = PolynomialFunctions.arrayOfRandomMultivariateQuadratics( plainTextBlockLength , plainTextBlockLength , DEFAULT_CHAIN_LENGTH );
+        F = PolynomialFunctions.randomFunction( plainTextBlockLength , plainTextBlockLength , 10 , 3 );
+        G = PolynomialFunctions.randomManyToOneLinearCombination(plainTextBlockLength);
+        
+        
+        composer = PolynomialFunctions.getComposer(G);
+
         try {
             decryptor = buildDecryptor();
         } catch (SingularMatrixException e) {
@@ -86,28 +126,44 @@ public class PrivateKey {
         }
         longsPerBlock = cipherTextBlockLength >>> 6;
     }
-    
-    public SimplePolynomialFunction encrypt( SimplePolynomialFunction plaintextFunction ) {
+
+    public SimplePolynomialFunction encryptBinary( SimplePolynomialFunction plaintextFunction ) {
         int plaintextLen =  E1.cols();
-        int ciphertextLen = E1.rows();
-        PolynomialFunctionGF2 R = PolynomialFunctionGF2.randomFunction( ciphertextLen , plaintextLen );
+        SimplePolynomialFunction R = PolynomialFunctions.randomFunction( plaintextFunction.getInputLength() , plaintextLen );
+        SimplePolynomialFunction lhsR = F.compose( R );
         
         return E1
-                .multiply( plaintextFunction.xor( F.compose( R ) ) )
+                .multiply( plaintextFunction.xor( lhsR ) )
                 .xor( E2.multiply( R ) );
     }
     
+    public SimplePolynomialFunction encrypt( SimplePolynomialFunction input ) {
+        return encrypt( input , G );
+    }
+    
+    public SimplePolynomialFunction encrypt( SimplePolynomialFunction input , SimplePolynomialFunction g ) {
+        Pair<SimplePolynomialFunction,SimplePolynomialFunction[]> pipeline = PolynomialFunctions.buildNonlinearPipeline( g , complexityChain );
+        
+        SimplePolynomialFunction E = 
+                E1.multiply( input.xor( A.multiply( g ) ) ).xor( E2.multiply( input.xor( B.multiply( g ) ) ) );
+        return E.xor( ParameterizedPolynomialFunctions.fromUnshiftedVariables( g.getInputLength() , E1.multiply( pipeline.getLeft() ).xor( E2.multiply( pipeline.getLeft() ) ) , pipeline.getRight() ) );
+    }
+    
     public SimplePolynomialFunction computeHomomorphicFunction( SimplePolynomialFunction f ) {
-        return encrypt( f.compose( decryptor ) );
+        return encrypt( f.compose( decryptor ) , PolynomialFunctions.randomManyToOneLinearCombination( E1.cols() ) );
+    }
+    
+    public SimplePolynomialFunction computeBinaryHomomorphicFunction( SimplePolynomialFunction f ) {
+        return encryptBinary( f.compose( FunctionUtils.concatenateInputsAndOutputs( decryptor, decryptor ) ) );
     }
     
     public EnhancedBitMatrix getD() {
         return D;
     }
 
-//    public EnhancedBitMatrix getL() {
-//        return L;
-//    }
+    public EnhancedBitMatrix getL() {
+        return L;
+    }
 
     public EnhancedBitMatrix getE1() {
         return E1;
@@ -117,10 +173,23 @@ public class PrivateKey {
         return E2;
     }
 
-    public PolynomialFunctionGF2 getF() {
-        return F;
+    public EnhancedBitMatrix getA() {
+        return A;
     }
-
+    
+    public EnhancedBitMatrix getB() {
+        return B;
+    }
+    
+    public SimplePolynomialFunction getG() {
+        return G;
+    }
+    
+    public EnhancedBitMatrix randomizedL() throws SingularMatrixException {
+        EnhancedBitMatrix randomL = Preconditions.checkNotNull( E2 , "E2 must not be null." ).getLeftNullifyingMatrix();
+        return  randomL.multiply( Preconditions.checkNotNull( E1 , "E1 must not be null.") ).inverse().multiply( randomL );  //Normalize
+    }
+    
     public byte[] decrypt( byte[] ciphertext ) {
         ByteBuffer buffer = ByteBuffer.wrap( ciphertext );
         ByteBuffer decryptedBytes = ByteBuffer.allocate( ciphertext.length >>> 1);
@@ -138,17 +207,24 @@ public class PrivateKey {
     
     public SimplePolynomialFunction buildDecryptor() throws SingularMatrixException {
         /*
-         * DX = R( m , r )
-         * Inv( E1 ) X = m +F( R( m , r ) ) + Inv( E1 ) E2 R(m, r) 
-         * Inv( E1 ) X + Inv( E1 ) E2 D X = m + F( R( m , r ) )
-         * Inv( E1 ) X + Inv( E1 ) E2 D X + F( DX ) = m
-         * Inv( E1 ) ( I + E2 D ) X + F( DX ) = m    
+         * G( x ) = Inv( A + B ) (L + D) x 
+         * D( x ) = L x + A G( x ) + c'_1 h'_1 + c'_2 h'_2 
          */
-        PolynomialFunctionGF2 X = PolynomialFunctionGF2.identity( E1.rows() );
-        return E1.leftGeneralizedInverse()
-                .multiply( EnhancedBitMatrix.identity( E2.rows() ).add( E2.multiply( D ) ) )
-                .multiply( X )
-                .xor( F.compose( D.multiply( X ) ) );
+        SimplePolynomialFunction X = PolynomialFunctions.identity( E1.rows() );
+        SimplePolynomialFunction GofX = A.add( B ).inverse().multiply( L.add( D ) ).multiply( X );
+        
+        Pair<SimplePolynomialFunction,SimplePolynomialFunction[]> pipeline = PolynomialFunctions.buildNonlinearPipeline( GofX , complexityChain );
+        SimplePolynomialFunction DofX = L.multiply( X ).xor( A.multiply( GofX ) ).xor( ParameterizedPolynomialFunctions.fromUnshiftedVariables( GofX.getInputLength() , pipeline.getLeft() , pipeline.getRight() ) );
+        return DofX;
+    }
+    
+    public byte[] decryptFromEnvelope(Ciphertext ciphertext) {
+        /*
+         * Decrypt using the message length to discard unneeded bytes.
+         */
+        return Arrays.copyOf( 
+                decrypt( ciphertext.getContents() ) , 
+                (int) decryptor.apply( new BitVector( ciphertext.getLength() , longsPerBlock << 6 ) ).elements()[0] );
     }
     
     protected static void toBuffer( ByteBuffer output , BitVector plaintextVector ) {
@@ -167,15 +243,5 @@ public class PrivateKey {
         
         return new BitVector( cipherLongs , longsPerBlock << 6 );
     }
-
-    public byte[] decryptFromEnvelope(Ciphertext ciphertext) {
-        /*
-         * Decrypt using the message length to discard unneeded bytes.
-         */
-        return Arrays.copyOf( 
-                decrypt( ciphertext.getContents() ) , 
-                (int) decryptor.apply( new BitVector( ciphertext.getLength() , longsPerBlock << 6 ) ).elements()[0] );
-    }
-       
 //    public abstract Object decryptObject( Object object ,  Class<?> clazz );
 }

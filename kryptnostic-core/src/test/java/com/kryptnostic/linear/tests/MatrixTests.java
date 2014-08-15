@@ -9,10 +9,11 @@ import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 public class MatrixTests {
     private static final Logger logger = LoggerFactory.getLogger( MatrixTests.class );
@@ -40,7 +41,7 @@ public class MatrixTests {
                 logger.error( "Singlur matrices cannot be inverted." , e );
                 ++count;
             }
-            logger.info("M^-1 = {}", m );
+            logger.trace("M^-1 = {}", m );
         }
         Assert.assertEquals( success , true );
     }
@@ -93,7 +94,7 @@ public class MatrixTests {
         
         EnhancedBitMatrix m = new EnhancedBitMatrix( Lists.newArrayList( row1, row2 ) );
         
-        logger.info( "v1 = {} , v2 = {} , v3 = {}" , v1 , v2 , v3 );
+        logger.trace( "v1 = {} , v2 = {} , v3 = {}" , v1 , v2 , v3 );
         
         BitVector r1 = m.multiply( v1 );
         Assert.assertEquals( r1.size() , 2 );
@@ -101,7 +102,7 @@ public class MatrixTests {
         Assert.assertEquals( r2.size() , 2 );
         BitVector r3 = m.multiply( v3 );
         Assert.assertEquals( r3.size() , 2 );
-        logger.info( "r1 = {} , r2 = {} , r3 = {}" , r1 , r2 , r3 );
+        logger.trace( "r1 = {} , r2 = {} , r3 = {}" , r1 , r2 , r3 );
         
         Assert.assertEquals( r1.get( 0 ) , false );
         Assert.assertEquals( r1.get( 1 ) , false );
@@ -149,11 +150,11 @@ public class MatrixTests {
         
         Assert.assertEquals( nsBasis.rows() , m.cols() );
         Assert.assertEquals( nsBasis.cols() , m.rows() );
-        logger.info( "Nullifying matrix ({},{}): {}" , nsBasis.rows() , nsBasis.cols() , nsBasis );
+        logger.trace( "Nullifying matrix ({},{}): {}" , nsBasis.rows() , nsBasis.cols() , nsBasis );
 
         EnhancedBitMatrix result = nsBasis.multiply( m );
         Assert.assertEquals( true , result.isZero() );
-        logger.info(  "Nullified: {}" , result );
+        logger.trace(  "Nullified: {}" , result );
     }
     
     @Test
@@ -165,9 +166,9 @@ public class MatrixTests {
     public void nullspaceTest() {
         EnhancedBitMatrix m = EnhancedBitMatrix.randomMatrix( 65 , 210 );
         EnhancedBitMatrix nsBasis = m.getNullspaceBasis();
-        logger.info( "Nullspace basis ({},{}): {}" , nsBasis.rows() , nsBasis.cols() , nsBasis );
+        logger.trace( "Nullspace basis ({},{}): {}" , nsBasis.rows() , nsBasis.cols() , nsBasis );
         EnhancedBitMatrix result = m.multiply( nsBasis );
-        logger.info(  "Nullified: {}" , result );
+        logger.trace(  "Nullified: {}" , result );
         Assert.assertEquals( true , result.isZero() );
     }
     
@@ -183,15 +184,15 @@ public class MatrixTests {
     @Test
     public void testPolynomialFunctionMultiply() {
         //Generate test function 
-        PolynomialFunctionGF2 f = PolynomialFunctionGF2.randomFunction(256, 256);
+        SimplePolynomialFunction f = PolynomialFunctions.randomFunction(256, 256);
         //Generate test matrices
         EnhancedBitMatrix m1 = EnhancedBitMatrix.randomMatrix( 256 , 256 );
         EnhancedBitMatrix m2 = EnhancedBitMatrix.randomMatrix( 512 , 256 );
         EnhancedBitMatrix m3 = EnhancedBitMatrix.randomMatrix( 128 , 256 );
         //Generate test vectors
-        BitVector v1 = BitUtils.randomBitVector( 256 );
-        BitVector v2 = BitUtils.randomBitVector( 256 );
-        BitVector v3 = BitUtils.randomBitVector( 256 );
+        BitVector v1 = BitUtils.randomVector( 256 );
+        BitVector v2 = BitUtils.randomVector( 256 );
+        BitVector v3 = BitUtils.randomVector( 256 );
         //Multiply vectorial polynomial function by matrix
         SimplePolynomialFunction r1 = m1.multiply( f );
         SimplePolynomialFunction r2 = m2.multiply( f );
@@ -205,16 +206,16 @@ public class MatrixTests {
         BitVector av2 = r2.apply( v2 );
         BitVector av3 = r3.apply( v3 );
         
-        logger.info( "Expected output for v1: {}" , ev1 );
-        logger.info( "Actual output for v1: {}" , av1 );
+        logger.trace( "Expected output for v1: {}" , ev1 );
+        logger.trace( "Actual output for v1: {}" , av1 );
         Assert.assertEquals( ev1 , av1 );
         
-        logger.info( "Expected output for v2: {}" , ev2 );
-        logger.info( "Actual output for v1: {}" , av2 );
+        logger.trace( "Expected output for v2: {}" , ev2 );
+        logger.trace( "Actual output for v1: {}" , av2 );
         Assert.assertEquals( ev2 , av2 );
         
-        logger.info( "Expected output for v3: {}" , ev3 );
-        logger.info( "Actual output for v1: {}" , av3 );
+        logger.trace( "Expected output for v3: {}" , ev3 );
+        logger.trace( "Actual output for v1: {}" , av3 );
         Assert.assertEquals( ev3 , av3 );
         
     }

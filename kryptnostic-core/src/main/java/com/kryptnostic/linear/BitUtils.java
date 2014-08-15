@@ -1,10 +1,14 @@
 package com.kryptnostic.linear;
 
+import java.util.Arrays;
 import java.util.Random;
+
+import com.kryptnostic.multivariate.MultivariateUtils;
 
 import cern.colt.bitvector.BitVector;
 
-public class BitUtils {
+public final class BitUtils {
+    private BitUtils() {}
     //TODO:Re-enable seeding.
     private static final Random r = new Random( 0 );//System.currentTimeMillis() );
     
@@ -28,15 +32,23 @@ public class BitUtils {
         return -1;
     }
     
-    public static BitVector randomBitVector( int length ) {
-        //TODO: Optimize this
+    public static BitVector randomVector( int length ) {
+        return MultivariateUtils.randomVector(length);
+    }
+    
+    public static BitVector subVector( BitVector v , int from , int to ) {
+        return new BitVector( Arrays.copyOfRange( v.elements() , from , to ) , (to - from) << 6 ); 
+    }
+    
+    public static BitVector randomVector( int length , int desiredHammingWeight ) {
         BitVector v = new BitVector( length );
-        for( int i = 0 ; i < length ; ++i ) {
-            if( r.nextBoolean() ) {
-                v.set( i );
-            }
+        /*
+         * In theory optimized popcnt instruction is going 
+         * to be faster than bit twiddling to check individual bits.
+         */
+        while( v.cardinality() < desiredHammingWeight ) {
+            v.set( r.nextInt( length ) );
         }
         return v;
     }
-    
  }

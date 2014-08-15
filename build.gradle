@@ -5,7 +5,13 @@ def getVersionName = { ->
         commandLine 'git', 'describe', '--tags', '--dirty', '--long'
         standardOutput = stdout
     }
-    return stdout.toString().trim()
+    def tagVer = stdout.toString().trim()
+    def semVer = (tagVer =~ /v([\d\.]+)/)[0][1]
+
+    if (tagVer.contains('dev')) {
+        semVer += "-SNAPSHOT"
+    }
+    return semVer
 }
 
 description = "Kryptnostic libraries for fully homomorphic encryption."
@@ -19,7 +25,14 @@ allprojects {
     apply plugin: "idea"
 
     task wrapper(type: Wrapper) {
-        gradleVersion = '1.10'
+        gradleVersion = '1.12'
+    }
+
+    test {
+        if (project.hasProperty('maxParallelForks')) 
+            maxParallelForks = project.maxParallelForks as int
+        if (project.hasProperty('forkEvery')) 
+            forkEvery = project.forkEvery as int
     }
 
     task sourceJar (type : Jar) {
@@ -32,14 +45,12 @@ allprojects {
       from javadoc.destinationDir
     }
 
-    ext.sourceCompatibility=JavaVersion.VERSION_1_7
-    ext.targetCompatibility=JavaVersion.VERSION_1_7
+    ext.isReleaseVersion = false
 
-    ext.spring_security_version='3.2.0.RELEASE'
-    ext.spring_framework_version='3.2.6.RELEASE'
+    ext.sourceCompatibility=JavaVersion.VERSION_1_6
+    ext.targetCompatibility=JavaVersion.VERSION_1_8
+
     ext.jackson_version='2.3.0'
-    ext.jetty_version='9.1.0.v20131115'
-
 }
 
 

@@ -7,23 +7,28 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.kryptnostic.multivariate.MultivariateUtils;
-import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.FunctionUtils;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
 
 import cern.colt.bitvector.BitVector;
 
 public class EnhancedBitMatrix {
     //TODO: Replace with BouncyCastle RNG
     //TODO: Re-enable seeding
-    private static final Random r = new Random( 0 );//System.currentTimeMillis() ); 
+    private static final Random r = new Random( 0 );//System.currentTimeMillis() );
+    private static final Logger logger = LoggerFactory.getLogger( EnhancedBitMatrix.class );
     protected final List<BitVector> rows;
     
     protected EnhancedBitMatrix() { 
@@ -43,7 +48,7 @@ public class EnhancedBitMatrix {
         this( m.rows );
     }
     
-    public EnhancedBitMatrix( List<BitVector> rows ) {
+    public EnhancedBitMatrix( Iterable<BitVector> rows ) {
         this.rows = 
                 Lists.newArrayList(
                         Iterables.transform( rows , new Function<BitVector,BitVector>() {
@@ -59,7 +64,10 @@ public class EnhancedBitMatrix {
     }
     
     public int cols() {
-        return rows.iterator().next().size();
+    	if ( rows.size() != 0) {
+    		return rows.iterator().next().size();
+    	}
+        return 0;
     }
     
     public boolean get( int row , int col ) {
@@ -83,6 +91,9 @@ public class EnhancedBitMatrix {
         return true;
     }
     
+    public List<BitVector> getRows() {
+    	return rows;
+    }
     //TODO: Add unit test
     public EnhancedBitMatrix add( EnhancedBitMatrix rhs ) {
         Preconditions.checkArgument( rows()==rhs.rows() , "Matrices being added must have the same number of rows.");
@@ -226,13 +237,15 @@ public class EnhancedBitMatrix {
             ++index;
         }
         
-        PolynomialFunctionGF2 result = new PolynomialFunctionGF2( 
-                f.getInputLength(), 
-                this.rows(), 
-                newMonomials, 
-                newContributions );
+        if( f.isParameterized() ) {
+            ParameterizedPolynomialFunctionGF2 ppf = (ParameterizedPolynomialFunctionGF2)f;
+            return new ParameterizedPolynomialFunctionGF2( f.getInputLength() , rows() , newMonomials , newContributions , ppf.getPipelines() );
+        }
         
-        return result;
+        return PolynomialFunctions.fromMonomialContributionMap(
+                f.getInputLength() , 
+                rows() , 
+                FunctionUtils.mapViewFromMonomialsAndContributions(newMonomials, newContributions) );
     }
     
     public static EnhancedBitMatrix identity( int size ) {
@@ -436,7 +449,7 @@ public class EnhancedBitMatrix {
     public static EnhancedBitMatrix randomSqrMatrix( int size ) { 
         List<BitVector> rows = Lists.newArrayListWithExpectedSize( size );
         for( int i = 0 ; i < size ; ++i ) {
-            rows.add( MultivariateUtils.randomVector( size ) );
+            rows.add( BitUtils.randomVector( size ) );
         }
         return new EnhancedBitMatrix( rows );
     }
@@ -444,9 +457,23 @@ public class EnhancedBitMatrix {
     public static EnhancedBitMatrix randomMatrix( int numRows , int numCols ) {
         List<BitVector> rows = Lists.newArrayListWithExpectedSize( numRows );
         for( int i = 0 ; i < numRows ; ++i ) {
-            rows.add( MultivariateUtils.randomVector( numCols ) );
+            rows.add( BitUtils.randomVector( numCols ) );
         }
         return new EnhancedBitMatrix( rows );
+    }
+    
+    public static EnhancedBitMatrix randomInvertibleMatrix( int rows ) {
+        EnhancedBitMatrix result = null;
+        
+        try {
+            while( result == null || !determinant( result ) ) {
+                result = randomMatrix( rows, rows );
+            }
+        } catch (NonSquareMatrixException e) {
+            logger.error("This shouldn't be possible." , e );
+        }
+        
+        return result;
     }
 
     public static class SingularMatrixException extends Exception {
@@ -463,6 +490,10 @@ public class EnhancedBitMatrix {
         public NonSquareMatrixException( String message ) {
             super( message );
         }
+    }
+
+    public BitVector getRow(int i) {
+        return rows.get( i ).copy();
     }
     
 }

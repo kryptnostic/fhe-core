@@ -1,17 +1,26 @@
 package com.kryptnostic.multivariate;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+
+import cern.colt.bitvector.BitVector;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
+import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
-import cern.colt.bitvector.BitVector;
-
+/**
+ * Basic implementation of CompoundPolynomialFunction over GF2, consisting of a linked list of functions.
+ * The input to the function is fed to first function in the list with the overall output of a compound 
+ * function being determined by traversing the linked list from the beginning and evaluating each function
+ * on the output of the previous function. The output of the last function is the output of evaluating the 
+ * function. 
+ * @author Matthew Tamayo-Rios
+ */
 public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction {
     
     private final LinkedList<PolynomialFunction> functions;
@@ -20,7 +29,7 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
         this( ImmutableList.<PolynomialFunction>of() );
     }
     
-    public CompoundPolynomialFunctionGF2( List<PolynomialFunction> functions ) {
+    public CompoundPolynomialFunctionGF2( List<? extends PolynomialFunction> functions ) {
         this.functions = Lists.newLinkedList( functions );
     }
     
@@ -30,7 +39,6 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
         
         newCPF.functions.addAll( inner.getFunctions() );
         newCPF.functions.addAll( functions );
-        
         return newCPF;
     }
     
@@ -42,6 +50,20 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
         return cpf;
     }
     
+    @Override
+    public CompoundPolynomialFunction prefix( PolynomialFunction inner ) {
+        validateForCompose( inner );
+        functions.addFirst( inner );
+        return this;
+    }
+    @Override
+    public CompoundPolynomialFunction suffix(PolynomialFunction inner) {
+       Preconditions.checkArgument( 
+               getOutputLength() == inner.getInputLength() , 
+               "Function being appeneded must have the same length." ); 
+       functions.addLast( inner );
+       return this;
+    }
     @Override
     public CompoundPolynomialFunctionGF2 copy() {
         CompoundPolynomialFunctionGF2 cpf = new CompoundPolynomialFunctionGF2();
@@ -93,16 +115,20 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
         }
     }
 
-    public static CompoundPolynomialFunctionGF2 fromFunctions( PolynomialFunction ... functions ) {
-        if( functions.length == 0 ) { 
-            return new CompoundPolynomialFunctionGF2();
-        } else {
-            return new CompoundPolynomialFunctionGF2( Arrays.asList( functions ) );
-        }
+    @Override
+    public List<PolynomialFunction> getFunctions() {
+        return Collections.unmodifiableList( functions );
+    }
+    
+    @Override
+    public int count() {
+        return functions.size();
     }
 
     @Override
-    public List<PolynomialFunction> getFunctions() {
-        return functions;
+    public void composeHeadDirectly(SimplePolynomialFunction inner) {
+        Preconditions.checkArgument( functions.getFirst() instanceof SimplePolynomialFunction , "Cannot compose function that isn't of type SimplePolynomialFunction." );
+        SimplePolynomialFunction outer = (SimplePolynomialFunction) functions.getFirst();
+        functions.set( 0 , outer.compose( inner ) );
     }
 }

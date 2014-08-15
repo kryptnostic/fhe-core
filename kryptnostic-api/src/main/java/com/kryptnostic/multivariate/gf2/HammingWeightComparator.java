@@ -6,10 +6,10 @@ public class HammingWeightComparator implements Comparator<Monomial> {
 
     @Override
     public int compare(Monomial o1, Monomial o2) {
-        int lhs = o1.cardinality();
-        int rhs = o2.cardinality();
+        Integer lhs = o1.cardinality();
+        Integer rhs = o2.cardinality();
         
-        return Integer.compare( lhs , rhs );
+        return lhs.compareTo(rhs);
     }
 
 }

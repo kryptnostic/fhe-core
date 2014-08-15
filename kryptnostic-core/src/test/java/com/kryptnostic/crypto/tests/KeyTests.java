@@ -1,18 +1,20 @@
 package com.kryptnostic.crypto.tests;
 
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cern.colt.bitvector.BitVector;
+
 import com.kryptnostic.crypto.Ciphertext;
 import com.kryptnostic.crypto.PrivateKey;
 import com.kryptnostic.crypto.PublicKey;
-import com.kryptnostic.linear.EnhancedBitMatrix;
+import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-
-import junit.framework.Assert;
 
 public class KeyTests {
     private static final Logger logger = LoggerFactory.getLogger( KeyTests.class );
@@ -26,13 +28,19 @@ public class KeyTests {
         logger.info("Finished generating key pair. Starting assumption tests...");
 
         SimplePolynomialFunction e = pubKey.getEncrypter();
-        SimplePolynomialFunction DX = privKey.getD().multiply( e ); 
-        SimplePolynomialFunction FofR = privKey.getF().compose( DX );
-        EnhancedBitMatrix L = privKey.getE2().getLeftNullifyingMatrix();
-        L = L.multiply( privKey.getE1() ).inverse().multiply( L );  //Normalize
-        SimplePolynomialFunction mFofR = L.multiply( e );
+        SimplePolynomialFunction LplusDX = privKey.getL().add( privKey.getD() ).multiply( e );
+        SimplePolynomialFunction expected = privKey.getA().add( privKey.getB()  ).multiply( privKey.getG() ) ;
+        SimplePolynomialFunction GofX =  (privKey.getA().add( privKey.getB() ) ).inverse().multiply( privKey.getL().add( privKey.getD() ).multiply( PolynomialFunctions.identity( e.getOutputLength() ) ) );
+        BitVector sample = BitUtils.randomVector( 128 );
+        BitVector enc = e.apply( sample );
+        BitVector aV = privKey.getL().add( privKey.getD() ).multiply( e ).apply( sample );
+        BitVector eV = expected.apply( sample ); 
+        Assert.assertEquals( eV , aV );
+        Assert.assertEquals( privKey.getG().apply( sample ) , GofX.apply( enc ) );
         
-        Assert.assertEquals( mFofR.xor( FofR ) , pubKey.getM() );
+        BitVector dec = privKey.getDecryptor().apply( enc );
+        sample.setSize( dec.size() );
+        Assert.assertEquals(  dec , sample );
     }
     
     @Test 
@@ -40,11 +48,11 @@ public class KeyTests {
         String plaintext = "hey!1234hey!1234hey!1234hey!12";
         byte[] plaintextBytes = plaintext.getBytes();
         byte[] ciphertext = pubKey.encrypt( plaintextBytes );
-        logger.info( "Plaintext: {}", plaintext );
-        logger.info( "Ciphertext: {}", new String( ciphertext ) );
+        logger.trace( "Plaintext: {}", plaintext );
+        logger.trace( "Ciphertext: {}", new String( ciphertext ) );
         byte[] decryptedBytes = privKey.decrypt( ciphertext ); 
         String decryptedPlaintext = new String( decryptedBytes );
-        logger.info( "Decrypted ciphertext: {}" , decryptedPlaintext );
+        logger.trace( "Decrypted ciphertext: {}" , decryptedPlaintext );
         Assert.assertTrue( StringUtils.startsWith( decryptedPlaintext , plaintext ) );
     }
     
@@ -55,7 +63,7 @@ public class KeyTests {
         Ciphertext ciphertext = pubKey.encryptIntoEnvelope( plaintextBytes );
         byte[] decryptedBytes = privKey.decryptFromEnvelope( ciphertext ); 
         String decryptedPlaintext = new String( decryptedBytes );
-        logger.info( "Decrypted ciphertext: {}" , decryptedPlaintext );
+        logger.trace( "Decrypted ciphertext: {}" , decryptedPlaintext );
         Assert.assertEquals( decryptedPlaintext , plaintext );
     }
 }

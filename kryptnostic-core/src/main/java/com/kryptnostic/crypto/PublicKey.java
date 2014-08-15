@@ -10,6 +10,7 @@ import com.google.common.base.Preconditions;
 import com.kryptnostic.crypto.padding.PaddingStrategy;
 import com.kryptnostic.crypto.padding.ZeroPaddingStrategy;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
@@ -23,21 +24,25 @@ public class PublicKey {
     //TODO: Replace with bouncy castle or real number generator.
     private static final Random r = new Random( 0 );
     private final SimplePolynomialFunction encrypter;
-    private final PolynomialFunctionGF2 m;
+    private final SimplePolynomialFunction m;
+    private final SimplePolynomialFunction[] complexityChain;
     private final PaddingStrategy paddingStrategy;
     private final int longsPerBlock;
+    
     public PublicKey( PrivateKey privateKey ) {
         this( privateKey, new ZeroPaddingStrategy( privateKey.getE1().rows() >>> 4 ) );
     }
+    
     public PublicKey( PrivateKey privateKey , PaddingStrategy paddingStrategy ) {
         this.paddingStrategy = paddingStrategy;
         int inputLen =  privateKey.getE1().cols();
         int outputLen = privateKey.getE1().rows();
+        complexityChain = null;
         m = PolynomialFunctionGF2.truncatedIdentity( inputLen , outputLen );
-        logger.debug( "m: {} -> {}" , inputLen , outputLen );
+        logger.debug( "m: {} -> {}" , outputLen , inputLen );
         
         /*
-         * E(m) = E1(m + F( R(m,r)) ) + E2(R(m,r))
+         * E(m) = E1(m + h + Ag ) + E2(m + h + Bg )
          */
         
         encrypter = privateKey.encrypt( m ); 
@@ -107,7 +112,7 @@ public class PublicKey {
         return encrypter;
     }
 
-    public PolynomialFunctionGF2 getM() {
+    public SimplePolynomialFunction getM() {
         return m;
     }
 }

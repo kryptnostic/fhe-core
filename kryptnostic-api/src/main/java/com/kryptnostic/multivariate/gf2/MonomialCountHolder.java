@@ -29,7 +29,7 @@ public class MonomialCountHolder implements Comparable<MonomialCountHolder> {
     
     @Override
     public int compareTo(MonomialCountHolder o) {
-        return Integer.compare( count , o.count );
+        return new Integer(count).compareTo(o.count);
     }
     
     public static Function<Entry<Monomial,Integer>, MonomialCountHolder> getFrequencyTransformer() {

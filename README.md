@@ -41,6 +41,10 @@ Setup for your IDE of choice:
 Alternatively, if you like IntelliJ:
 
 	> ./gradlew idea	
+
+Also, to run tests in parallel
+
+    > ./gradlew build -PmaxParallelForks=8
 	
 Enjoy!
 
@@ -77,7 +81,7 @@ Usage
 
 
 ####Usage Notes
-Raw encryption automatically pads on encryption, as required by the underlying implementation.  Currently the the default and only implemented padding scheme is zero padding. This padding is not removed when doing raw decryption.
+Raw encryption automatically pads on encryption, as required by the underlying implementation.  Currently the default and only implemented padding scheme is zero padding. This padding is not removed when doing raw decryption.
 
 When you encrypt enveloped data it also encrypts the length of the data and keeps it in the envelope. This enables things like string concatenation and automatically recovering the original bytestream exactly.
 
