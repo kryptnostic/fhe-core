@@ -194,6 +194,23 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     }
 
     @Override
+    public SimplePolynomialFunction resolve(BitVector input) {
+        Map<Monomial,BitVector> contributionsMap = Maps.newHashMapWithExpectedSize( monomials.length );
+        for( int i = 0 ; i < monomials.length ; ++i ) {
+            Monomial resolved = monomials[ i ].partialEval( input );
+            if( resolved != null ) {
+                BitVector contribution = contributionsMap.get( resolved );
+                if( contribution == null ) {
+                    contribution = new BitVector( outputLength );
+                    contributionsMap.put( resolved , contribution );
+                }
+                contribution.xor( contributions[ i ] );
+            } 
+        }
+        return PolynomialFunctions.fromMonomialContributionMap( inputLength - input.size() , outputLength , contributionsMap );
+    }
+    
+    @Override
     public SimplePolynomialFunction compose(SimplePolynomialFunction lhs, SimplePolynomialFunction rhs) {
         return this.compose(PolynomialFunctions.concatenate(lhs, rhs));
 

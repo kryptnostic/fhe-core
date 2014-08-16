@@ -80,7 +80,8 @@ dependencies {
 
     compile 'com.codahale.metrics:metrics-core:3.0.2'
     compile 'com.codahale.metrics:metrics-graphite:3.0.2'
-    
+    compile 'com.codahale.metrics:metrics-annotation:3.0.2'
+        
     /*
      * GUAVA 
      * EventBus, FluentIterables, ListenableFutures and more
