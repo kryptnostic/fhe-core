@@ -28,9 +28,6 @@ apply from: "publish.gradle"
 
 mainClassName = ""
 
-ext.sourceCompatibility=JavaVersion.VERSION_1_6
-ext.targetCompatibility=JavaVersion.VERSION_1_8
-
 repositories {
   mavenCentral()  
   mavenLocal()
@@ -147,13 +144,4 @@ dependencies {
      */
 
     compile 'junit:junit:4.11'
-}
-
-
-eclipse {
-    ext.downloadSources = true
-    ext.downloadJavadoc = true
-
-    ext.sourceCompatibility=JavaVersion.VERSION_1_6
-    ext.targetCompatibility=JavaVersion.VERSION_1_6
 }

@@ -153,9 +153,3 @@ dependencies {
     testCompile 'junit:junit:4.11'
     testCompile project(":kryptnostic-test")
 }
-
-
-eclipse {
-    ext.downloadSources = true
-    ext.downloadJavadoc = true
-}

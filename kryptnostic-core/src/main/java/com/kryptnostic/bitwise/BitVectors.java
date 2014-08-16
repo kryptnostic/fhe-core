@@ -58,7 +58,7 @@ public final class BitVectors {
      */
     public static String marshalBitvector(BitVector input) {
         long[] data = input.elements();
-        byte[] target = new byte[data.length * Long.BYTES + Integer.BYTES];
+        byte[] target = new byte[data.length * ( Long.SIZE / Byte.SIZE ) + ( Integer.SIZE / Byte.SIZE )];
         ByteBuffer buf = ByteBuffer.wrap(target);
         buf.putInt(input.size());
         buf.asLongBuffer().put(data);
