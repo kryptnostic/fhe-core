@@ -1,8 +1,6 @@
 package com.kryptnostic.indexing;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -15,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Charsets;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Resources;
+import com.kryptnostic.indexing.metadata.Metadata;
 import com.kryptnostic.indexing.metadata.Metadatum;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
@@ -50,9 +49,9 @@ public class IndexingTests {
 		Assert.assertTrue( !metadata.isEmpty() );
 		
 		start = System.nanoTime();
-		Map<String,List<Metadatum>> keyedMetadata = keyService.mapTokensToKeys(metadata);
+		Metadata balancedMetadata = keyService.mapTokensToKeys(metadata);
 		logger.info( "Mapped token keys in {} ms", TimeUnit.NANOSECONDS.toMillis( System.nanoTime() - start ) );
-		Assert.assertNotNull( keyedMetadata );
+		Assert.assertNotNull( balancedMetadata );
 	}
 	
 }
