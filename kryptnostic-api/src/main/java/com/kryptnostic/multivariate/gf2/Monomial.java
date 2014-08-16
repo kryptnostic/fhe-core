@@ -68,6 +68,22 @@ public class Monomial extends BitVector {
         return check.equals( this ) ;
     }
     
+    public Monomial partialEval( BitVector input ) {
+        Preconditions.checkArgument( size() > input.size() , "Size of monomial must be strictly greater than input." );
+        Monomial result = wrap( this.partFromTo( 0 , input.size() - 1 ) );
+        Monomial check = result.clone();
+        result.and( input );
+        if( result.equals( check ) ) {
+            return wrap( this.partFromTo( input.size() , size() - 1 ) );
+        } else {
+            return null;
+        }
+    }
+    
+    private static Monomial wrap( BitVector v ) {
+        return new Monomial( v.elements() , v.size() );
+    }
+    
     public Monomial product( Monomial monomial ) {
         Preconditions.checkArgument( this.size() == monomial.size() , "Cannot compute product due to polynomial ring mismatch.");
         Monomial result = clone();
