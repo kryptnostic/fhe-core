@@ -11,7 +11,7 @@ import com.kryptnostic.test.metrics.MetricsConfiguration;
 
 @Configuration
 public class AbstractInstrumentedTest {
-	private static final ConcurrentMap<Class<?>,AnnotationConfigApplicationContext> contexts = Maps.newConcurrentMap();
+	AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 	
 	public AbstractInstrumentedTest( Class<?> ... annotatedClasses ) {
 	    registerTestConfigurations( MetricsConfiguration.class );
@@ -21,20 +21,8 @@ public class AbstractInstrumentedTest {
 	    getTestContext().refresh();
 	}
 	
-	private static AnnotationConfigApplicationContext getTestContext( Class<?> clazz ) {
-	    Preconditions.checkNotNull( clazz , "Cannot retrieve context for null class." );
-	    
-	    AnnotationConfigApplicationContext context = contexts.get( clazz);
-	    if( context == null ) {
-	        context = new AnnotationConfigApplicationContext();
-	        contexts.put( clazz , context  );
-	    }
-	    
-	    return context;
-	}
-	
 	protected AnnotationConfigApplicationContext getTestContext() {
-	    return getTestContext( getClass() );
+	    return context;
 	}
 	
 	protected void registerTestConfigurations( Class<?> ... annotatedClasses ) {
