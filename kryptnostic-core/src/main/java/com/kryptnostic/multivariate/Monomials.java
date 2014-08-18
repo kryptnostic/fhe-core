@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.base.Function;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
@@ -18,9 +19,12 @@ public class Monomials {
     private static final Comparator<Monomial> comparator = new Comparator<Monomial>() {
     	@Override
 		public int compare(Monomial m1, Monomial m2) {
-			for (int i = 0; i < m1.size(); i++) {
+			if (m1.cardinality() != m2.cardinality()) {
+				return m1.cardinality() > m2.cardinality() ? 1 : -1;
+			}
+    		for (int i = 0; i < m1.size(); i++) {
 				if ( m1.get(i) != m2.get(i)) {
-					return m1.get(i) ? 1 : -1;
+					return m1.get(i) ? -1 : 1;
 				}
 			}
 			return 0;
@@ -87,12 +91,29 @@ public class Monomials {
     }
     
     /**
-     * Optimized lookup for sorted monomial list. 
+     * Optimized lookup for complete monomial list in particular sort. 
      * @param monomials
      * @param m
      * @return
      */
     public static Integer indexOfSorted(List<Monomial> monomials, Monomial m) {
-    	return Collections.binarySearch(monomials, m, comparator);
+    	Integer firstIndex = Long.numberOfTrailingZeros(m.elements()[0]);
+    	Integer secondIndex = 0;
+    	if (m.cardinality() == 2) {
+    		for (int i = firstIndex + 1; i < m.size(); i++) {
+    			if (m.get(i)) {
+    				secondIndex = i;
+    				break;
+    			}
+    		}
+    	}
+    	Integer index = 129;
+    	for (int i = 1; i <= Math.min(firstIndex, secondIndex); i++) {
+    		index += (127 - 2);
+    	}
+    	
+    	index += Math.max(firstIndex, secondIndex); 
+    	
+    	return index;
     }
 }
