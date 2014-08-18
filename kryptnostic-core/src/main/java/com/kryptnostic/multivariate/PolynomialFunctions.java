@@ -19,7 +19,7 @@ import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.CompoundPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.FunctionUtils;
-import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctionPipelineStage;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
@@ -55,7 +55,7 @@ public final class PolynomialFunctions {
             contributions[offsetIndex] = contribution.copy();
         }
 
-        return new PolynomialFunctionGF2(xorLength, xorLength, monomials, contributions);
+        return new OptimizedPolynomialFunctionGF2(xorLength, xorLength, monomials, contributions);
     }
 
     public static SimplePolynomialFunction BINARY_XOR(int xorLength) {
@@ -75,7 +75,7 @@ public final class PolynomialFunctions {
             contributions[offsetIndex] = contribution.copy();
         }
 
-        return new PolynomialFunctionGF2(inputLength, xorLength, monomials, contributions);
+        return new OptimizedPolynomialFunctionGF2(inputLength, xorLength, monomials, contributions);
     }
 
     public static SimplePolynomialFunction AND(int andLength) {
@@ -92,7 +92,7 @@ public final class PolynomialFunctions {
             contributions[i] = contribution;
         }
 
-        return new PolynomialFunctionGF2(andLength, andLength, monomials, contributions);
+        return new OptimizedPolynomialFunctionGF2(andLength, andLength, monomials, contributions);
     }
 
     public static SimplePolynomialFunction BINARY_AND(int andLength) {
@@ -109,7 +109,7 @@ public final class PolynomialFunctions {
             contributions[i] = contribution;
         }
 
-        return new PolynomialFunctionGF2(inputLength, andLength, monomials, contributions);
+        return new OptimizedPolynomialFunctionGF2(inputLength, andLength, monomials, contributions);
     }
 
     public static SimplePolynomialFunction LSH(int inputLength, int shiftLength) {
@@ -122,7 +122,7 @@ public final class PolynomialFunctions {
             contribution.set(i + shiftLength);
             contributions[i] = contribution;
         }
-        return new PolynomialFunctionGF2(inputLength, inputLength, monomials, contributions);
+        return new OptimizedPolynomialFunctionGF2(inputLength, inputLength, monomials, contributions);
     }
 
     public static SimplePolynomialFunction NEG(int inputLength) {
@@ -138,7 +138,7 @@ public final class PolynomialFunctions {
         monomials[inputLength] = new Monomial(inputLength);
         contributions[inputLength] = new BitVector(inputLength);
         contributions[inputLength].not();
-        return new PolynomialFunctionGF2(inputLength, inputLength, monomials, contributions);
+        return new OptimizedPolynomialFunctionGF2(inputLength, inputLength, monomials, contributions);
     }
 
     public static SimplePolynomialFunction RSH(int inputLength, int shiftLength) {
@@ -152,7 +152,7 @@ public final class PolynomialFunctions {
             contribution.set(index);
             contributions[index] = contribution;
         }
-        return new PolynomialFunctionGF2(inputLength, inputLength, monomials, contributions);
+        return new OptimizedPolynomialFunctionGF2(inputLength, inputLength, monomials, contributions);
     }
 
     public static SimplePolynomialFunction HALF_ADDER(int length) {
@@ -206,7 +206,7 @@ public final class PolynomialFunctions {
             contributions[adjustedIndex] = contribution;
         }
 
-        return new PolynomialFunctionGF2(monomialOrder, monomialOrder, monomials, contributions);
+        return new OptimizedPolynomialFunctionGF2(monomialOrder, monomialOrder, monomials, contributions);
     }
 
     /**
@@ -228,7 +228,7 @@ public final class PolynomialFunctions {
             contributions[adjustedIndex] = contribution;
         }
 
-        return new PolynomialFunctionGF2(monomialOrder, baseIndex, monomials, contributions);
+        return new OptimizedPolynomialFunctionGF2(monomialOrder, baseIndex, monomials, contributions);
     }
 
     /**
@@ -254,7 +254,7 @@ public final class PolynomialFunctions {
         }
 
         // No need to use
-        return new PolynomialFunctionGF2(inputLength, inputLength, monomials, contributions);
+        return new OptimizedPolynomialFunctionGF2(inputLength, inputLength, monomials, contributions);
     }
 
     /**
@@ -275,7 +275,7 @@ public final class PolynomialFunctions {
         }
 
         // No need to use
-        return new PolynomialFunctionGF2(inputLength, maxIndex, monomials, contributions);
+        return new OptimizedPolynomialFunctionGF2(inputLength, maxIndex, monomials, contributions);
     }
 
     /**
@@ -352,7 +352,7 @@ public final class PolynomialFunctions {
                 contributions[flatIndex] = BitUtils.randomVector(outputLength);
             }
         }
-        return new PolynomialFunctionGF2(inputLength, outputLength, monomials, contributions);
+        return new OptimizedPolynomialFunctionGF2(inputLength, outputLength, monomials, contributions);
     }
 
     /**
@@ -391,7 +391,7 @@ public final class PolynomialFunctions {
 
     public static SimplePolynomialFunction fromMonomialContributionMap(int inputLength, int outputLength,
             Map<Monomial, BitVector> monomialContributionsMap) {
-        PolynomialFunctionGF2.removeNilContributions(monomialContributionsMap);
+        OptimizedPolynomialFunctionGF2.removeNilContributions(monomialContributionsMap);
         Monomial[] newMonomials = new Monomial[monomialContributionsMap.size()];
         BitVector[] newContributions = new BitVector[monomialContributionsMap.size()];
         int index = 0;
@@ -401,7 +401,7 @@ public final class PolynomialFunctions {
             newContributions[index] = contribution;
             ++index;
         }
-        return new PolynomialFunctionGF2(inputLength, outputLength, newMonomials, newContributions);
+        return new OptimizedPolynomialFunctionGF2(inputLength, outputLength, newMonomials, newContributions);
     }
 
     /**
@@ -480,7 +480,7 @@ public final class PolynomialFunctions {
             contributions[i] = contribution;
         }
 
-        return new PolynomialFunctionGF2(monomialCount, monomialCount, monomials, contributions);
+        return new OptimizedPolynomialFunctionGF2(monomialCount, monomialCount, monomials, contributions);
     }
 
     /**

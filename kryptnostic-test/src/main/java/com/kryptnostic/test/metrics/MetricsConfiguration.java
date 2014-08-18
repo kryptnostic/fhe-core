@@ -14,7 +14,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.health.HealthCheckRegistry;
-import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.ryantenney.metrics.spring.config.annotation.EnableMetrics;
 import com.ryantenney.metrics.spring.config.annotation.MetricsConfigurer;
@@ -27,8 +26,8 @@ public class MetricsConfiguration implements MetricsConfigurer {
 	private static final Logger logger = LoggerFactory.getLogger( MetricsConfiguration.class );
 	
 	static {
-		String host = System.getenv("graphite-server");
-		int port = Integer.parseInt( Optional.fromNullable( System.getenv("graphite-port" ) ).or( "2003" ) );
+		String host = System.getenv("graphite_server");
+		int port = Integer.parseInt( Optional.fromNullable( System.getenv("graphite_port" ) ).or( "2003" ) );
 		if( host == null )  {
 			graphite = Optional.absent();
 		} else {

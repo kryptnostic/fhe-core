@@ -1,15 +1,10 @@
 package com.kryptnostic.test;
-import java.util.concurrent.ConcurrentMap;
-
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.Configuration;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 import com.kryptnostic.test.metrics.MetricsConfiguration;
 
 
-@Configuration
 public class AbstractInstrumentedTest {
 	AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 	

@@ -22,7 +22,8 @@ public interface SimplePolynomialFunction extends PolynomialFunction {
     SimplePolynomialFunction compose( SimplePolynomialFunction lhs , SimplePolynomialFunction rhs );
     @Timed
     SimplePolynomialFunction resolve( BitVector input );
-    
+    @Timed
+    SimplePolynomialFunction optimize();
     
     Monomial[] getMonomials();
     BitVector[] getContributions();

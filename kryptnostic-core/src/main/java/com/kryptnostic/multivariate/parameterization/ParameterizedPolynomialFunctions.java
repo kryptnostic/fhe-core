@@ -11,7 +11,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.kryptnostic.multivariate.CompoundPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.CompoundPolynomialFunctions;
-import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
@@ -32,7 +32,7 @@ public final class ParameterizedPolynomialFunctions {
             newContributions[ i ] = originalContributions[ i ].copy();
         }
 
-        return new PolynomialFunctionGF2( extendedSize , f.getOutputLength() , newMonomials , newContributions );
+        return new OptimizedPolynomialFunctionGF2( extendedSize , f.getOutputLength() , newMonomials , newContributions );
     }
 
     public static SimplePolynomialFunction extendAndShift( int extendedSize, int shiftSize , SimplePolynomialFunction f ) {
@@ -47,7 +47,7 @@ public final class ParameterizedPolynomialFunctions {
             newContributions[ i ] = originalContributions[ i ].copy();
         }
 
-        return new PolynomialFunctionGF2( extendedSize , f.getOutputLength() , newMonomials , newContributions );
+        return new OptimizedPolynomialFunctionGF2( extendedSize , f.getOutputLength() , newMonomials , newContributions );
     }
 
     public static SimplePolynomialFunction extendAndShift( int extendedSize, int baseIndex, int shiftSize , SimplePolynomialFunction f ) {
@@ -62,7 +62,7 @@ public final class ParameterizedPolynomialFunctions {
             newContributions[ i ] = originalContributions[ i ].copy();
         }
 
-        return new PolynomialFunctionGF2( extendedSize , f.getOutputLength() , newMonomials , newContributions );
+        return new OptimizedPolynomialFunctionGF2( extendedSize , f.getOutputLength() , newMonomials , newContributions );
     }
 
     public static CompoundPolynomialFunction extendAndMap( int extendedSize, int[][] srcRanges, int[][] dstRanges , CompoundPolynomialFunction f ) {
@@ -80,7 +80,7 @@ public final class ParameterizedPolynomialFunctions {
                 newMonomials[ j ] = originalMonomials[ j ].extendAndMapRanges( extendedSize , srcRanges , dstRanges );
                 newContributions[ j ] = originalContributions[ j ].copy();
             }
-            extended = new PolynomialFunctionGF2( extendedSize , pf.getOutputLength() , newMonomials , newContributions );
+            extended = new OptimizedPolynomialFunctionGF2( extendedSize , pf.getOutputLength() , newMonomials , newContributions );
 
         }
 
@@ -202,7 +202,7 @@ public final class ParameterizedPolynomialFunctions {
         Preconditions.checkArgument( Preconditions.checkNotNull( f , "Function cannot be null." ).isParameterized() , "Function must be paramterized to wrap.");
         ParameterizedPolynomialFunctionGF2 ppfF = (ParameterizedPolynomialFunctionGF2)f;
         int extendedSize = ppfF.getInputLength() + ppfF.getPipelineOutputLength();
-        return new PolynomialFunctionGF2(extendedSize, f.getOutputLength(), f.getMonomials(), f.getContributions() );  
+        return new OptimizedPolynomialFunctionGF2(extendedSize, f.getOutputLength(), f.getMonomials(), f.getContributions() );  
     }
 
 
