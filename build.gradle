@@ -22,10 +22,11 @@ allprojects {
     apply plugin: "maven-publish"
     apply plugin: "java"
     apply plugin: "maven"
+    apply plugin: "eclipse"
     apply plugin: "idea"
 
     task wrapper(type: Wrapper) {
-        gradleVersion = '1.12'
+        gradleVersion = '2.0'
     }
 
     test {
@@ -47,11 +48,19 @@ allprojects {
 
     ext.isReleaseVersion = false
 
-    ext.sourceCompatibility=JavaVersion.VERSION_1_6
-    ext.targetCompatibility=JavaVersion.VERSION_1_8
+    sourceCompatibility=JavaVersion.VERSION_1_6
+    targetCompatibility=JavaVersion.VERSION_1_6
 
     ext.jackson_version='2.3.0'
+
+    eclipse {
+        ext.sourceCompatibility=JavaVersion.VERSION_1_6
+        ext.targetCompatibility=JavaVersion.VERSION_1_6
+        ext.downloadSources = true
+        ext.downloadJavadoc = true
+        classpath {
+             containers.remove('org.eclipse.jdt.launching.JRE_CONTAINER')
+             containers 'org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6'
+        }
+    }
 }
-
-
-

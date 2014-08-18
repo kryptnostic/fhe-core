@@ -43,9 +43,6 @@ task javadocJar(type: Jar, dependsOn:javadoc) {
   from javadoc.destinationDir
 }*/
 
-ext.sourceCompatibility=JavaVersion.VERSION_1_6
-ext.targetCompatibility=JavaVersion.VERSION_1_8
-
 repositories {
   mavenCentral()  
   mavenLocal()
@@ -83,12 +80,13 @@ dependencies {
 
     compile 'com.codahale.metrics:metrics-core:3.0.2'
     compile 'com.codahale.metrics:metrics-graphite:3.0.2'
-    
+    compile 'com.codahale.metrics:metrics-annotation:3.0.2'
+        
     /*
      * GUAVA 
      * EventBus, FluentIterables, ListenableFutures and more
      */
-    compile 'com.google.guava:guava:15.0'
+    compile 'com.google.guava:guava:17.0'
 
     /*
      JODA TIME - A better datetime class.
@@ -154,13 +152,5 @@ dependencies {
      * TESTING
      */
     testCompile 'junit:junit:4.11'
-}
-
-
-eclipse {
-    ext.downloadSources = true
-    ext.downloadJavadoc = true
-
-    ext.sourceCompatibility=JavaVersion.VERSION_1_6
-    ext.targetCompatibility=JavaVersion.VERSION_1_6
+    testCompile project(":kryptnostic-test")
 }

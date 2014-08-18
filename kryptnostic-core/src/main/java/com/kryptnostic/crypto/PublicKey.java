@@ -6,14 +6,13 @@ import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cern.colt.bitvector.BitVector;
+
 import com.google.common.base.Preconditions;
 import com.kryptnostic.crypto.padding.PaddingStrategy;
 import com.kryptnostic.crypto.padding.ZeroPaddingStrategy;
 import com.kryptnostic.multivariate.PolynomialFunctionGF2;
-import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-
-import cern.colt.bitvector.BitVector;
 
 /**
  * Public key class used for encryption. 
@@ -100,8 +99,10 @@ public class PublicKey {
         Preconditions.checkArgument( (plaintext.length<<3) == ( encrypter.getInputLength() >>> 3 ) , "Cannot directly encrypt block of incorrect length." );
         
         BitVector result = encrypter.apply( new BitVector( plaintext , encrypter.getInputLength() ) );
-        for( long l : result.elements() ) {
-            logger.debug("Wrote the following ciphertext long: {}" , l );
+        if( logger.isDebugEnabled() ) {
+        	for( long l : result.elements() ) {
+        		logger.debug("Wrote the following ciphertext long: {}" , l );
+        	}
         }
         return result.elements();
     }

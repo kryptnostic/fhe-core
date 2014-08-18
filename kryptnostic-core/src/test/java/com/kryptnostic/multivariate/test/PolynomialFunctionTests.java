@@ -1,4 +1,5 @@
 package com.kryptnostic.multivariate.test;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -30,42 +31,42 @@ import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
-
 public class PolynomialFunctionTests {
-    private static final Logger logger = LoggerFactory.getLogger( PolynomialFunctionTests.class );
+    private static final Logger logger = LoggerFactory.getLogger(PolynomialFunctionTests.class);
     private static final Random r = new Random(0);
+
     @Test
     public void builderTest() {
-        PolynomialFunctionGF2.Builder builder = PolynomialFunctionGF2.builder( 256 , 256 );
-        for( int i = 0 ; i < 1024 ; ++i ) {
-            BitVector contribution = BitUtils.randomVector( 256 );
-            builder.setMonomialContribution( Monomial.randomMonomial( 256 , 4 ) , contribution);
+        PolynomialFunctionGF2.Builder builder = PolynomialFunctionGF2.builder(256, 256);
+        for (int i = 0; i < 1024; ++i) {
+            BitVector contribution = BitUtils.randomVector(256);
+            builder.setMonomialContribution(Monomial.randomMonomial(256, 4), contribution);
         }
-        
+
         PolynomialFunctionGF2 f = builder.build();
-        BitVector result = f.apply( BitUtils.randomVector( 256 ) );
-        logger.trace( "Result: {}" , result );
-        Assert.assertEquals( result.size() ,  256 );
+        BitVector result = f.apply(BitUtils.randomVector(256));
+        logger.trace("Result: {}", result);
+        Assert.assertEquals(result.size(), 256);
     }
 
     @Test
     public void denseRandomMVQTest() {
-        SimplePolynomialFunction f = PolynomialFunctions.denseRandomMultivariateQuadratic(256 , 256);
-        Assert.assertEquals( 256 , f.getInputLength() );
-        Assert.assertEquals( 256 , f.getOutputLength() );
-        Assert.assertEquals( 1 + 128*257 , f.getMonomials().length );
-        
-        for( Monomial m : f.getMonomials() ) {
-            Assert.assertTrue( m.cardinality() <= 2 );
+        SimplePolynomialFunction f = PolynomialFunctions.denseRandomMultivariateQuadratic(256, 256);
+        Assert.assertEquals(256, f.getInputLength());
+        Assert.assertEquals(256, f.getOutputLength());
+        Assert.assertEquals(1 + 128 * 257, f.getMonomials().length);
+
+        for (Monomial m : f.getMonomials()) {
+            Assert.assertTrue(m.cardinality() <= 2);
         }
-        
-        BitVector input = BitUtils.randomVector( f.getInputLength() );
-        
+
+        BitVector input = BitUtils.randomVector(f.getInputLength());
+
         BitVector result = f.apply(input);
-        Assert.assertNotNull( result );
-        Assert.assertEquals( f.getOutputLength(),  result.size() );
+        Assert.assertNotNull(result);
+        Assert.assertEquals(f.getOutputLength(), result.size());
     }
-    
+
     @Test
     public void evaluationTest() {
     	int nTrials = 5000;
@@ -74,8 +75,9 @@ public class PolynomialFunctionTests {
         for( int i = 0 ; i < 1024 ; ++i ) {
             BitVector contribution = BitUtils.randomVector( 256 );
             builder.setMonomialContribution( Monomial.randomMonomial( 256 , 4 ) , contribution);
+
         }
-        
+
         PolynomialFunctionGF2 f = builder.build();
         for (int j = 0; j < nTrials; j++) {
 	        BitVector input = BitUtils.randomVector( 256 );
@@ -89,7 +91,7 @@ public class PolynomialFunctionTests {
         }
     	logger.info("Function evaluation test took an average: {} ms.",((double)time) / ((double)nTrials));
     }
-    
+   
     @Test
     public void denseEvaluationTest() {
     	SimplePolynomialFunction f = PolynomialFunctions.denseRandomMultivariateQuadratic( 256 , 256 );
@@ -560,4 +562,6 @@ public class PolynomialFunctionTests {
        }
        logger.info( "Non-linear pipeline test took a total of {} ms" , totalMillis );
    }
+
+   
 }

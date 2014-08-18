@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate.gf2;
+package com.kryptnostic.multivariate;
 
 import java.security.InvalidParameterException;
 import java.util.Arrays;
@@ -7,13 +7,12 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import cern.colt.bitvector.BitVector;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.kryptnostic.multivariate.MultivariateUtils;
-
-import cern.colt.bitvector.BitVector;
+import com.kryptnostic.multivariate.gf2.Monomial;
 
 
 /**
@@ -56,24 +55,32 @@ public class PolynomialFunctionRepresentationGF2 {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
-            return false;
-        if (!(obj instanceof PolynomialFunctionRepresentationGF2))
-            return false;
-        PolynomialFunctionRepresentationGF2 other = (PolynomialFunctionRepresentationGF2) obj;
-        if (outputLength != other.outputLength)
-            return false;
-        if (inputLength != other.inputLength)
-            return false;
-        Map<Monomial,BitVector> thisMap = MultivariateUtils.mapViewFromMonomialsAndContributions(monomials, contributions);
-        Map<Monomial,BitVector> objMap = MultivariateUtils.mapViewFromMonomialsAndContributions(other.monomials, other.contributions);
+        }
         
-        if( !Sets.symmetricDifference( thisMap.keySet() , objMap.keySet() ).isEmpty() ) {
+        if (obj == null) {
             return false;
         }
-      
+        if (!(obj instanceof PolynomialFunctionRepresentationGF2)) {
+            return false;
+        }
+        
+        PolynomialFunctionRepresentationGF2 other = (PolynomialFunctionRepresentationGF2) obj;
+        
+        if (outputLength != other.outputLength) {
+        	return false;
+        }
+        if (inputLength != other.inputLength) {
+            return false;
+        }
+        /*
+         * Generate a map view of monomial contributions. If one map has no entries that are not in the other map
+         * and both maps have the same number of monomials, then the functions are equal.
+         */
+        Map<Monomial,BitVector> thisMap = MultivariateUtils.mapViewFromMonomialsAndContributions(monomials, contributions);
+        Map<Monomial,BitVector> objMap = MultivariateUtils.mapViewFromMonomialsAndContributions(other.monomials, other.contributions);
+              
         for( Entry<Monomial,BitVector> entry : thisMap.entrySet() ) {
             BitVector thisContribution = entry.getValue();
             BitVector otherContribution = objMap.get( entry.getKey() );
@@ -85,7 +92,11 @@ public class PolynomialFunctionRepresentationGF2 {
             }
         }
         
-        return true;
+        if( monomials.length == other.monomials.length ) {
+        	return true;
+        } 
+        
+        return false;
     }
 
     public static class Builder {

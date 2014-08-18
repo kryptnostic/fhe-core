@@ -2,8 +2,12 @@ package com.kryptnostic.multivariate.gf2;
 
 import cern.colt.bitvector.BitVector;
 
+import com.codahale.metrics.annotation.Timed;
+
 public interface SimplePolynomialFunction extends PolynomialFunction {
+    @Timed
     SimplePolynomialFunction xor( SimplePolynomialFunction input );
+    @Timed
     SimplePolynomialFunction and( SimplePolynomialFunction input );
     
     /**
@@ -12,8 +16,13 @@ public interface SimplePolynomialFunction extends PolynomialFunction {
      * @return A new function representing the function composition of this function and inner, 
      * such that evaluating it on input is equivalent to {@code this.evaluate( inner.evaluate( input ) )}  
      */
+    @Timed
     SimplePolynomialFunction compose( SimplePolynomialFunction inner );
+    @Timed
     SimplePolynomialFunction compose( SimplePolynomialFunction lhs , SimplePolynomialFunction rhs );
+    @Timed
+    SimplePolynomialFunction resolve( BitVector input );
+    
     
     Monomial[] getMonomials();
     BitVector[] getContributions();
