@@ -177,17 +177,25 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
  
     /**
      * Evaluate function for input vector.
+     * 
+     * TODO: find and fix concurrency bug
      */
     public BitVector apply( final BitVector input ) {
     	
-    	int nTasks = (monomials.length % CONCURRENCY_LEVEL) > 0 ? CONCURRENCY_LEVEL + 1 : CONCURRENCY_LEVEL;
-    	final CountDownLatch latch = new CountDownLatch(nTasks);
+    	final CountDownLatch latch = new CountDownLatch(CONCURRENCY_LEVEL);
     	
     	final BitVector result = new BitVector( outputLength );
     	int blocks = (monomials.length / CONCURRENCY_LEVEL);
-    	for( int fIndex = 0; fIndex < monomials.length ; fIndex+=blocks ) {
-    		final int fromIndex = fIndex;
-    		final int toIndex = Math.min( fromIndex + blocks , monomials.length );
+    	int leftover = monomials.length % CONCURRENCY_LEVEL;
+    	
+    	
+    	for( int i=0; i<CONCURRENCY_LEVEL; i++ ) {
+    		final int fromIndex = i*blocks;
+    		int targetIndex = fromIndex + blocks;
+    		if (leftover != 0 && i == CONCURRENCY_LEVEL - 1) {
+    			targetIndex += leftover;
+    		}
+    		final int toIndex = targetIndex;
     		
     		Runnable r = new Runnable() {
     			@Override
