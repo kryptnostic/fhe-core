@@ -174,17 +174,44 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
 
         return new PolynomialFunctionGF2(inputLength, outputLength, newMonomials, newContributions);
     }
-
-    public BitVector apply(BitVector input) {
-        BitVector result = new BitVector(outputLength);
-
-        for (int i = 0; i < monomials.length; ++i) {
-            Monomial term = monomials[i];
-            if (term.eval(input)) {
-                result.xor(contributions[i]);
-            }
-        }
-
+ 
+    /**
+     * Evaluate function for input vector.
+     */
+    public BitVector apply( final BitVector input ) {
+    	
+    	int nTasks = (monomials.length % CONCURRENCY_LEVEL) > 0 ? CONCURRENCY_LEVEL + 1 : CONCURRENCY_LEVEL;
+    	final CountDownLatch latch = new CountDownLatch(nTasks);
+    	
+    	final BitVector result = new BitVector( outputLength );
+    	int blocks = (monomials.length / CONCURRENCY_LEVEL);
+    	for( int fIndex = 0; fIndex < monomials.length ; fIndex+=blocks ) {
+    		final int fromIndex = fIndex;
+    		final int toIndex = Math.min( fromIndex + blocks , monomials.length );
+    		
+    		Runnable r = new Runnable() {
+    			@Override
+    			public void run() {
+    				BitVector intermediary = new BitVector( outputLength);
+    				for( int i = fromIndex; i < toIndex ; ++i ) {
+    					Monomial term =  monomials[ i ];
+    					if( term.eval( input ) ){
+    						intermediary.xor( contributions[ i ] );
+    					}
+    				}
+    				synchronized (result) {
+    					result.xor(intermediary);
+    				}
+    				latch.countDown();
+    			}
+    		};
+    		executor.execute( r );
+    	}
+    	try {
+			latch.await();
+		} catch (InterruptedException e) {
+			logger.error("Concurrent apply() latch interrupted.");
+		}
         return result;
     }
 

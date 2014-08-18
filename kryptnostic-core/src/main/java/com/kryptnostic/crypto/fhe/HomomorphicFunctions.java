@@ -21,6 +21,9 @@ import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunc
 
 public class HomomorphicFunctions {
     private static final Logger logger = LoggerFactory.getLogger( HomomorphicFunctions.class );
+    
+	private HomomorphicFunctions(){}
+    
     public static SimplePolynomialFunction HomomorphicXor( int length , PrivateKey privateKey ) {
         return privateKey.computeHomomorphicFunction( PolynomialFunctions.XOR( length ) );
     }

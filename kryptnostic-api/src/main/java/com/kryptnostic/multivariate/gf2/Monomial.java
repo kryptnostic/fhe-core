@@ -61,6 +61,11 @@ public class Monomial extends BitVector {
         return true;
     }
     
+    /**
+     * Evaluates input vector
+     * @param input
+     * @return
+     */
     public boolean eval( BitVector input ) {
         Preconditions.checkArgument( size() == input.size() , "Number of terms in input doesn't not much number of terms in Monomial." );
         BitVector check = copy();
