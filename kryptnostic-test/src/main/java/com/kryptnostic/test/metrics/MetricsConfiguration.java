@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 
 import com.codahale.metrics.ConsoleReporter;
+import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
@@ -61,9 +62,10 @@ public class MetricsConfiguration implements MetricsConfigurer {
 	}
 	
 	
+	
 	@Override
 	public MetricRegistry getMetricRegistry() {
-		return new MetricRegistry(); 
+		return new NameCorrectingMetricRegistry(); 
 	}
 
 	@Override
@@ -78,5 +80,23 @@ public class MetricsConfiguration implements MetricsConfigurer {
             logger.error( "Unable to resolve host name, defaulting to empty prefix." );
             return "";
         }
+	}
+	
+	private static class NameCorrectingMetricRegistry extends MetricRegistry {
+	    @Override
+	    public <T extends Metric> T register(String name, T metric) throws IllegalArgumentException {
+	        return super.register( cleanupName( name ) , metric );
+	    }
+	    
+	    private static String cleanupName( String name ) {
+	        int endIndex =  name.indexOf( "$" );
+	        int periodStart = name.indexOf( "." , endIndex );
+	        
+	        if( endIndex > 0  ) {
+	            return name.substring( 0 , endIndex ) + name.substring( periodStart );
+	        } else { 
+	            return name;
+	        }
+	    }
 	}
 }
