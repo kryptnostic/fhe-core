@@ -20,6 +20,7 @@ import cern.colt.bitvector.BitVector;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
@@ -592,10 +593,6 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         // Verify the functions are composable
         Preconditions.checkArgument(inputLength == inner.getOutputLength(),
                 "Input length of outer function must match output length of inner function it is being composed with");
-
-//        if ( this.getMaximumMonomialOrder() == 2 && inner.getMaximumMonomialOrder() == 1) {
-//        	return optimizedQuadraticCompose(inner);
-//        }
         
         Optional<Integer> constantOuterMonomialIndex = Optional.absent();
         EnhancedBitMatrix contributionRows = new EnhancedBitMatrix(Arrays.asList(inner.getContributions()));
@@ -603,9 +600,21 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
 
         final List<Monomial> mList = Lists.newArrayList(inner.getMonomials());
         final ConcurrentMap<Monomial, Integer> indices = Maps.newConcurrentMap();
-
         for (int i = 0; i < mList.size(); ++i) {
             indices.put(mList.get(i), i);
+        }
+        
+        if ( this.getMaximumMonomialOrder() == 2 && inner.getMaximumMonomialOrder() == 1) {
+        	Monomial[] linearMonomials = inner.getMonomials();
+         	for (int i = 0 ; i < linearMonomials.length; i++) {
+        		for (int j = i+1; j < linearMonomials.length; j++) {
+        			Monomial p = mList.get(i).product(mList.get(j));
+        			if (indices.get(p) == null) {
+        				indices.put(p, mList.size());
+        				mList.add(p);
+        			}
+        		}
+        	}
         }
 
         Optional<Integer> constantInnerMonomialIndex = Optional.fromNullable(indices.get(Monomial
