@@ -24,14 +24,18 @@ public class MetricsConfiguration implements MetricsConfigurer {
 	//TODO: Make this configurable instead of being hardcoded to our internal graphite server.
 	private static final Optional<Graphite> graphite; 
 	private static final Logger logger = LoggerFactory.getLogger( MetricsConfiguration.class );
+	private static final String GRAPHITE_SERVER_VAR = "graphite_server";
+	private static final String GRAPHITE_PORT_VAR = "graphite_port";
+	private static final String GRAPHITE_SERVER;
+	private static final int GRAPHITE_PORT;
 	
 	static {
-		String host = System.getenv("graphite_server");
-		int port = Integer.parseInt( Optional.fromNullable( System.getenv("graphite_port" ) ).or( "2003" ) );
-		if( host == null )  {
+		GRAPHITE_SERVER  = System.getenv( GRAPHITE_SERVER_VAR) ;
+		GRAPHITE_PORT = Integer.parseInt( Optional.fromNullable( System.getenv( GRAPHITE_PORT_VAR ) ).or( "2003" ) );
+		if( GRAPHITE_SERVER == null )  {
 			graphite = Optional.absent();
 		} else {
-			graphite = Optional.of( new Graphite( new InetSocketAddress( host , port ) ) );
+			graphite = Optional.of( new Graphite( new InetSocketAddress( GRAPHITE_SERVER , GRAPHITE_PORT ) ) );
 		}
 	}
 	
@@ -46,7 +50,7 @@ public class MetricsConfiguration implements MetricsConfigurer {
 						.convertRatesTo( TimeUnit.MILLISECONDS )
 						.build( graphite.get() );
 			reporter.start( 1 , TimeUnit.SECONDS );
-			logger.error("Address = {}:{}" , System.getenv("graphite-server") , Integer.parseInt( System.getenv("graphite-port" ) ) );
+			logger.info("Address = {}:{}" , GRAPHITE_SERVER , GRAPHITE_PORT );
 		} else {
 			ConsoleReporter
 				.forRegistry( metricRegistry )

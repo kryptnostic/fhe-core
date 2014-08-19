@@ -40,5 +40,11 @@ public class PolynomialFunctionTestsDriver extends AbstractInstrumentedTest  {
         }
     }
     
+    @Test
+    public void testFunctionXor() {
+        for( int i = 0 ; i < 100; ++i ) {
+            tests.addTest();
+        }
+    }
 }
 

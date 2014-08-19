@@ -109,11 +109,9 @@ public class PolynomialFunctionTests {
     
    @Timed
    public void identityTest() {
-		   SimplePolynomialFunction f = identity();
-	       BitVector input = BitUtils.randomVector( 256 );
-	       
-	       Assert.assertEquals( input , f.apply( input ) );
-       
+       SimplePolynomialFunction f = identity();
+       BitVector input = BitUtils.randomVector( INPUT_LENGTH );
+       Assert.assertEquals( input , f.apply( input ) );
    }
    
    @Timed
@@ -158,8 +156,8 @@ public class PolynomialFunctionTests {
    
    @Timed 
    public void addTest() {
-       SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction(256, 256);
-       SimplePolynomialFunction rhs = PolynomialFunctions.randomFunction(256, 256);
+       SimplePolynomialFunction lhs = randomFunction();
+       SimplePolynomialFunction rhs = randomFunction();
        BitVector val = BitUtils.randomVector( 256 ) ;
        BitVector expected = lhs.apply( val );
        expected.xor( rhs.apply( val ) );
@@ -168,8 +166,8 @@ public class PolynomialFunctionTests {
    
    @Timed
    public void productTest() {
-       SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction(256, 256, 10, 2);
-       SimplePolynomialFunction rhs = PolynomialFunctions.randomFunction(256, 256, 10, 2);
+       SimplePolynomialFunction lhs = randomFunction();
+       SimplePolynomialFunction rhs = randomFunction();
        BitVector val = BitUtils.randomVector( 256 ) ;
        BitVector expected = lhs.apply( val );
        expected.and( rhs.apply( val ) );
