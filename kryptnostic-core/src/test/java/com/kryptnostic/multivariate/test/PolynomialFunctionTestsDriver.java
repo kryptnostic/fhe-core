@@ -63,7 +63,7 @@ public class PolynomialFunctionTestsDriver extends AbstractInstrumentedTest  {
     
     @Test
     public void runMostFrequentFactor() {
-        for( int i = 0 ; i < 1000; ++i ) {
+        for( int i = 0 ; i < 5; ++i ) {
             tests.mostFrequentFactorTest();
         }
     }
@@ -78,7 +78,7 @@ public class PolynomialFunctionTestsDriver extends AbstractInstrumentedTest  {
     
     @Test
     public void runSerializationTests() {
-        for( int i = 0 ; i < 1000; ++i ) {
+        for( int i = 0 ; i < 10; ++i ) {
             tests.testToFromString();
         }
     }

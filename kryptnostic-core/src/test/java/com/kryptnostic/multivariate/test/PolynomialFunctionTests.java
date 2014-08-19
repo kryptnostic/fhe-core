@@ -41,7 +41,7 @@ public class PolynomialFunctionTests {
     private static final Random r = new Random(0);
     private static final int INPUT_LENGTH = 128;
     private static final int OUTPUT_LENGTH = 128;
-    private static final int PIPELINE_LENGTH = 5;
+    private static final int PIPELINE_LENGTH = 2;
     
     @Timed
     public void builderTest() {
@@ -59,7 +59,7 @@ public class PolynomialFunctionTests {
 
     @Timed
     public void denseRandomMVQTest() {
-        SimplePolynomialFunction f = singletonDenseRandomFunction();
+        SimplePolynomialFunction f = denseRandomFunction();
         Assert.assertEquals(INPUT_LENGTH, f.getInputLength());
         Assert.assertEquals(OUTPUT_LENGTH, f.getOutputLength());
         Assert.assertEquals( 1 + f.getInputLength() + ((f.getInputLength()*(f.getInputLength() - 1))>>>1), f.getMonomials().length);
@@ -79,7 +79,7 @@ public class PolynomialFunctionTests {
 
    @Timed
    public void identityTest() {
-       SimplePolynomialFunction f = identity();
+       SimplePolynomialFunction f = optimizedIdentity();
        BitVector input = BitUtils.randomVector( INPUT_LENGTH );
        Assert.assertEquals( input , f.apply( input ) );
    }
