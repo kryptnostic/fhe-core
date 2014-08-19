@@ -453,7 +453,7 @@ public class PolynomialFunctionTests {
            BitVector innerInput = FunctionUtils.concatenate( randomVector() , randomVector() );
            Assert.assertEquals( outerSlow.apply( input ) , outerFast.apply( input ) );
            Assert.assertEquals( innerSlow.apply( innerInput) , innerFast.apply( innerInput ) );
-           Assert.assertEquals( slowComposed.apply( input ) , fastComposed.apply( input ) );
+           Assert.assertEquals( slowComposed.apply( innerInput ) , fastComposed.apply( input ) );
        }
    }
    
