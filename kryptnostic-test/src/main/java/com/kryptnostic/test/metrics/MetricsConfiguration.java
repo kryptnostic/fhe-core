@@ -7,11 +7,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.health.HealthCheckRegistry;
@@ -29,6 +31,7 @@ public class MetricsConfiguration implements MetricsConfigurer {
 	private static final String GRAPHITE_PORT_VAR = "graphite_port";
 	private static final String GRAPHITE_SERVER;
 	private static final int GRAPHITE_PORT;
+	private ScheduledReporter reporter;
 	
 	static {
 		GRAPHITE_SERVER  = System.getenv( GRAPHITE_SERVER_VAR) ;
@@ -43,25 +46,30 @@ public class MetricsConfiguration implements MetricsConfigurer {
 	@Override
 	public void configureReporters(MetricRegistry metricRegistry) {
 		if( graphite.isPresent() ) {
-			GraphiteReporter reporter = 
+			reporter = 
 					GraphiteReporter
 						.forRegistry( metricRegistry )
 						.prefixedWith( getHostName() )
 						.convertDurationsTo( TimeUnit.MILLISECONDS )
 						.convertRatesTo( TimeUnit.MILLISECONDS )
 						.build( graphite.get() );
-			reporter.start( 1 , TimeUnit.SECONDS );
+			reporter.start( 5 , TimeUnit.SECONDS );
 			logger.info("Address = {}:{}" , GRAPHITE_SERVER , GRAPHITE_PORT );
+			
 		} else {
-			ConsoleReporter
-				.forRegistry( metricRegistry )
-				.convertDurationsTo( TimeUnit.MILLISECONDS )
-				.convertRatesTo( TimeUnit.MILLISECONDS )
-				.build();
+			reporter = 
+			        ConsoleReporter
+			            .forRegistry( metricRegistry )
+			            .convertDurationsTo( TimeUnit.MILLISECONDS )
+			            .convertRatesTo( TimeUnit.MILLISECONDS )
+			            .build();
 		}
 	}
 	
-	
+	@Bean
+	public ScheduledReporter reporter() {
+	    return reporter;
+	}
 	
 	@Override
 	public MetricRegistry getMetricRegistry() {
