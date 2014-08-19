@@ -22,7 +22,7 @@ public class PolynomialFunctionTestsDriver extends AbstractInstrumentedTest  {
     
     @Test
     public void runPipelineTests() { 
-        for( int i = 0 ; i < 5 ; ++i ) {
+        for( int i = 0 ; i < 1 ; ++i ) {
             tests.testPipelineStage();
             tests.testRandomlyPartitionMVQ();
             tests.testNonlinearPipeline();
@@ -85,7 +85,7 @@ public class PolynomialFunctionTestsDriver extends AbstractInstrumentedTest  {
     
     @Test
     public void runParallelizationTests() {
-        for( int i = 0 ; i < 5 ; ++i ) {
+        for( int i = 0 ; i < 1 ; ++i ) {
             tests.testParallelization();
         }
     }

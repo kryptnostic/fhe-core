@@ -24,87 +24,90 @@ import com.ryantenney.metrics.spring.config.annotation.MetricsConfigurer;
 @Configuration
 @EnableMetrics(proxyTargetClass=true)
 public class MetricsConfiguration implements MetricsConfigurer {
-	//TODO: Make this configurable instead of being hardcoded to our internal graphite server.
-	private static final Optional<Graphite> graphite; 
-	private static final Logger logger = LoggerFactory.getLogger( MetricsConfiguration.class );
-	private static final String GRAPHITE_SERVER_VAR = "graphite_server";
-	private static final String GRAPHITE_PORT_VAR = "graphite_port";
-	private static final String GRAPHITE_SERVER;
-	private static final int GRAPHITE_PORT;
-	private ScheduledReporter reporter;
-	
-	static {
-		GRAPHITE_SERVER  = System.getenv( GRAPHITE_SERVER_VAR) ;
-		GRAPHITE_PORT = Integer.parseInt( Optional.fromNullable( System.getenv( GRAPHITE_PORT_VAR ) ).or( "2003" ) );
-		if( GRAPHITE_SERVER == null )  {
-			graphite = Optional.absent();
-		} else {
-			graphite = Optional.of( new Graphite( new InetSocketAddress( GRAPHITE_SERVER , GRAPHITE_PORT ) ) );
-		}
-	}
-	
-	@Override
-	public void configureReporters(MetricRegistry metricRegistry) {
-		if( graphite.isPresent() ) {
-			reporter = 
-					GraphiteReporter
-						.forRegistry( metricRegistry )
-						.prefixedWith( getHostName() )
-						.convertDurationsTo( TimeUnit.MILLISECONDS )
-						.convertRatesTo( TimeUnit.MILLISECONDS )
-						.build( graphite.get() );
-			reporter.start( 5 , TimeUnit.SECONDS );
-			logger.info("Address = {}:{}" , GRAPHITE_SERVER , GRAPHITE_PORT );
-			
-		} else {
-			reporter = 
-			        ConsoleReporter
-			            .forRegistry( metricRegistry )
-			            .convertDurationsTo( TimeUnit.MILLISECONDS )
-			            .convertRatesTo( TimeUnit.MILLISECONDS )
-			            .build();
-		}
-	}
-	
-	@Bean
-	public ScheduledReporter reporter() {
-	    return reporter;
-	}
-	
-	@Override
-	public MetricRegistry getMetricRegistry() {
-		return new NameCorrectingMetricRegistry(); 
-	}
+    private static final Optional<Graphite> graphite; 
+    private static final Logger logger = LoggerFactory.getLogger( MetricsConfiguration.class );
+    private static final String GRAPHITE_SERVER_VAR = "graphite_server";
+    private static final String GRAPHITE_PORT_VAR = "graphite_port";
+    private static final String GRAPHITE_SERVER;
+    private static final int GRAPHITE_PORT;
+    private static final MetricRegistry singletonMetricRegistry = new NameCorrectingMetricRegistry();  
+    private static final HealthCheckRegistry singletonHealthCheckRegistry = new HealthCheckRegistry();
+    private static final ScheduledReporter reporter;
 
-	@Override
-	public HealthCheckRegistry getHealthCheckRegistry() {
-		return new HealthCheckRegistry();
-	}
-	
-	private String getHostName() {
-	    try {
+    static {
+        GRAPHITE_SERVER  = System.getenv( GRAPHITE_SERVER_VAR) ;
+        GRAPHITE_PORT = Integer.parseInt( Optional.fromNullable( System.getenv( GRAPHITE_PORT_VAR ) ).or( "2003" ) );
+
+        if( GRAPHITE_SERVER == null )  {
+            graphite = Optional.absent();
+        } else {
+            graphite = Optional.of( new Graphite( new InetSocketAddress( GRAPHITE_SERVER , GRAPHITE_PORT ) ) );
+        }
+
+
+        if( graphite.isPresent() ) {
+            reporter = 
+                    GraphiteReporter
+                    .forRegistry( singletonMetricRegistry )
+                    .prefixedWith( getHostName() )
+                    .convertDurationsTo( TimeUnit.MILLISECONDS )
+                    .convertRatesTo( TimeUnit.MILLISECONDS )
+                    .build( graphite.get() );
+            reporter.start( 5 , TimeUnit.SECONDS );
+            logger.info("Address = {}:{}" , GRAPHITE_SERVER , GRAPHITE_PORT );
+
+        } else {
+            reporter = 
+                    ConsoleReporter
+                    .forRegistry( singletonMetricRegistry )
+                    .convertDurationsTo( TimeUnit.MILLISECONDS )
+                    .convertRatesTo( TimeUnit.MILLISECONDS )
+                    .build();
+        }
+    }
+
+    @Override
+    public void configureReporters(MetricRegistry metricRegistry) {}
+
+    @Bean
+    public ScheduledReporter reporter() {
+        return reporter;
+    }
+
+    @Override
+    public MetricRegistry getMetricRegistry() {
+        return singletonMetricRegistry;
+    }
+
+    @Override
+    public HealthCheckRegistry getHealthCheckRegistry() {
+        return singletonHealthCheckRegistry;
+    }
+
+    private static String getHostName() {
+        try {
             return InetAddress.getLocalHost().getCanonicalHostName();
         } catch (UnknownHostException e) {
             logger.error( "Unable to resolve host name, defaulting to empty prefix." );
             return "";
         }
-	}
-	
-	private static class NameCorrectingMetricRegistry extends MetricRegistry {
-	    @Override
-	    public <T extends Metric> T register(String name, T metric) throws IllegalArgumentException {
-	        return super.register( cleanupName( name ) , metric );
-	    }
-	    
-	    private static String cleanupName( String name ) {
-	        int endIndex =  name.indexOf( "$" );
-	        int periodStart = name.indexOf( "." , endIndex );
-	        
-	        if( endIndex > 0  ) {
-	            return name.substring( 0 , endIndex ) + name.substring( periodStart );
-	        } else { 
-	            return name;
-	        }
-	    }
-	}
+    }
+
+    private static class NameCorrectingMetricRegistry extends MetricRegistry {
+        @Override
+        public <T extends Metric> T register(String name, T metric) throws IllegalArgumentException {
+            return super.register( cleanupName( name ) , metric );
+        }
+
+        private static String cleanupName( String name ) {
+            int endIndex =  name.indexOf( "$" );
+            int periodStart = name.indexOf( "." , endIndex );
+
+            if( endIndex > 0  ) {
+                return name.substring( 0 , endIndex ) + name.substring( periodStart );
+            } else { 
+                return name;
+            }
+        }
+    }
 }

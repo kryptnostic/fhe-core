@@ -299,7 +299,7 @@ public class PolynomialFunctionTests {
 
    @Timed
    public void testRandomlyPartitionMVQ() {
-       SimplePolynomialFunction f = denseRandomFunction();
+       SimplePolynomialFunction f = denseRandomFunction().optimize();
        Pair<SimplePolynomialFunction,SimplePolynomialFunction> gh = PolynomialFunctions.randomlyPartitionMVQ(f);
        SimplePolynomialFunction g = gh.getLeft();
        SimplePolynomialFunction h = gh.getRight();
@@ -453,7 +453,7 @@ public class PolynomialFunctionTests {
            BitVector innerInput = FunctionUtils.concatenate( randomVector() , randomVector() );
            Assert.assertEquals( outerSlow.apply( input ) , outerFast.apply( input ) );
            Assert.assertEquals( innerSlow.apply( innerInput) , innerFast.apply( innerInput ) );
-           Assert.assertEquals( slowComposed.apply( innerInput ) , fastComposed.apply( input ) );
+           Assert.assertEquals( slowComposed.apply( innerInput ) , fastComposed.apply( innerInput ) );
        }
    }
    
