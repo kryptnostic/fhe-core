@@ -289,11 +289,11 @@ public class PolynomialFunctionTests {
    
    @Timed
    public void testToFromString() {
-       SimplePolynomialFunction f = randomFunction();
+       SimplePolynomialFunction f = randomFunction().optimize();
        String fString = f.toString();
        logger.trace( "f = {}" , fString );
        
-       SimplePolynomialFunction fPrime = FunctionUtils.fromString( INPUT_LENGTH , fString );
+       SimplePolynomialFunction fPrime = FunctionUtils.fromString( f.getInputLength() , fString );
        Assert.assertEquals( f , fPrime );
    }
 
