@@ -70,7 +70,7 @@ public class PolynomialFunctionTestsDriver extends AbstractInstrumentedTest  {
     
     @Test
     public void runEvaluationTests() {
-        for( int i = 0 ; i < 500000 ; ++i ) { 
+        for( int i = 0 ; i < 50000 ; ++i ) { 
             tests.identityTest();
             tests.denseRandomMVQTest();
         }
