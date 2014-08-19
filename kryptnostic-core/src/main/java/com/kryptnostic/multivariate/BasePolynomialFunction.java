@@ -794,4 +794,13 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
             return contributions;
         }
     }
+    
+    @Override
+    public SimplePolynomialFunction deoptimize() {
+        if( getClass().equals( BasePolynomialFunction.class ) ){
+            return this;
+        } else {
+            return new BasePolynomialFunction( inputLength , outputLength , monomials , contributions );
+        }
+    }
 }

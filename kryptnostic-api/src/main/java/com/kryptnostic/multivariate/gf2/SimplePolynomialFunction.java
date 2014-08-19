@@ -7,6 +7,7 @@ import com.codahale.metrics.annotation.Timed;
 public interface SimplePolynomialFunction extends PolynomialFunction {
     @Timed
     SimplePolynomialFunction xor( SimplePolynomialFunction input );
+
     @Timed
     SimplePolynomialFunction and( SimplePolynomialFunction input );
     
@@ -18,12 +19,18 @@ public interface SimplePolynomialFunction extends PolynomialFunction {
      */
     @Timed
     SimplePolynomialFunction compose( SimplePolynomialFunction inner );
+    
     @Timed
     SimplePolynomialFunction compose( SimplePolynomialFunction lhs , SimplePolynomialFunction rhs );
+    
     @Timed
     SimplePolynomialFunction resolve( BitVector input );
+    
     @Timed
     SimplePolynomialFunction optimize();
+    
+    @Timed
+    SimplePolynomialFunction deoptimize();
     
     Monomial[] getMonomials();
     BitVector[] getContributions();
