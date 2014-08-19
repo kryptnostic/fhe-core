@@ -24,7 +24,7 @@ public class MonomialsTests {
 	public void sortAndGetIndexTest() {
 		Stopwatch watch;
 		watch = Stopwatch.createStarted();
-		List<Monomial> monomials = Lists.newArrayList(Monomials.allMonomials( 128 , 2));
+		List<Monomial> monomials = Lists.newArrayList(Monomials.allMonomials( 256 , 2));
 		watch.stop();
 		logger.info("Monomial creation time: " + watch);
 		
@@ -51,13 +51,7 @@ public class MonomialsTests {
 	}
 	
 	@Test
-	public void allMonomialsTest() {
-		Set<Monomial> monomials = Monomials.allMonomials(128, 2);
-		Assert.assertEquals(monomials.size(), 8257);
-	}
-	
-	@Test
-    public void testAllMonomials() {
+    public void allMonomialsTest() {
     	Set<Monomial> allMonomials = Sets.newHashSet();
     	allMonomials.add( new Monomial( 4 ));
     	allMonomials.add( new Monomial( 4 ).chainSet(0) );
@@ -91,5 +85,8 @@ public class MonomialsTests {
     	
     	Assert.assertEquals( allMonomials, Monomials.allMonomials(4, 4));
     	Assert.assertEquals( order2AndLessMonomials, Monomials.allMonomials(4, 2));
+    	
+    	Set<Monomial> monomials = Monomials.allMonomials(128, 2);
+		Assert.assertEquals(monomials.size(), 8257);
     }
 }

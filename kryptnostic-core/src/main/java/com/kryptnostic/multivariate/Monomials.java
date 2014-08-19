@@ -97,23 +97,6 @@ public class Monomials {
      * @return
      */
     public static Integer indexOfSorted(List<Monomial> monomials, Monomial m) {
-    	Integer firstIndex = Long.numberOfTrailingZeros(m.elements()[0]);
-    	Integer secondIndex = 0;
-    	if (m.cardinality() == 2) {
-    		for (int i = firstIndex + 1; i < m.size(); i++) {
-    			if (m.get(i)) {
-    				secondIndex = i;
-    				break;
-    			}
-    		}
-    	}
-    	Integer index = 129;
-    	for (int i = 1; i <= Math.min(firstIndex, secondIndex); i++) {
-    		index += (127 - 2);
-    	}
-    	
-    	index += Math.max(firstIndex, secondIndex); 
-    	
-    	return index;
+    	return Collections.binarySearch(monomials, m, comparator);
     }
 }
