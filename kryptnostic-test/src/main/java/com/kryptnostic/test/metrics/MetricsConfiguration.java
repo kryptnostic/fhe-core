@@ -3,6 +3,7 @@ package com.kryptnostic.test.metrics;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -96,7 +97,14 @@ public class MetricsConfiguration implements MetricsConfigurer {
     private static class NameCorrectingMetricRegistry extends MetricRegistry {
         @Override
         public <T extends Metric> T register(String name, T metric) throws IllegalArgumentException {
-            return super.register( cleanupName( name ) , metric );
+            String cleanName = cleanupName( name );
+            Map<String, Metric> existingMetrics = getMetrics();
+            int i = 0;
+            String freeName = cleanName;
+            while( existingMetrics.containsKey( freeName ) ) {
+                freeName = cleanName + Integer.toString( i++ );
+            }
+            return super.register( freeName , metric );
         }
 
         private static String cleanupName( String name ) {
