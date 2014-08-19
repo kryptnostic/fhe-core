@@ -20,7 +20,6 @@ import cern.colt.bitvector.BitVector;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
@@ -441,9 +440,9 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             ConcurrentMap<Monomial, Integer> indices) {
         BitVector result = new BitVector(monomials.size());
         for (int i = 0; i < lhs.size(); ++i) {
-            if (lhs.get(i)) {
+            if (lhs.getQuick(i)) {
                 for (int j = 0; j < rhs.size(); ++j) {
-                    if (rhs.get(j)) {
+                    if (rhs.getQuick(j)) {
                         Monomial p = monomials.get(i).product(monomials.get(j));
 
                         Integer indexObj = indices.get(p);
@@ -464,7 +463,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                             result.setSize(result.size() << 1);
                         }
 
-                        if (result.get(indexObj)) {
+                        if (result.getQuick(indexObj)) {
                             result.clear(indexObj);
                         } else {
                             result.set(indexObj);
