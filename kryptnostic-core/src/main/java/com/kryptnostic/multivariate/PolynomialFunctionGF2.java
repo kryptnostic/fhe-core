@@ -16,12 +16,12 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import cern.colt.bitvector.BitVector;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
@@ -477,6 +477,31 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         }
         return result;
     }
+    
+    private BitVector product(BitVector lhs,
+			BitVector rhs, List<Monomial> mList,
+			List<Monomial> possibleMonomials) {
+		BitVector result = new BitVector(lhs.size());
+        for (int i = Long.numberOfTrailingZeros(lhs.elements()[0]); i < lhs.size(); ++i) {
+            if (lhs.get(i)) {
+                for (int j = Long.numberOfTrailingZeros(rhs.elements()[0]); j < rhs.size(); ++j) {
+                    if (rhs.get(j)) {
+                        Monomial p = mList.get(i).product(mList.get(j));
+                        Integer index = Monomials.indexOfSorted(possibleMonomials, p); 
+                        if (index >= result.size()) {
+                        	result.setSize(result.size()*2);
+                        }
+                        if (result.get(index)) {
+                            result.clear(index);
+                        } else {
+                            result.set(index);
+                        }
+                    }
+                }
+            }
+        }
+		return result;
+	}
 
     // TODO: Figure out whether this worth unit testing.
     public static Set<Monomial> product(Set<Monomial> lhs, Set<Monomial> rhs) {
@@ -596,6 +621,10 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         Preconditions.checkArgument(inputLength == inner.getOutputLength(),
                 "Input length of outer function must match output length of inner function it is being composed with");
 
+//        if ( this.getMaximumMonomialOrder() == 2 && inner.getMaximumMonomialOrder() == 1) {
+//        	return optimizedQuadraticCompose(inner);
+//        }
+        
         Optional<Integer> constantOuterMonomialIndex = Optional.absent();
         EnhancedBitMatrix contributionRows = new EnhancedBitMatrix(Arrays.asList(inner.getContributions()));
         EnhancedBitMatrix.transpose(contributionRows);
@@ -704,8 +733,108 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         return new PolynomialFunctionGF2(inner.getInputLength(), outputLength,
                 filteredMonomials.toArray(new Monomial[0]), filteredContributions.toArray(new BitVector[0]));
     }
-
+    
     /**
+     * Optimized compose. Takes advantage of low function orders to precompute all of the possible 
+     * monomials before calculating the expansion of each outer monomial.
+     * 
+     * @param inner
+     * @return
+     */
+    private SimplePolynomialFunction optimizedQuadraticCompose(
+			SimplePolynomialFunction inner) {
+		//  precompute all of the possible expanded monomials, create a function that maps monomials to index in that array
+    	Optional<Integer> constantOuterMonomialIndex = Optional.absent();
+        EnhancedBitMatrix contributionRows = new EnhancedBitMatrix(Arrays.asList(inner.getContributions()));
+        EnhancedBitMatrix.transpose(contributionRows);
+
+        final List<Monomial> mList = Lists.newArrayList(inner.getMonomials());
+        ConcurrentMap<Monomial, Integer> indices = Maps.newConcurrentMap();
+
+        for (int i = 0; i < mList.size(); ++i) {
+            indices.put(mList.get(i), i);
+        }
+
+        Optional<Integer> constantInnerMonomialIndex = Optional.fromNullable(indices.get(Monomial
+                .constantMonomial(inner.getInputLength())));
+
+        
+        Stopwatch watch = Stopwatch.createStarted();
+        // Create a list of the possible monomials and sort
+        final List<Monomial> possibleMonomials = Lists.newArrayList(Monomials.allMonomials(inputLength << 1, getMaximumMonomialOrder()));
+        Monomials.sort(possibleMonomials);
+        watch.stop();
+        logger.info("time: " + watch);
+        
+        
+        final BitVector[] innerRows = new BitVector[inputLength];
+        for (int i = 0; i < contributionRows.rows(); ++i) {
+        	innerRows[i] = contributionRows.getRow(i);
+        }
+        
+        final BitVector[] results = new BitVector[monomials.length];
+        for (int i = 0; i < monomials.length; ++i) {
+        	results[i] = new BitVector(possibleMonomials.size());
+        }
+        
+        int nTasks = (monomials.length % CONCURRENCY_LEVEL) > 0 ? CONCURRENCY_LEVEL + 1 : CONCURRENCY_LEVEL;
+        final CountDownLatch latch = new CountDownLatch( nTasks);
+        
+        final int blocks = monomials.length / CONCURRENCY_LEVEL;
+        // Expand the outer monomials concurrently
+        for (int fIndex = 0; fIndex < monomials.length; fIndex++) {
+        	final int fromIndex = fIndex;
+        	final int toIndex = Math.min(fromIndex + blocks,  monomials.length);
+
+        	Runnable r = new Runnable() {
+				@Override
+				public void run() {
+					for (int index = fromIndex; index < toIndex; index++) {
+						Monomial outerMonomial = monomials[index];
+						if (! outerMonomial.isZero()) {
+			                BitVector contributions = new BitVector(possibleMonomials.size());
+							for (int i = Long.numberOfTrailingZeros(outerMonomial.elements()[0]); i < outerMonomial.size(); ++i) {
+			                    if (outerMonomial.get(i)) {
+			                        if ( i == Long.numberOfTrailingZeros(outerMonomial.elements()[0])) {
+			                            contributions = innerRows[i];
+			                        } else {
+			                            contributions = product(contributions, innerRows[i], mList, possibleMonomials); 
+			                        } // TODO grow contributions length within product, then extend for final xor with results.
+			                    }
+			                }
+							synchronized (results) {
+								contributions.setSize(possibleMonomials.size());
+								results[index].xor(contributions);
+							}
+						}    
+					}
+					latch.countDown();
+				}
+
+				
+			};
+            executor.execute(r);
+        }
+    	
+    	try {
+			latch.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+    	
+    	List<BitVector> filteredContributions = Lists.newArrayList();
+    	List<Monomial> filteredMonomials = Lists.newArrayList();
+    	for (int i = 0; i < possibleMonomials.size(); i++) {
+    		if (notNilContributionPredicate.apply(results[i])) {
+    			filteredContributions.add(results[i]);
+    			filteredMonomials.add(possibleMonomials.get(i));
+    		}
+    	}
+    	
+		return null;
+	}
+
+	/**
      * Filter out monomials with empty contributions.
      * 
      * @param unfilteredContributions
