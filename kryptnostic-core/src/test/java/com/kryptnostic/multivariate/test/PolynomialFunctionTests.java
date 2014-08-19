@@ -39,8 +39,8 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 public class PolynomialFunctionTests {
     private static final Logger logger = LoggerFactory.getLogger(PolynomialFunctionTests.class);
     private static final Random r = new Random(0);
-    private static final int INPUT_LENGTH = 256;
-    private static final int OUTPUT_LENGTH = 256;
+    private static final int INPUT_LENGTH = 128;
+    private static final int OUTPUT_LENGTH = 128;
     private static final int PIPELINE_LENGTH = 5;
     
     @Timed
@@ -212,7 +212,7 @@ public class PolynomialFunctionTests {
        logger.info( "Compose took {} ms." , watch.elapsed( TimeUnit.MILLISECONDS ) );
 
        for( int i = 0 ; i < 25 ; ++i ) {
-           BitVector randomInput = BitUtils.randomVector( INPUT_LENGTH );
+           BitVector randomInput = BitUtils.randomVector( INPUT_LENGTH << 1 );
            BitVector innerResult = inner.apply( randomInput );
            BitVector outerResult = outer.apply( innerResult );
            BitVector composedResult = composed.apply( randomInput );
@@ -234,7 +234,7 @@ public class PolynomialFunctionTests {
        logger.info( "Compose took {} ms." , watch.elapsed( TimeUnit.MILLISECONDS ) );
 
        for( int i = 0 ; i < 25 ; ++i ) {
-           BitVector randomInput = BitUtils.randomVector( INPUT_LENGTH );
+           BitVector randomInput = BitUtils.randomVector( INPUT_LENGTH << 1 );
            BitVector innerResult = inner.apply( randomInput );
            BitVector outerResult = outer.apply( innerResult );
            BitVector composedResult = composed.apply( randomInput );
