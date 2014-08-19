@@ -29,6 +29,7 @@ import com.kryptnostic.multivariate.PolynomialFunctionPipelineStage;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
+import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 public class PolynomialFunctionTests {
@@ -342,16 +343,23 @@ public class PolynomialFunctionTests {
    @Test
    public void composeTest() {
 	   final int BIT_SIZE = 128;
-//       SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(BIT_SIZE, BIT_SIZE, 10, 3);
-//       SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(BIT_SIZE, BIT_SIZE, 10, 2);
-	   SimplePolynomialFunction outer = PolynomialFunctions.denseRandomMultivariateQuadratic( BIT_SIZE, BIT_SIZE );
-	   SimplePolynomialFunction inner = PolynomialFunctions.randomManyToOneLinearCombination( BIT_SIZE );
-       long start = System.nanoTime();
+	   
+	   SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(BIT_SIZE, BIT_SIZE << 1, 10, 3);
+       SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(BIT_SIZE << 1, BIT_SIZE, 10, 2);
+	   composeFunctionsTest(inner, outer, BIT_SIZE);
+       
+	   outer = PolynomialFunctions.denseRandomMultivariateQuadratic( BIT_SIZE, BIT_SIZE );
+	   inner = PolynomialFunctions.randomManyToOneLinearCombination( BIT_SIZE );
+	   composeFunctionsTest(inner, outer, BIT_SIZE);
+   }
+   
+   public void composeFunctionsTest(SimplePolynomialFunction inner, SimplePolynomialFunction outer, int bitSize) {
+	   long start = System.nanoTime();
        SimplePolynomialFunction composed = outer.compose( inner );
        long millis = TimeUnit.MILLISECONDS.convert( System.nanoTime() - start , TimeUnit.NANOSECONDS ); 
        logger.info( "Compose took {} ms." , millis );
        for( int i = 0 ; i < 25 ; ++i ) {
-           BitVector randomInput = BitUtils.randomVector( BIT_SIZE << 1);
+           BitVector randomInput = BitUtils.randomVector( bitSize << 1);
            BitVector innerResult = inner.apply( randomInput );
            BitVector outerResult = outer.apply( innerResult );
            BitVector composedResult = composed.apply( randomInput );
