@@ -62,7 +62,7 @@ public class PolynomialFunctionTests {
         SimplePolynomialFunction f = singletonDenseRandomFunction();
         Assert.assertEquals(INPUT_LENGTH, f.getInputLength());
         Assert.assertEquals(OUTPUT_LENGTH, f.getOutputLength());
-        Assert.assertEquals(1 + 128 * 257, f.getMonomials().length);
+        Assert.assertEquals( 1 + f.getInputLength() + ((f.getInputLength()*(f.getInputLength() - 1))>>>1), f.getMonomials().length);
 
         for (Monomial m : f.getMonomials()) {
             Assert.assertTrue(m.cardinality() <= 2);
