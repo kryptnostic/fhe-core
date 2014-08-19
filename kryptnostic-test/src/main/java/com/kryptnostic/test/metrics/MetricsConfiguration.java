@@ -49,21 +49,21 @@ public class MetricsConfiguration implements MetricsConfigurer {
         if( graphite.isPresent() ) {
             reporter = 
                     GraphiteReporter
-                    .forRegistry( singletonMetricRegistry )
-                    .prefixedWith( getHostName() )
-                    .convertDurationsTo( TimeUnit.MILLISECONDS )
-                    .convertRatesTo( TimeUnit.MILLISECONDS )
-                    .build( graphite.get() );
+                        .forRegistry( singletonMetricRegistry )
+                        .prefixedWith( getHostName() )
+                        .convertDurationsTo( TimeUnit.MILLISECONDS )
+                        .convertRatesTo( TimeUnit.MILLISECONDS )
+                        .build( graphite.get() );
             reporter.start( 5 , TimeUnit.SECONDS );
             logger.info("Address = {}:{}" , GRAPHITE_SERVER , GRAPHITE_PORT );
 
         } else {
             reporter = 
                     ConsoleReporter
-                    .forRegistry( singletonMetricRegistry )
-                    .convertDurationsTo( TimeUnit.MILLISECONDS )
-                    .convertRatesTo( TimeUnit.MILLISECONDS )
-                    .build();
+                        .forRegistry( singletonMetricRegistry )
+                        .convertDurationsTo( TimeUnit.MILLISECONDS )
+                        .convertRatesTo( TimeUnit.MILLISECONDS )
+                        .build();
         }
     }
 
