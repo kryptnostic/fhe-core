@@ -13,37 +13,67 @@ public class PolynomialFunctionTestsDriver extends AbstractInstrumentedTest  {
     }
     
     @Test
-    public void testCompose() {
+    public void runCompose() {
         for( int i = 0 ; i < 10 ; ++i ) { 
             tests.composeTest();
         }
     }
     
     @Test
-    public void testCombination() {
+    public void runCombination() {
         for( int i = 0 ; i < 100 ; ++i ) {
-            tests.testCombination(); 
+            tests.testCombination();
         }
     }
     
     @Test
-    public void testApply() {
-        for( int i = 0 ; i < 500 ; ++i ) { 
-            tests.identityTest();
-        }
-    }
-    
-    @Test
-    public void testAssumptions() {
+    public void runAssumptions() {
         for( int i = 0 ; i < 5 ; ++i ) { 
             tests.testTestAssumptions();
         }
     }
     
     @Test
-    public void testFunctionXor() {
+    public void runFunctionXor() {
         for( int i = 0 ; i < 100; ++i ) {
             tests.addTest();
+        }
+    }
+
+    @Test
+    public void runFunctionAnd() {
+        for( int i = 0 ; i < 100; ++i ) {
+            tests.productTest();
+        }
+    }
+    
+    @Test
+    public void runMostFrequentFactor() {
+        for( int i = 0 ; i < 1000; ++i ) {
+            tests.mostFrequentFactorTest();
+        }
+    }
+    
+    @Test
+    public void runEvaluationTests() {
+        for( int i = 0 ; i < 500000 ; ++i ) { 
+            tests.identityTest();
+            tests.evaluationTest();
+            tests.denseEvaluationTest();
+        }
+    }
+    
+    @Test
+    public void runSerializationTests() {
+        for( int i = 0 ; i < 1000; ++i ) {
+            tests.testToFromString();
+        }
+    }
+    
+    @Test
+    public void runBuilderTests() {
+        for( int i = 0 ; i < 1000; ++i ) {
+            tests.builderTest();
         }
     }
 }
