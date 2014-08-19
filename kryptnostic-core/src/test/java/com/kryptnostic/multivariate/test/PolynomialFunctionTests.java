@@ -59,7 +59,7 @@ public class PolynomialFunctionTests {
 
     @Timed
     public void denseRandomMVQTest() {
-        SimplePolynomialFunction f = denseRandomFunction();
+        SimplePolynomialFunction f = singletonDenseRandomFunction();
         Assert.assertEquals(INPUT_LENGTH, f.getInputLength());
         Assert.assertEquals(OUTPUT_LENGTH, f.getOutputLength());
         Assert.assertEquals( 1 + f.getInputLength() + ((f.getInputLength()*(f.getInputLength() - 1))>>>1), f.getMonomials().length);
@@ -460,9 +460,8 @@ public class PolynomialFunctionTests {
    @Timed
    public void testTestAssumptions() {
        Assert.assertTrue( randomFunction()!=randomFunction() );
-       Assert.assertTrue( identity()!=identity() );
    }
-
+   
    @Bean
    @Scope( value = ConfigurableBeanFactory.SCOPE_PROTOTYPE )
    @Timed
