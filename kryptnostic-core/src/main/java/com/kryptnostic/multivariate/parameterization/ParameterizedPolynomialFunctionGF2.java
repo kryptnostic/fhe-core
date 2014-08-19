@@ -9,7 +9,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.kryptnostic.multivariate.FunctionUtils;
-import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -20,7 +20,7 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
  * 
  * @author mtamayo
  */
-public class ParameterizedPolynomialFunctionGF2 extends PolynomialFunctionGF2 {
+public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunctionGF2 {
     private final List<CompoundPolynomialFunction> pipelines;
     
     /**
@@ -40,7 +40,7 @@ public class ParameterizedPolynomialFunctionGF2 extends PolynomialFunctionGF2 {
     }
     
     /** 
-     * @see com.kryptnostic.multivariate.PolynomialFunctionGF2#apply(cern.colt.bitvector.BitVector)
+     * @see com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2#apply(cern.colt.bitvector.BitVector)
      * @param input a bitvector apply the input.
      */
     @Override

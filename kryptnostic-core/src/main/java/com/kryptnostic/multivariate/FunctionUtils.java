@@ -141,6 +141,6 @@ public class FunctionUtils {
             contributions[ i + lhsContributions.length ] = new BitVector( newContributionElements , combinedOutputLength );
         }
         
-        return new PolynomialFunctionGF2( combinedInputLength , combinedOutputLength , monomials , contributions );
+        return new OptimizedPolynomialFunctionGF2( combinedInputLength , combinedOutputLength , monomials , contributions );
     }
 }
