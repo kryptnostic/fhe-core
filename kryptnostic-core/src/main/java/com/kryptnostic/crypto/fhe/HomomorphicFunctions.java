@@ -10,7 +10,7 @@ import com.google.common.collect.Lists;
 import com.kryptnostic.crypto.PrivateKey;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
-import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
@@ -110,8 +110,8 @@ public class HomomorphicFunctions {
         }
         
         
-        SimplePolynomialFunction X = new PolynomialFunctionGF2( rhsInput , decryptor.getOutputLength() , lhsMonomials , decryptor.getContributions() );
-        SimplePolynomialFunction Y = new PolynomialFunctionGF2( rhsInput , decryptor.getOutputLength() , rhsMonomials , decryptor.getContributions() );
+        SimplePolynomialFunction X = new OptimizedPolynomialFunctionGF2( rhsInput , decryptor.getOutputLength() , lhsMonomials , decryptor.getContributions() );
+        SimplePolynomialFunction Y = new OptimizedPolynomialFunctionGF2( rhsInput , decryptor.getOutputLength() , rhsMonomials , decryptor.getContributions() );
         logger.info("Generated functions for producting.");
         SimplePolynomialFunction XY = X.and( Y );
         logger.info("Computed product of decryption functons");

@@ -45,11 +45,11 @@ import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunc
  * 
  * @author Matthew Tamayo-Rios
  */
-public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 implements SimplePolynomialFunction {
-    private static final Logger logger = LoggerFactory.getLogger(PolynomialFunctionGF2.class);
-    private static final int CONCURRENCY_LEVEL = Runtime.getRuntime().availableProcessors();
-    private static final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors
-            .newFixedThreadPool(CONCURRENCY_LEVEL));
+public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 implements SimplePolynomialFunction {
+    private static final Logger logger = LoggerFactory.getLogger( BasePolynomialFunction.class );
+    protected static final int CONCURRENCY_LEVEL = Runtime.getRuntime().availableProcessors();
+    //TODO: Move thread pool to child class and restore single threaded compose to this class.
+    protected static final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(CONCURRENCY_LEVEL));
     private final Lock productLock = new ReentrantLock();
     private static final Predicate<BitVector> notNilContributionPredicate = new Predicate<BitVector>() {
         @Override
@@ -63,7 +63,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         }
     };
 
-    public PolynomialFunctionGF2(int inputLength, int outputLength, Monomial[] monomials, BitVector[] contributions) {
+    public BasePolynomialFunction(int inputLength, int outputLength, Monomial[] monomials, BitVector[] contributions) {
         super(inputLength, outputLength, monomials, contributions);
 
     }
@@ -76,13 +76,13 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         @Override
         protected PolynomialFunctionRepresentationGF2 make(int inputLength, int outputLength, Monomial[] monomials,
                 BitVector[] contributions) {
-            return new PolynomialFunctionGF2(inputLength, outputLength, monomials, contributions);
+            return new BasePolynomialFunction(inputLength, outputLength, monomials, contributions);
         }
 
         @Override
-        public PolynomialFunctionGF2 build() {
+        public BasePolynomialFunction build() {
             Pair<Monomial[], BitVector[]> monomialsAndContributions = getMonomialsAndContributions();
-            return new PolynomialFunctionGF2(inputLength, outputLength, monomialsAndContributions.getLeft(),
+            return new BasePolynomialFunction(inputLength, outputLength, monomialsAndContributions.getLeft(),
                     monomialsAndContributions.getRight());
         }
     }
@@ -169,57 +169,22 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             }
         }
 
-        return new PolynomialFunctionGF2(inputLength, outputLength, newMonomials, newContributions);
-    }
- 
-    /**
-     * Evaluate function for input vector.
-     * 
-     * TODO: find and fix concurrency bug
-     */
-    public BitVector apply( final BitVector input ) {
-    	
-    	final CountDownLatch latch = new CountDownLatch(CONCURRENCY_LEVEL);
-    	
-    	final BitVector result = new BitVector( outputLength );
-    	int blocks = (monomials.length / CONCURRENCY_LEVEL);
-    	int leftover = monomials.length % CONCURRENCY_LEVEL;
-    	
-    	
-    	for( int i=0; i<CONCURRENCY_LEVEL; i++ ) {
-    		final int fromIndex = i*blocks;
-    		int targetIndex = fromIndex + blocks;
-    		if (leftover != 0 && i == CONCURRENCY_LEVEL - 1) {
-    			targetIndex += leftover;
-    		}
-    		final int toIndex = targetIndex;
-    		
-    		Runnable r = new Runnable() {
-    			@Override
-    			public void run() {
-    				BitVector intermediary = new BitVector( outputLength);
-    				for( int i = fromIndex; i < toIndex ; ++i ) {
-    					Monomial term =  monomials[ i ];
-    					if( term.eval( input ) ){
-    						intermediary.xor( contributions[ i ] );
-    					}
-    				}
-    				synchronized (result) {
-    					result.xor(intermediary);
-    				}
-    				latch.countDown();
-    			}
-    		};
-    		executor.execute( r );
-    	}
-    	try {
-			latch.await();
-		} catch (InterruptedException e) {
-			logger.error("Concurrent apply() latch interrupted.");
-		}
-        return result;
+        return new BasePolynomialFunction(inputLength, outputLength, newMonomials, newContributions);
     }
 
+    public BitVector apply(BitVector input) {
+        BitVector result = new BitVector(outputLength);
+
+        for (int i = 0; i < monomials.length; ++i) {
+            Monomial term = monomials[i];
+            if (term.eval(input)) {
+                result.xor(contributions[i]);
+            }
+        }
+        
+        return result;
+    }
+    
     @Override
     public BitVector apply(BitVector lhs, BitVector rhs) {
         return apply(FunctionUtils.concatenate(lhs, rhs));
@@ -245,10 +210,19 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
     @Override
     public SimplePolynomialFunction compose(SimplePolynomialFunction lhs, SimplePolynomialFunction rhs) {
         return this.compose(PolynomialFunctions.concatenate(lhs, rhs));
-
     }
 
-    public PolynomialFunctionGF2 extend(int length) {
+    @Override
+    public SimplePolynomialFunction optimize() {
+        return new OptimizedPolynomialFunctionGF2( inputLength , outputLength , monomials , contributions );
+    }
+    
+    @Override
+    public SimplePolynomialFunction deoptimize() {
+        return new BasePolynomialFunction( inputLength , outputLength , monomials , contributions );
+    }
+    
+    public BasePolynomialFunction extend(int length) {
         // TODO: Add re-entrant read/write lock for updating contributions.
         Monomial[] newMonomials = new Monomial[monomials.length];
         BitVector[] newContributions = new BitVector[monomials.length];
@@ -260,10 +234,10 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                     current.size() << 1);
         }
 
-        return new PolynomialFunctionGF2(length, length, newMonomials, newContributions);
+        return new BasePolynomialFunction(length, length, newMonomials, newContributions);
     }
 
-    public PolynomialFunctionGF2 clone() {
+    public BasePolynomialFunction clone() {
         Monomial[] newMonomials = new Monomial[monomials.length];
         BitVector[] newContributions = new BitVector[monomials.length];
 
@@ -272,7 +246,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             newContributions[i] = contributions[i].copy();
         }
 
-        return new PolynomialFunctionGF2(inputLength, outputLength, newMonomials, newContributions);
+        return new BasePolynomialFunction(inputLength, outputLength, newMonomials, newContributions);
     }
 
     @Override
@@ -546,7 +520,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
      * 
      * @param monomialContributionMap
      * @return A filtered map {@link Maps#filterValues(Map, Predicate)} created using
-     *         {@link PolynomialFunctionGF2#notNilContributionPredicate}
+     *         {@link BasePolynomialFunction#notNilContributionPredicate}
      */
     public static Map<Monomial, BitVector> filterNilContributions(Map<Monomial, BitVector> monomialContributionMap) {
         return Maps.filterValues(monomialContributionMap, notNilContributionPredicate);
@@ -583,11 +557,11 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         return result;
     }
 
-    public static PolynomialFunctionGF2 truncatedIdentity(int outputLength, int inputLength) {
+    public static BasePolynomialFunction truncatedIdentity(int outputLength, int inputLength) {
         return truncatedIdentity(0, outputLength - 1, inputLength);
     }
 
-    public static PolynomialFunctionGF2 truncatedIdentity(int startMonomial, int stopMonomial, int inputLength) {
+    public static BasePolynomialFunction truncatedIdentity(int startMonomial, int stopMonomial, int inputLength) {
         int outputLength = stopMonomial - startMonomial + 1;
         Monomial[] monomials = new Monomial[outputLength];
         BitVector[] contributions = new BitVector[outputLength];
@@ -599,10 +573,10 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             contributions[i] = contribution;
         }
 
-        return new PolynomialFunctionGF2(inputLength, outputLength, monomials, contributions);
+        return new BasePolynomialFunction(inputLength, outputLength, monomials, contributions);
     }
 
-    public static PolynomialFunctionGF2 prepareForLhsOfBinaryOp(PolynomialFunctionGF2 lhs) {
+    public static BasePolynomialFunction prepareForLhsOfBinaryOp(BasePolynomialFunction lhs) {
         Monomial[] monomials = new Monomial[lhs.monomials.length];
         BitVector[] contributions = new BitVector[lhs.contributions.length];
         for (int i = 0; i < lhs.monomials.length; ++i) {
@@ -611,10 +585,10 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             contributions[i] = contributions[i].copy();
         }
 
-        return new PolynomialFunctionGF2(monomials[0].size(), contributions.length, monomials, contributions);
+        return new BasePolynomialFunction(monomials[0].size(), contributions.length, monomials, contributions);
     }
 
-    public static PolynomialFunctionGF2 prepareForRhsOfBinaryOp(PolynomialFunctionGF2 rhs) {
+    public static BasePolynomialFunction prepareForRhsOfBinaryOp(BasePolynomialFunction rhs) {
         Monomial[] monomials = new Monomial[rhs.monomials.length];
         BitVector[] contributions = new BitVector[rhs.contributions.length];
         for (int i = 0; i < rhs.monomials.length; ++i) {
@@ -627,7 +601,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
             contributions[i] = contributions[i].copy();
         }
 
-        return new PolynomialFunctionGF2(monomials[0].size(), contributions.length, monomials, contributions);
+        return new BasePolynomialFunction(monomials[0].size(), contributions.length, monomials, contributions);
     }
 
     @Override
@@ -792,7 +766,7 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
                     ppf.getPipelines());
         }
 
-        return new PolynomialFunctionGF2(inner.getInputLength(), outputLength,
+        return new BasePolynomialFunction(inner.getInputLength(), outputLength,
                 filteredMonomials.toArray(new Monomial[0]), filteredContributions.toArray(new BitVector[0]));
     }
 
@@ -826,4 +800,5 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         public List<BitVector> contributions;
         public List<BitVector> monomials;
     }
+
 }

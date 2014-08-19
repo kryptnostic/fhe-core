@@ -11,7 +11,7 @@ import cern.colt.bitvector.BitVector;
 import com.google.common.base.Preconditions;
 import com.kryptnostic.crypto.padding.PaddingStrategy;
 import com.kryptnostic.crypto.padding.ZeroPaddingStrategy;
-import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 /**
@@ -37,7 +37,7 @@ public class PublicKey {
         int inputLen =  privateKey.getE1().cols();
         int outputLen = privateKey.getE1().rows();
         complexityChain = null;
-        m = PolynomialFunctionGF2.truncatedIdentity( inputLen , outputLen );
+        m = OptimizedPolynomialFunctionGF2.truncatedIdentity( inputLen , outputLen );
         logger.debug( "m: {} -> {}" , outputLen , inputLen );
         
         /*

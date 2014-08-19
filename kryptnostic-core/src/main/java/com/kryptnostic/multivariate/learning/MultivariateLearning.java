@@ -14,7 +14,7 @@ import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.Monomials;
-import com.kryptnostic.multivariate.PolynomialFunctionGF2;
+import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -133,7 +133,7 @@ public class MultivariateLearning {
 	        contribution.set( i );
 	        contributions[ i ] = contribution;
 	    }
-	    return new PolynomialFunctionGF2( monomials[ 0 ].size() , monomials.length , monomials, contributions );
+	    return new OptimizedPolynomialFunctionGF2( monomials[ 0 ].size() , monomials.length , monomials, contributions );
 	}
 	
 	/**

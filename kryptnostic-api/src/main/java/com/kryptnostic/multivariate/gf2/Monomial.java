@@ -1,5 +1,6 @@
 package com.kryptnostic.multivariate.gf2;
 
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.Set;
@@ -17,7 +18,7 @@ public class Monomial extends BitVector {
     private static final long serialVersionUID = -8751413919025034976L;
     private static final MonomialOrderHomogeneityPredicate linearHomogeneityPredicate = new MonomialOrderHomogeneityPredicate( 1 );
     //TODO:Re-enable random seeding.
-    private static final Random r = new Random( 0 );
+    private static final Random r = new SecureRandom();
     public Monomial( int size ) {
         super( size );
     }
