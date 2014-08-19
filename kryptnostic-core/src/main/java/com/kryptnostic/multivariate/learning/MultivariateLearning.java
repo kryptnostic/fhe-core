@@ -13,6 +13,7 @@ import com.google.common.collect.Lists;
 import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
+import com.kryptnostic.multivariate.Monomials;
 import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
@@ -35,7 +36,7 @@ public class MultivariateLearning {
 	 * @return Pair of inverse function and training data over which it was valid
 	 */
 	public static Pair<SimplePolynomialFunction, List <BitVector>> learnInverse(PolynomialFunction function, Integer orderOfInverse) {
-		Set<Monomial> monomials = Monomial.allMonomials( function.getOutputLength() , orderOfInverse);
+		Set<Monomial> monomials = Monomials.allMonomials( function.getOutputLength() , orderOfInverse);
 		SimplePolynomialFunction monomialsFunction = functionFromMonomials( monomials );
 		
 		List<BitVector> functionInputs = null;
@@ -70,7 +71,7 @@ public class MultivariateLearning {
      * @return Pair of function and training data over which it was valid
      */
     public static Pair<SimplePolynomialFunction, List <BitVector>> learnFunction(PolynomialFunction function, Integer order) {
-        Set<Monomial> monomials = Monomial.allMonomials( function.getInputLength() , order);
+        Set<Monomial> monomials = Monomials.allMonomials( function.getInputLength() , order);
         SimplePolynomialFunction monomialsFunction = functionFromMonomials( monomials );
         
         List<BitVector> functionInputs = null, extendedInputs;

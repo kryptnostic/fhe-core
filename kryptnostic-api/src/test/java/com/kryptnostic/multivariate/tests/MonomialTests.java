@@ -54,43 +54,6 @@ public class MonomialTests {
     }
     
     @Test
-    public void testAllMonomials() {
-    	Set<Monomial> allMonomials = Sets.newHashSet();
-    	allMonomials.add( new Monomial( 4 ));
-    	allMonomials.add( new Monomial( 4 ).chainSet(0) );
-    	allMonomials.add( new Monomial( 4 ).chainSet(1) );
-    	allMonomials.add( new Monomial( 4 ).chainSet(2) );
-    	allMonomials.add( new Monomial( 4 ).chainSet(3) );
-    	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(1) );
-    	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(2) );
-    	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(3) );
-    	allMonomials.add( new Monomial( 4 ).chainSet(1).chainSet(2) );
-    	allMonomials.add( new Monomial( 4 ).chainSet(1).chainSet(3) );
-    	allMonomials.add( new Monomial( 4 ).chainSet(2).chainSet(3) );	
-    	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(1).chainSet(2) );
-    	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(1).chainSet(3) );
-    	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(2).chainSet(3) );
-    	allMonomials.add( new Monomial( 4 ).chainSet(1).chainSet(2).chainSet(3) );
-    	allMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(1).chainSet(2).chainSet(3) );
-    	
-    	Set<Monomial> order2AndLessMonomials = Sets.newHashSet();
-    	order2AndLessMonomials.add( new Monomial( 4 ));
-    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(0) );
-    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(1) );
-    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(2) );
-    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(3) );
-    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(1) );
-    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(2) );
-    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(0).chainSet(3) );
-    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(1).chainSet(2) );
-    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(1).chainSet(3) );
-    	order2AndLessMonomials.add( new Monomial( 4 ).chainSet(2).chainSet(3) );
-    	
-    	Assert.assertEquals( allMonomials, Monomial.allMonomials(4, 4));
-    	Assert.assertEquals( order2AndLessMonomials, Monomial.allMonomials(4, 2));
-    }
-    
-    @Test
     public void testIsFactor() {
         Monomial m = new Monomial( 139 );
         m.chainSet( 0 ).chainSet( 2 ).chainSet( 10 ).chainSet( 25 ).chainSet( 64 ).chainSet( 65 ).chainSet( 130 );

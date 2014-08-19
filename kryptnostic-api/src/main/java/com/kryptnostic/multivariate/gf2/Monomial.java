@@ -132,29 +132,6 @@ public class Monomial extends BitVector {
         return subsets;
     }
     
-    /**
-     * Generate a list of monomials corresponding to every unique term possible for monomials of this order, at 
-     * or below the order given.
-     * @param order
-     * @return
-     */
-    public static Set<Monomial> allMonomials(int size, int maxOrder) {
-    	Set<Monomial> subsets = Sets.newHashSet( Monomial.constantMonomial( size ) );
-        for( int ss = 0 ; ss < maxOrder ; ++ss ) {
-            Set<Monomial> nextSubsets = Sets.newHashSet();
-            for( Monomial m : subsets ) {
-                for( int i = 0 ; i < size ; ++i ) {
-                    if( !m.get( i ) ) {
-                        nextSubsets.add( m.clone().chainSet( i ) );
-                    }
-                }
-            }
-            subsets.addAll( nextSubsets );
-        }
-        
-        return subsets;
-    }
-    
     public Monomial chainSet(int index) {
         super.set(index);
         return this;
@@ -269,4 +246,5 @@ public class Monomial extends BitVector {
         
         return m;
     }
+
 }

@@ -5,10 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -27,7 +25,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
@@ -218,6 +215,11 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
     @Override
     public SimplePolynomialFunction optimize() {
         return new OptimizedPolynomialFunctionGF2( inputLength , outputLength , monomials , contributions );
+    }
+    
+    @Override
+    public SimplePolynomialFunction deoptimize() {
+        return new BasePolynomialFunction( inputLength , outputLength , monomials , contributions );
     }
     
     public BasePolynomialFunction extend(int length) {
@@ -464,9 +466,9 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
             ConcurrentMap<Monomial, Integer> indices) {
         BitVector result = new BitVector(monomials.size());
         for (int i = 0; i < lhs.size(); ++i) {
-            if (lhs.get(i)) {
+            if (lhs.getQuick(i)) {
                 for (int j = 0; j < rhs.size(); ++j) {
-                    if (rhs.get(j)) {
+                    if (rhs.getQuick(j)) {
                         Monomial p = monomials.get(i).product(monomials.get(j));
 
                         Integer indexObj = indices.get(p);
@@ -484,10 +486,10 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
                         }
 
                         if (indexObj >= result.size()) {
-                            result.setSize(indexObj + 1);
+                            result.setSize(result.size() << 1);
                         }
 
-                        if (result.get(indexObj)) {
+                        if (result.getQuick(indexObj)) {
                             result.clear(indexObj);
                         } else {
                             result.set(indexObj);
@@ -498,7 +500,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         }
         return result;
     }
-
+    
     // TODO: Figure out whether this worth unit testing.
     public static Set<Monomial> product(Set<Monomial> lhs, Set<Monomial> rhs) {
         Set<Monomial> result = Sets.newHashSetWithExpectedSize(lhs.size() * rhs.size() / 2);
@@ -616,46 +618,88 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         // Verify the functions are composable
         Preconditions.checkArgument(inputLength == inner.getOutputLength(),
                 "Input length of outer function must match output length of inner function it is being composed with");
-
+        
         Optional<Integer> constantOuterMonomialIndex = Optional.absent();
         EnhancedBitMatrix contributionRows = new EnhancedBitMatrix(Arrays.asList(inner.getContributions()));
         EnhancedBitMatrix.transpose(contributionRows);
 
-        List<Monomial> mList = Lists.newArrayList(inner.getMonomials());
-        ConcurrentMap<Monomial, Integer> indices = Maps.newConcurrentMap();
-
+        final List<Monomial> mList = Lists.newArrayList(inner.getMonomials());
+        final ConcurrentMap<Monomial, Integer> indices = Maps.newConcurrentMap();
         for (int i = 0; i < mList.size(); ++i) {
             indices.put(mList.get(i), i);
+        }
+        
+        if ( this.getMaximumMonomialOrder() == 2 && inner.getMaximumMonomialOrder() == 1) {
+        	Monomial[] linearMonomials = inner.getMonomials();
+         	for (int i = 0 ; i < linearMonomials.length; i++) {
+        		for (int j = i+1; j < linearMonomials.length; j++) {
+        			Monomial p = mList.get(i).product(mList.get(j));
+        			if (indices.get(p) == null) {
+        				indices.put(p, mList.size());
+        				mList.add(p);
+        			}
+        		}
+        	}
         }
 
         Optional<Integer> constantInnerMonomialIndex = Optional.fromNullable(indices.get(Monomial
                 .constantMonomial(inner.getInputLength())));
 
-        BitVector[] innerRows = new BitVector[inputLength];
-        BitVector[] results = new BitVector[monomials.length];
+        final BitVector[] innerRows = new BitVector[inputLength];
+        
 
         for (int i = 0; i < inputLength; ++i) {
             innerRows[i] = contributionRows.getRow(i);
         }
 
         // Expand the outer monomials concurrently
-        List<ListenableFuture<BitVector>> futures = Lists.newArrayList();
-        for (Monomial m : monomials) {
-            Callable<BitVector> expandableMonomial = new ExpandableMonomial(m, innerRows, mList, indices);
-            ListenableFuture<BitVector> future = executor.submit(expandableMonomial);
-            futures.add(future);
+        
+        final CountDownLatch latch = new CountDownLatch(CONCURRENCY_LEVEL);
+        final BitVector[] results = new BitVector[monomials.length];
+        int blocks = monomials.length / CONCURRENCY_LEVEL;
+        int leftover = monomials.length % CONCURRENCY_LEVEL;
+        
+        for (int i = 0; i < CONCURRENCY_LEVEL; i++) {
+            final int fromIndex = i*blocks;
+            int targetIndex = fromIndex + blocks;
+            if (leftover != 0 && i == CONCURRENCY_LEVEL - 1) {
+            	targetIndex += leftover;
+            }
+        	final int toIndex = targetIndex;
+        	
+        	executor.execute( new Runnable() {
+				
+				@Override
+				public void run() {
+					for (int j = fromIndex; j < toIndex; j++) {
+						Monomial outerMonomial = monomials[j];
+						BitVector newContributions = null;
+						if (outerMonomial.isZero()) {
+			                newContributions = new BitVector(mList.size());
+			            } else {
+			                for (int i = Long.numberOfTrailingZeros(outerMonomial.elements()[0]); i < outerMonomial.size(); ++i) {
+			                    if (outerMonomial.get(i)) {
+			                        if (newContributions == null) {
+			                            newContributions = innerRows[i];
+			                        } else {
+			                            newContributions = product(newContributions, innerRows[i], mList, indices);
+			                        }
+			                    }
+			                }
+			            }
+			            results[j] = newContributions;
+					}
+					latch.countDown();
+				}
+			});
+            
         }
 
-        // extract all of the contributions into an array
-        for (int i = 0; i < monomials.length; i++) {
-            try {
-                results[i] = futures.get(i).get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-        }
+        try {
+			latch.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 
         // Now lets fix the contributions so they're all the same length.
         for (int i = 0; i < results.length; ++i) {
@@ -726,7 +770,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
                 filteredMonomials.toArray(new Monomial[0]), filteredContributions.toArray(new BitVector[0]));
     }
 
-    /**
+	/**
      * Filter out monomials with empty contributions.
      * 
      * @param unfilteredContributions
@@ -757,50 +801,4 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         public List<BitVector> monomials;
     }
 
-    /**
-     * Helper class to concurrently evaluate the expansion of a single outer monomial during compose.
-     *
-     */
-    private class ExpandableMonomial implements Callable<BitVector> {
-        private final Monomial outerMonomial;
-        private final BitVector[] innerRows;
-        private ConcurrentMap<Monomial, Integer> indices;
-        private List<Monomial> monomialList;
-        private BitVector contributions;
-
-        public ExpandableMonomial(Monomial outerMonomial, BitVector[] innerRows, List<Monomial> innerMonomials,
-                ConcurrentMap<Monomial, Integer> indices) {
-            this.outerMonomial = outerMonomial;
-            this.innerRows = innerRows;
-            this.indices = indices;
-            this.monomialList = innerMonomials;
-        }
-
-        @Override
-        public BitVector call() throws Exception {
-            if (outerMonomial.isZero()) {
-                contributions = new BitVector(monomialList.size());
-            } else {
-                for (int i = Long.numberOfTrailingZeros(outerMonomial.elements()[0]); i < outerMonomial.size(); ++i) {
-                    if (outerMonomial.get(i)) {
-                        if (contributions == null) {
-                            contributions = innerRows[i];
-                        } else {
-                            contributions = product(contributions, innerRows[i], monomialList, indices);
-                        }
-                    }
-                }
-            }
-            return contributions;
-        }
-    }
-    
-    @Override
-    public SimplePolynomialFunction deoptimize() {
-        if( getClass().equals( BasePolynomialFunction.class ) ){
-            return this;
-        } else {
-            return new BasePolynomialFunction( inputLength , outputLength , monomials , contributions );
-        }
-    }
 }

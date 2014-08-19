@@ -33,6 +33,7 @@ import com.kryptnostic.multivariate.PolynomialFunctionPipelineStage;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
+import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 @Configuration
@@ -245,6 +246,7 @@ public class PolynomialFunctionTests {
            Assert.assertEquals( outerResult , composedResult );
        }
    }
+ 
    
    @Timed
    public void testConcatenateInputsAndOutputs() {
