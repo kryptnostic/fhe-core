@@ -18,7 +18,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.kryptnostic.indexing.metadata.BalancedMetadata;
 import com.kryptnostic.indexing.metadata.BaseMetadatum;
+import com.kryptnostic.indexing.metadata.Metadata;
 import com.kryptnostic.indexing.metadata.Metadatum;
 import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -62,7 +64,7 @@ public class BalancedMetadataKeyService implements MetadataKeyService {
 	}
 
 	@Override
-	public Map<String, List<Metadatum>> mapTokensToKeys(Set<Metadatum> metadata) {
+	public Metadata mapTokensToKeys(Set<Metadatum> metadata) {
 		/*
 		 * Let's balance the metadatum set and generate random nonces.
 		 * 
@@ -74,19 +76,22 @@ public class BalancedMetadataKeyService implements MetadataKeyService {
 		 *  the same bucket, unless they compromise the random number generator.
 		 *  
 		 */
-		Map<String, List<Metadatum>> balancedAndMappedMetadata = Maps.newHashMapWithExpectedSize( metadata.size() );
+		Map<String, List<Metadatum>> metadataMap = Maps.newHashMapWithExpectedSize( metadata.size() );
+		List<BitVector> nonces = Lists.newArrayList();
 		for( Metadatum metadatum : metadata ) { 
 			String token = metadatum.getToken();
 			List<Integer> locations = metadatum.getLocations();
 			int fromIndex = 0, toIndex = Math.min( locations.size() , bucketSize );
 			do {
 				Metadatum balancedMetadatum = new BaseMetadatum( metadatum.getDocumentId() , token , subListAndPad( locations , fromIndex , toIndex ) );
-				String key = getKey( token , BitUtils.randomVector( nonceLength ) );
-				List<Metadatum> metadatumList = balancedAndMappedMetadata.get( key );
+				BitVector nonce = BitUtils.randomVector( nonceLength );
+				String key = getKey( token , nonce );
+				nonces.add( nonce );
+				List<Metadatum> metadatumList = metadataMap.get( key );
 				//TODO: Retry a few times instead of just allowing collision.  
 				if( metadatumList == null ) { 
 					metadatumList = Lists.newArrayListWithExpectedSize( 1 );
-					balancedAndMappedMetadata.put( key, metadatumList );
+					metadataMap.put( key, metadatumList );
 				}
 				metadatumList.add( balancedMetadatum );
 				fromIndex += bucketSize;
@@ -96,7 +101,7 @@ public class BalancedMetadataKeyService implements MetadataKeyService {
 				}
 			} while( fromIndex < toIndex );
 		}
-		return balancedAndMappedMetadata;
+		return BalancedMetadata.from( metadataMap , nonces );
 	}
 	
 	private Iterable<Integer> subListAndPad( List<Integer> locations, int fromIndex, int toIndex ) {

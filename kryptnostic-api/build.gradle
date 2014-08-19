@@ -80,7 +80,8 @@ dependencies {
 
     compile 'com.codahale.metrics:metrics-core:3.0.2'
     compile 'com.codahale.metrics:metrics-graphite:3.0.2'
-    
+    compile 'com.codahale.metrics:metrics-annotation:3.0.2'
+        
     /*
      * GUAVA 
      * EventBus, FluentIterables, ListenableFutures and more
@@ -152,10 +153,4 @@ dependencies {
      */
     testCompile 'junit:junit:4.11'
     testCompile project(":kryptnostic-test")
-}
-
-
-eclipse {
-    ext.downloadSources = true
-    ext.downloadJavadoc = true
 }

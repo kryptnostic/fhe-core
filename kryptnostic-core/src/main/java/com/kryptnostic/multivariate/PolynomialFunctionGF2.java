@@ -171,17 +171,52 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
 
         return new PolynomialFunctionGF2(inputLength, outputLength, newMonomials, newContributions);
     }
-
-    public BitVector apply(BitVector input) {
-        BitVector result = new BitVector(outputLength);
-
-        for (int i = 0; i < monomials.length; ++i) {
-            Monomial term = monomials[i];
-            if (term.eval(input)) {
-                result.xor(contributions[i]);
-            }
-        }
-
+ 
+    /**
+     * Evaluate function for input vector.
+     * 
+     * TODO: find and fix concurrency bug
+     */
+    public BitVector apply( final BitVector input ) {
+    	
+    	final CountDownLatch latch = new CountDownLatch(CONCURRENCY_LEVEL);
+    	
+    	final BitVector result = new BitVector( outputLength );
+    	int blocks = (monomials.length / CONCURRENCY_LEVEL);
+    	int leftover = monomials.length % CONCURRENCY_LEVEL;
+    	
+    	
+    	for( int i=0; i<CONCURRENCY_LEVEL; i++ ) {
+    		final int fromIndex = i*blocks;
+    		int targetIndex = fromIndex + blocks;
+    		if (leftover != 0 && i == CONCURRENCY_LEVEL - 1) {
+    			targetIndex += leftover;
+    		}
+    		final int toIndex = targetIndex;
+    		
+    		Runnable r = new Runnable() {
+    			@Override
+    			public void run() {
+    				BitVector intermediary = new BitVector( outputLength);
+    				for( int i = fromIndex; i < toIndex ; ++i ) {
+    					Monomial term =  monomials[ i ];
+    					if( term.eval( input ) ){
+    						intermediary.xor( contributions[ i ] );
+    					}
+    				}
+    				synchronized (result) {
+    					result.xor(intermediary);
+    				}
+    				latch.countDown();
+    			}
+    		};
+    		executor.execute( r );
+    	}
+    	try {
+			latch.await();
+		} catch (InterruptedException e) {
+			logger.error("Concurrent apply() latch interrupted.");
+		}
         return result;
     }
 
@@ -190,6 +225,23 @@ public class PolynomialFunctionGF2 extends PolynomialFunctionRepresentationGF2 i
         return apply(FunctionUtils.concatenate(lhs, rhs));
     }
 
+    @Override
+    public SimplePolynomialFunction resolve(BitVector input) {
+        Map<Monomial,BitVector> contributionsMap = Maps.newHashMapWithExpectedSize( monomials.length );
+        for( int i = 0 ; i < monomials.length ; ++i ) {
+            Monomial resolved = monomials[ i ].partialEval( input );
+            if( resolved != null ) {
+                BitVector contribution = contributionsMap.get( resolved );
+                if( contribution == null ) {
+                    contribution = new BitVector( outputLength );
+                    contributionsMap.put( resolved , contribution );
+                }
+                contribution.xor( contributions[ i ] );
+            } 
+        }
+        return PolynomialFunctions.fromMonomialContributionMap( inputLength - input.size() , outputLength , contributionsMap );
+    }
+    
     @Override
     public SimplePolynomialFunction compose(SimplePolynomialFunction lhs, SimplePolynomialFunction rhs) {
         return this.compose(PolynomialFunctions.concatenate(lhs, rhs));

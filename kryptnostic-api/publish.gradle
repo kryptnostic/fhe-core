@@ -1,13 +1,5 @@
 apply plugin: "signing"
 
-if( !project.hasProperty( 'user' ) ) {
-    project.user = ''
-}
-
-if( !project.hasProperty( 'password') ) {
-    project.password = ''
-}
-
 
 configurations {
     pom
@@ -40,8 +32,8 @@ if (ext.isReleaseVersion) {
             maven { 
                 url repoUrl
                 credentials {
-                    username = project.user   
-                    password = project.password
+                    username = ''
+                    password = ''
                 }
             }
         }

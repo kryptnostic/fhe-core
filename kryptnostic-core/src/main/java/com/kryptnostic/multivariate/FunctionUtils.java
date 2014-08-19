@@ -13,6 +13,8 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 import cern.colt.bitvector.BitVector;
 
 public class FunctionUtils {
+	private FunctionUtils() {}
+	
     public static <T> T[] mergeArrays( T[] lhs, T[] rhs ) {
         T[] newArray = Arrays.copyOf( lhs , lhs.length + rhs.length );
         for( int i = lhs.length ; i < rhs.length ; ++i ) {

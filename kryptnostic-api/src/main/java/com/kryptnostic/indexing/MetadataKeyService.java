@@ -1,9 +1,8 @@
 package com.kryptnostic.indexing;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
+import com.kryptnostic.indexing.metadata.Metadata;
 import com.kryptnostic.indexing.metadata.Metadatum;
 
 /**
@@ -12,5 +11,5 @@ import com.kryptnostic.indexing.metadata.Metadatum;
  *
  */
 public interface MetadataKeyService {
-	Map<String,List<Metadatum>> mapTokensToKeys( Set<Metadatum> metadata ); 
+	Metadata mapTokensToKeys( Set<Metadatum> metadata ); 
 }
