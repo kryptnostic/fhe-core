@@ -448,7 +448,7 @@ public class PolynomialFunctionTests {
        
        Assert.assertEquals( slowComposed , fastComposed );
        
-       for( int i = 0 ; i < 500000; ++i ) {
+       for( int i = 0 ; i < 100; ++i ) {
            BitVector input = randomVector();
            BitVector innerInput = FunctionUtils.concatenate( randomVector() , randomVector() );
            Assert.assertEquals( outerSlow.apply( input ) , outerFast.apply( input ) );
@@ -477,14 +477,12 @@ public class PolynomialFunctionTests {
    }
 
    @Bean
-   @Scope( value = ConfigurableBeanFactory.SCOPE_PROTOTYPE )
    @Timed
    public SimplePolynomialFunction identity() {
        return PolynomialFunctions.identity( INPUT_LENGTH ).deoptimize();
    }
    
    @Bean
-   @Scope( value = ConfigurableBeanFactory.SCOPE_PROTOTYPE )
    @Timed
    public SimplePolynomialFunction optimizedIdentity() {
        return PolynomialFunctions.identity( INPUT_LENGTH );
