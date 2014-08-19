@@ -49,7 +49,7 @@ public class MultivariateLearning {
 				functionOutputs.add( monomialsFunction.apply( output ) );
 			}
 			
-			coefficients = learnCoefficients(functionOutputs, functionInputs, monomialsFunction);
+			coefficients = learnCoefficients(functionOutputs, functionInputs);
 			if ( coefficients != null) {
 				logger.info("Succesfully inverted evaluated monomials with " + quantityInput + " inputs");
 				break;
@@ -85,7 +85,7 @@ public class MultivariateLearning {
                 extendedInputs.add( monomialsFunction.apply( input ) );
             }
             
-            coefficients = learnCoefficients(extendedInputs, functionOutputs, monomialsFunction);
+            coefficients = learnCoefficients(extendedInputs, functionOutputs);
             if ( coefficients != null) {
             	logger.info("Succesfully inverted evaluated monomials with " + quantityInput + " inputs");
                 break;
@@ -102,7 +102,7 @@ public class MultivariateLearning {
 	 * Attempts to compute the coefficients of a supplied polynomial function, given training data.
 	 * Returns null on failure to learn coefficients.
 	 */
-	public static EnhancedBitMatrix learnCoefficients(List<BitVector> inputs, List<BitVector> outputs, PolynomialFunction monomialsFunction) {
+	public static EnhancedBitMatrix learnCoefficients(List<BitVector> inputs, List<BitVector> outputs) {
 		EnhancedBitMatrix coefficients;
 		
 		EnhancedBitMatrix outputsTransposed = new EnhancedBitMatrix( outputs ).tranpose();
