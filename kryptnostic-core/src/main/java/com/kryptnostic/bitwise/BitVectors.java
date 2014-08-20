@@ -12,6 +12,8 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 
 public final class BitVectors {
+    private static final int INTEGER_BYTES = Integer.SIZE / Byte.SIZE;
+    private static final Base64 codec = new Base64();
     private BitVectors() {
     }
 
@@ -58,12 +60,11 @@ public final class BitVectors {
      */
     public static String marshalBitvector(BitVector input) {
         long[] data = input.elements();
-        byte[] target = new byte[data.length * ( Long.SIZE / Byte.SIZE ) + ( Integer.SIZE / Byte.SIZE )];
+        byte[] target = new byte[data.length << 3 + INTEGER_BYTES];
         ByteBuffer buf = ByteBuffer.wrap(target);
         buf.putInt(input.size());
         buf.asLongBuffer().put(data);
-        String payload = new String(Base64.encodeBase64(target));
-        return payload;
+        return new String(codec.encode(target));
     }
 
     /**
