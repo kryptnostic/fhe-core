@@ -11,8 +11,6 @@ import org.apache.commons.codec.binary.Base64;
 
 import cern.colt.bitvector.BitVector;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -46,13 +44,7 @@ public class BalancedMetadataKeyService implements MetadataKeyService {
 	}
 	
 	public String getKey(String token, BitVector nonce) {
-	    byte[] hash = hf.hashString(token, Charsets.UTF_8).asBytes();
-	    //TODO: Consider padding output to a multiple of 8
-	    Preconditions.checkState( hash.length % 8 == 0 , "Output length of has function must be a multiple of 8.");
-	    long [] raw = new long[ hash.length >>> 3 ];
-	    ByteBuffer.wrap( hash ).asLongBuffer().get( raw );
-		
-		BitVector tokenVector = new BitVector( raw , raw.length << 6 );
+	    BitVector tokenVector = Indexes.computeHashAndGetBits( hf , token );
 		
 		long[] rawResult = hashFunction.apply( tokenVector , nonce ).elements();
 		ByteBuffer buf = ByteBuffer.allocate( rawResult.length << 3 ); 

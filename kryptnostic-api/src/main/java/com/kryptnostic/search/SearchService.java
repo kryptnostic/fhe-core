@@ -4,6 +4,6 @@ import java.util.Set;
 
 import com.kryptnostic.indexing.metadata.Metadatum;
 
-public interface DocumentSearchService {
+public interface SearchService {
 	public Set<Metadatum> search( String query );
 }

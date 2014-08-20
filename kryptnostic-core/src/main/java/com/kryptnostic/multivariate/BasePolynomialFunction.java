@@ -218,6 +218,11 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
     }
     
     @Override
+    public SimplePolynomialFunction concatenatingCompose(SimplePolynomialFunction lhs, SimplePolynomialFunction rhs) {
+        return this.compose( FunctionUtils.concatenateInputsAndOutputs( lhs , rhs ) );
+    }
+    
+    @Override
     public SimplePolynomialFunction deoptimize() {
         return new BasePolynomialFunction( inputLength , outputLength , monomials , contributions );
     }

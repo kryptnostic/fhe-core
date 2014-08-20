@@ -1,5 +1,6 @@
 package com.kryptnostic.indexing;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,7 +40,6 @@ public class BaseIndexingService implements IndexingService {
 
 	@Override
 	public Set<Analyzer> getAnalyzers() {
-		return Sets.newHashSet( analyzers );
+		return Collections.unmodifiableSet( analyzers );
 	}
-
 }
