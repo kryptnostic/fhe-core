@@ -46,7 +46,11 @@ allprojects {
       from javadoc.destinationDir
     }
 
-    ext.isReleaseVersion = false
+    ext {
+        isReleaseVersion = false
+        developmentMode = true
+    }
+
 
     sourceCompatibility=JavaVersion.VERSION_1_6
     targetCompatibility=JavaVersion.VERSION_1_6

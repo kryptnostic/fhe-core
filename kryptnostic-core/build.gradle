@@ -124,12 +124,19 @@ dependencies {
      * Kryo serialization -- faster generic Java serialization
      */
     compile 'com.esotericsoftware.kryo:kryo:2.22'  
-    compile( project(":kryptnostic-api") )
+    
 
     /*
      * TESTING
      */
-
+     
     testCompile 'junit:junit:4.11'
-    testCompile project(":kryptnostic-test")
+    if( project.hasProperty('developmentMode') && project.developmentMode ) {
+        logger.quiet("$project.name is using project dependencies.")
+        compile( project(":fhe-core:kryptnostic-api") )
+        testCompile( project(":fhe-core:kryptnostic-test") )
+    } else {
+        logger.quiet("$project.name is using jar dependencies.")
+        testCompile "com.kryptnostic:kryptnostic-test:0.1.1-dev"
+    }
 }
