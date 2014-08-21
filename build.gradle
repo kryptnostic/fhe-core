@@ -22,7 +22,6 @@ allprojects {
     apply plugin: "maven-publish"
     apply plugin: "java"
     apply plugin: "maven"
-    apply plugin: "eclipse"
     apply plugin: "idea"
 
     task wrapper(type: Wrapper) {
@@ -54,6 +53,10 @@ allprojects {
 
     ext.jackson_version='2.3.0'
 
+}
+
+subprojects {
+    apply plugin: 'eclipse'
     eclipse {
         ext.sourceCompatibility=JavaVersion.VERSION_1_6
         ext.targetCompatibility=JavaVersion.VERSION_1_6
