@@ -57,8 +57,7 @@ repositories {
   }
 }
 
-ext.hazelcastVersion='3.1.5'
-ext.jackson_version='2.3.0'
+ext.jackson_version='2.4.2'
 
 dependencies {
     /*
@@ -138,15 +137,6 @@ dependencies {
      * Kryo serialization -- faster generic Java serialization
      */
     compile 'com.esotericsoftware.kryo:kryo:2.22'
-
-    /*
-     * HAZELCAST - DISTRIBUTED DATA GRID
-     * Transparent http clustering, distributed java.util collections
-     */
-
-    compile "com.hazelcast:hazelcast:${hazelcastVersion}"
-    compile "com.hazelcast:hazelcast-client:${hazelcastVersion}"
-    compile "com.hazelcast:hazelcast-wm:${hazelcastVersion}"
 
     /*
      * TESTING
