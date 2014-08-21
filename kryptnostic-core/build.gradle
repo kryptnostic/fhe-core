@@ -133,10 +133,11 @@ dependencies {
     testCompile 'junit:junit:4.11'
     if( project.hasProperty('developmentMode') && project.developmentMode ) {
         logger.quiet("$project.name is using project dependencies.")
-        compile( project(":fhe-core:kryptnostic-api") )
-        testCompile( project(":fhe-core:kryptnostic-test") )
+        compile( project(":kryptnostic-api") )
+        testCompile( project(":kryptnostic-test") )
     } else {
         logger.quiet("$project.name is using jar dependencies.")
-        testCompile "com.kryptnostic:kryptnostic-test:0.1.1-dev"
+        compile "com.kryptnostic:kryptnostic-api:$version"
+        testCompile "com.kryptnostic:kryptnostic-test:$version"
     }
 }
