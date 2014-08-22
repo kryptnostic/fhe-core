@@ -42,7 +42,6 @@ import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunc
  */
 public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 implements SimplePolynomialFunction {
     private static final Logger logger = LoggerFactory.getLogger( BasePolynomialFunction.class );
-    
     private final Lock productLock = new ReentrantLock();
     protected static final Predicate<BitVector> notNilContributionPredicate = new Predicate<BitVector>() {
         @Override
@@ -473,13 +472,28 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
 
 	@Override
 	public SimplePolynomialFunction compose(SimplePolynomialFunction inner) {
-    	//Verify the functions are composable
         Preconditions.checkArgument( 
                 inputLength == inner.getOutputLength() ,
                 "Input length of outer function must match output length of inner function it is being composed with"
                 );
         
-        EnhancedBitMatrix contributionRows = new EnhancedBitMatrix( Arrays.asList( inner.getContributions() ) );
+        ComposePreProcessResults prereqs =  preProcessCompose(inner);
+        
+        logger.debug("Expanding outer monomials.");
+        BitVector[] results = expandOuterMonomials(prereqs.monomialsList, prereqs.innerRows, prereqs.indices);
+
+        return postProcessCompose(prereqs.monomialsList, prereqs.indices, results, inner);
+        
+    }
+	
+	/**
+	 * Abstracts some of the preliminary work of the compose routine. If the composition is of a quadratic with
+	 * a linear, pre-computes all of the monomial products.
+	 * @param inner
+	 * @return
+	 */
+	protected ComposePreProcessResults preProcessCompose(SimplePolynomialFunction inner) {
+		EnhancedBitMatrix contributionRows = new EnhancedBitMatrix( Arrays.asList( inner.getContributions() ) );
         EnhancedBitMatrix.transpose( contributionRows );
         
         List<Monomial> mList = Lists.newArrayList( inner.getMonomials() );
@@ -489,8 +503,19 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
             indices.put( mList.get( i ) , i );
         }
         
+        if ( this.getMaximumMonomialOrder() == 2 && inner.getMaximumMonomialOrder() == 1) {
+        	Monomial[] linearMonomials = inner.getMonomials();
+         	for (int i = 0 ; i < linearMonomials.length; i++) {
+        		for (int j = i+1; j < linearMonomials.length; j++) {
+        			Monomial p = mList.get(i).product(mList.get(j));
+        			if (indices.get(p) == null) {
+        				indices.put(p, mList.size());
+        				mList.add(p);
+        			}
+        		}
+        	}
+        }
         
-
         Monomial [] linearMonomials = new Monomial[ inputLength ];
         BitVector [] innerRows = new BitVector[ inputLength ];
         
@@ -503,14 +528,15 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         for( int i = 0 ; i < monomials.length ; ++i ) {
             indicesResults.put( monomials[ i ] , i );
         }
-        	
-        logger.debug("Expanding outer monomials.");
-        BitVector[] results = expandOuterMonomials(mList, innerRows, indices);
-
-        return postProcessCompose(mList, indices, results, inner);
         
-    }
-	
+        ComposePreProcessResults results = new ComposePreProcessResults();
+        results.indices = indices;
+        results.monomialsList = mList;
+        results.innerRows = innerRows;
+        
+		return results;
+	}
+
 	protected  BitVector[] expandOuterMonomials(List<Monomial> mList, BitVector[] innerRows, ConcurrentMap<Monomial, Integer> indices) {
 		BitVector[] results = new BitVector[ monomials.length ];
 		for( int k = 0; k < monomials.length ; ++k ) {
@@ -647,6 +673,13 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
     protected class BitVectorFunction {
         public List<BitVector> contributions;
         public List<BitVector> monomials;
+    }
+    
+    protected class ComposePreProcessResults {
+    	public List<Monomial> monomialsList;
+    	public ConcurrentMap<Monomial, Integer> indices;
+    	public BitVector[] innerRows;
+    	
     }
 
 }

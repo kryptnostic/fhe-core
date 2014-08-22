@@ -1,6 +1,5 @@
 package com.kryptnostic.multivariate;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,13 +17,10 @@ import cern.colt.bitvector.BitVector;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
@@ -37,11 +33,6 @@ public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
         super( inputLength , outputLength , monomials , contributions );
     }
 
-    /**
-     * Evaluate function for input vector.
-     * 
-     * TODO: find and fix concurrency bug
-     */
     public BitVector apply( final BitVector input ) {
         
         final CountDownLatch latch = new CountDownLatch(CONCURRENCY_LEVEL);
@@ -128,48 +119,18 @@ public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
      */
     @Override
     public SimplePolynomialFunction compose(SimplePolynomialFunction inner) {
-        // Verify the functions are composable
         Preconditions.checkArgument(inputLength == inner.getOutputLength(),
                 "Input length of outer function must match output length of inner function it is being composed with");
         
-        EnhancedBitMatrix contributionRows = new EnhancedBitMatrix(Arrays.asList(inner.getContributions()));
-        EnhancedBitMatrix.transpose(contributionRows);
-
-        final List<Monomial> mList = Lists.newArrayList(inner.getMonomials());
-        final ConcurrentMap<Monomial, Integer> indices = Maps.newConcurrentMap();
-        for (int i = 0; i < mList.size(); ++i) {
-            indices.put(mList.get(i), i);
-        }
+        ComposePreProcessResults prereqs = preProcessCompose( inner );
         
-        if ( this.getMaximumMonomialOrder() == 2 && inner.getMaximumMonomialOrder() == 1) {
-        	Monomial[] linearMonomials = inner.getMonomials();
-         	for (int i = 0 ; i < linearMonomials.length; i++) {
-        		for (int j = i+1; j < linearMonomials.length; j++) {
-        			Monomial p = mList.get(i).product(mList.get(j));
-        			if (indices.get(p) == null) {
-        				indices.put(p, mList.size());
-        				mList.add(p);
-        			}
-        		}
-        	}
-        }
-
-        final BitVector[] innerRows = new BitVector[inputLength];
+        BitVector[] results = expandOuterMonomials(prereqs.monomialsList, prereqs.innerRows, prereqs.indices);
         
-
-        for (int i = 0; i < inputLength; ++i) {
-            innerRows[i] = contributionRows.getRow(i);
-        }
-        
-        BitVector[] results = expandOuterMonomials(mList, innerRows, indices);
-        
-        return postProcessCompose(mList, indices, results, inner);
+        return postProcessCompose(prereqs.monomialsList, prereqs.indices, results, inner);
     }
 
 	@Override
 	protected  BitVector[] expandOuterMonomials(final List<Monomial> mList, final BitVector[] innerRows, final ConcurrentMap<Monomial, Integer> indices) {
-		// Expand the outer monomials concurrently
-        
         final CountDownLatch latch = new CountDownLatch(CONCURRENCY_LEVEL);
         final BitVector[] results = new BitVector[monomials.length];
         int blocks = monomials.length / CONCURRENCY_LEVEL;
@@ -290,8 +251,7 @@ public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
         try {
             latch.await();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.error("Concurrent outer monomial expansion interrupted.");
         }
 
         Set<Monomial> sharesFactor = Sets.newHashSet();
