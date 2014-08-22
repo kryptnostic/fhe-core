@@ -33,7 +33,6 @@ import com.kryptnostic.multivariate.PolynomialFunctionPipelineStage;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
-import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 @Configuration
@@ -235,7 +234,7 @@ public class PolynomialFunctionTests {
        logger.info( "Compose took {} ms." , watch.elapsed( TimeUnit.MILLISECONDS ) );
 
        for( int i = 0 ; i < 25 ; ++i ) {
-           BitVector randomInput = BitUtils.randomVector( INPUT_LENGTH << 1 );
+           BitVector randomInput = BitUtils.randomVector( INPUT_LENGTH );
            BitVector innerResult = inner.apply( randomInput );
            BitVector outerResult = outer.apply( innerResult );
            BitVector composedResult = composed.apply( randomInput );
