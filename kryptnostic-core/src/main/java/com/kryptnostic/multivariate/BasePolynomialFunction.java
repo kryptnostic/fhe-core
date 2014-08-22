@@ -473,13 +473,12 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
 
 	@Override
 	public SimplePolynomialFunction compose(SimplePolynomialFunction inner) {
-        long startTime = System.currentTimeMillis();
     	//Verify the functions are composable
         Preconditions.checkArgument( 
                 inputLength == inner.getOutputLength() ,
                 "Input length of outer function must match output length of inner function it is being composed with"
                 );
-        Optional<Integer> constantOuterMonomialIndex = Optional.absent();
+        
         EnhancedBitMatrix contributionRows = new EnhancedBitMatrix( Arrays.asList( inner.getContributions() ) );
         EnhancedBitMatrix.transpose( contributionRows );
         
@@ -490,11 +489,11 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
             indices.put( mList.get( i ) , i );
         }
         
-        Optional<Integer> constantInnerMonomialIndex = Optional.fromNullable( indices.get( Monomial.constantMonomial( inner.getInputLength() ) ) );
+        
 
         Monomial [] linearMonomials = new Monomial[ inputLength ];
         BitVector [] innerRows = new BitVector[ inputLength ];
-        BitVector[] results = new BitVector[ monomials.length ];
+        
         
         for( int i = 0 ; i < inputLength ; ++i ) {
             Monomial linearMonomial = Monomial.linearMonomial( inputLength , i );
@@ -504,10 +503,17 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         for( int i = 0 ; i < monomials.length ; ++i ) {
             indicesResults.put( monomials[ i ] , i );
         }
-  
-        long expandStart = System.currentTimeMillis();
+        	
+        logger.debug("Expanding outer monomials.");
+        BitVector[] results = expandOuterMonomials(mList, innerRows, indices);
+
+        return postProcessCompose(mList, indices, results, inner);
         
-        for( int k = 0; k < monomials.length ; ++k ) {
+    }
+	
+	protected  BitVector[] expandOuterMonomials(List<Monomial> mList, BitVector[] innerRows, ConcurrentMap<Monomial, Integer> indices) {
+		BitVector[] results = new BitVector[ monomials.length ];
+		for( int k = 0; k < monomials.length ; ++k ) {
             Monomial m = monomials[ k ];
             BitVector lhs = null; 
             if( m.isZero() ) {
@@ -525,13 +531,13 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
             } 
             results[ k ] = lhs;
         }
-        
-
-		
-        long expandEnd = System.currentTimeMillis();
-        System.out.println("Expansion time:" + (expandEnd - expandStart));
-        
-        //Now lets fix the contributions so they're all the same length.
+		return results;
+	}
+	
+	protected SimplePolynomialFunction postProcessCompose(List<Monomial> mList, Map<Monomial, Integer> indices, BitVector[] results, SimplePolynomialFunction inner) {
+		Optional<Integer> constantOuterMonomialIndex = Optional.absent();
+		Optional<Integer> constantInnerMonomialIndex = Optional.fromNullable( indices.get( Monomial.constantMonomial( inner.getInputLength() ) ) );
+		//Now lets fix the contributions so they're all the same length.
         for( int i = 0 ; i < results.length ; ++i ) {
             BitVector contribution = results [ i ];
             if ( contribution.size() != mList.size() ) {
@@ -560,8 +566,8 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
                 }
             }
         }
-        
-        /*
+		
+		/*
          * After we have computed the contributions in terms of the new monomial basis we transform from row 
          * to column form of contributions to match up with each monomial in mList
          */
@@ -604,15 +610,13 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
             return new ParameterizedPolynomialFunctionGF2( inner.getInputLength() , outputLength , filteredMonomials.toArray( new Monomial[0] ),  filteredContributions.toArray( new BitVector[0] ) , ppf.getPipelines() );
         }
         
-        long endTime = System.currentTimeMillis();
-        System.out.println("Total time:" + (endTime - startTime));
         return new BasePolynomialFunction( 
                     inner.getInputLength(), 
                     outputLength, 
                     filteredMonomials.toArray( new Monomial[0] ) ,
                     filteredContributions.toArray( new BitVector[0] )
                     );       
-    }
+	}
 
 	/**
      * Filter out monomials with empty contributions.

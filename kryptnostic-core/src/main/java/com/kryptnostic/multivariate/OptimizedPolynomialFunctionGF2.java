@@ -27,7 +27,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
 
 public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
     private static final Logger logger = LoggerFactory.getLogger( OptimizedPolynomialFunctionGF2.class );
@@ -133,7 +132,6 @@ public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
         Preconditions.checkArgument(inputLength == inner.getOutputLength(),
                 "Input length of outer function must match output length of inner function it is being composed with");
         
-        Optional<Integer> constantOuterMonomialIndex = Optional.absent();
         EnhancedBitMatrix contributionRows = new EnhancedBitMatrix(Arrays.asList(inner.getContributions()));
         EnhancedBitMatrix.transpose(contributionRows);
 
@@ -156,17 +154,21 @@ public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
         	}
         }
 
-        Optional<Integer> constantInnerMonomialIndex = Optional.fromNullable(indices.get(Monomial
-                .constantMonomial(inner.getInputLength())));
-
         final BitVector[] innerRows = new BitVector[inputLength];
         
 
         for (int i = 0; i < inputLength; ++i) {
             innerRows[i] = contributionRows.getRow(i);
         }
+        
+        BitVector[] results = expandOuterMonomials(mList, innerRows, indices);
+        
+        return postProcessCompose(mList, indices, results, inner);
+    }
 
-        // Expand the outer monomials concurrently
+	@Override
+	protected  BitVector[] expandOuterMonomials(final List<Monomial> mList, final BitVector[] innerRows, final ConcurrentMap<Monomial, Integer> indices) {
+		// Expand the outer monomials concurrently
         
         final CountDownLatch latch = new CountDownLatch(CONCURRENCY_LEVEL);
         final BitVector[] results = new BitVector[monomials.length];
@@ -214,77 +216,8 @@ public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-
-        // Now lets fix the contributions so they're all the same length.
-        for (int i = 0; i < results.length; ++i) {
-            BitVector contribution = results[i];
-            if (contribution.size() != mList.size()) {
-                contribution.setSize(mList.size());
-            }
-        }
-
-        /*
-         * Each monomial that has been computed in terms of the inner function contributes a set of monomials to each
-         * row of output of the output, i.e proudctCache.get( monomials[ i ] ) We have to compute the resulting set of
-         * contributions in terms of the new monomial basis for the polynomials ( mList )
-         */
-
-        BitVector[] outputContributions = new BitVector[outputLength];
-
-        for (int row = 0; row < outputLength; ++row) {
-            outputContributions[row] = new BitVector(mList.size());
-            for (int i = 0; i < contributions.length; ++i) {
-                if (contributions[i].get(row)) {
-                    if (monomials[i].isZero()) {
-                        constantOuterMonomialIndex = Optional.of(i);
-                    } else {
-                        outputContributions[row].xor(results[i]);
-                    }
-                }
-            }
-        }
-
-        /*
-         * After we have computed the contributions in terms of the new monomial basis we transform from row to column
-         * form of contributions to match up with each monomial in mList
-         */
-        List<BitVector> unfilteredContributions = Lists.newArrayList(outputContributions);
-        EnhancedBitMatrix.transpose(unfilteredContributions, mList.size());
-
-        /*
-         * If the outer monomial has constant terms and the unfiltered contributions have a constant term, than we xor
-         * them together to get the overall constant contributions.
-         */
-
-        if (constantOuterMonomialIndex.isPresent()) {
-            if (constantInnerMonomialIndex.isPresent()) {
-                unfilteredContributions.get(constantInnerMonomialIndex.get()).xor(
-                        contributions[constantOuterMonomialIndex.get()]);
-            } else {
-                // Don't use the outer monomial directly since it maybe the
-                // wrong size.
-                // mList.add( monomials[ constantOuterMonomialIndex.get() ] );
-                mList.add(Monomial.constantMonomial(inner.getInputLength()));
-                unfilteredContributions.add(contributions[constantOuterMonomialIndex.get()]);
-            }
-        }
-
-        BitVectorFunction filteredFunction = filterFunction(unfilteredContributions, mList);
-        List<BitVector> filteredContributions = filteredFunction.contributions;
-        List<BitVector> filteredMonomials = filteredFunction.monomials;
-
-        if (inner.isParameterized()) {
-            ParameterizedPolynomialFunctionGF2 ppf = (ParameterizedPolynomialFunctionGF2) inner;
-            return new ParameterizedPolynomialFunctionGF2(inner.getInputLength(), outputLength,
-                    filteredMonomials.toArray(new Monomial[0]), filteredContributions.toArray(new BitVector[0]),
-                    ppf.getPipelines());
-        }
-
-        return new BasePolynomialFunction(inner.getInputLength(), outputLength,
-                filteredMonomials.toArray(new Monomial[0]), filteredContributions.toArray(new BitVector[0]));
-    }
-
-	
+        return results;
+	}
     
     public static Set<Monomial> getCandidatesForProducting(final Set<Monomial> monomials,
             final Set<Monomial> requiredMonomials) {
