@@ -23,6 +23,16 @@ public interface SimplePolynomialFunction extends PolynomialFunction {
     @Timed
     SimplePolynomialFunction compose( SimplePolynomialFunction lhs , SimplePolynomialFunction rhs );
     
+    
+    /**
+     * Computes this( [ lhs( x ) , rhs( y) ] ) 
+     * @param lhs
+     * @param rhs
+     * @return
+     */
+    @Timed
+    SimplePolynomialFunction concatenatingCompose( SimplePolynomialFunction lhs , SimplePolynomialFunction rhs );
+    
     @Timed
     SimplePolynomialFunction resolve( BitVector input );
     
