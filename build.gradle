@@ -19,7 +19,7 @@ group = "com.kryptnostic"
 version = getVersionName()
 
 allprojects { 
-    apply plugin: "maven-publish"
+    
     apply plugin: "java"
     apply plugin: "maven"
     apply plugin: "idea"
@@ -35,7 +35,7 @@ allprojects {
             forkEvery = project.forkEvery as int
     }
 
-    task sourceJar (type : Jar) {
+    task sourcesJar (type : Jar) {
       classifier = 'sources'
       from sourceSets.main.allSource
     }
@@ -45,18 +45,17 @@ allprojects {
       from javadoc.destinationDir
     }
 
-    ext.isReleaseVersion = false
     ext.standaloneMode = true
 
     sourceCompatibility=JavaVersion.VERSION_1_6
     targetCompatibility=JavaVersion.VERSION_1_6
 
-    ext.jackson_version='2.3.0'
-
+    ext.jackson_version='2.4.1'
 }
 
 subprojects {
     apply plugin: 'eclipse'
+     
     eclipse {
         ext.sourceCompatibility=JavaVersion.VERSION_1_6
         ext.targetCompatibility=JavaVersion.VERSION_1_6

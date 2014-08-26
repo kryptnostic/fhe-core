@@ -1,39 +1,45 @@
-apply plugin: "signing"
-
-
-configurations {
-    pom
+def stdout = new ByteArrayOutputStream()
+exec {
+    commandLine 'git', 'rev-parse', '--abbrev-ref', 'HEAD'
+    standardOutput = stdout
 }
+def branch=stdout.toString().trim();
 
-ext {
-    snapshotUrl = "https://oss.sonatype.org/content/repositories/snapshots"
-    releaseUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-    localUrl = "file:/${project.projectDir}/artifacts"
-}
+if( ( (branch.equals("develop") || branch.equals("master") ) ) && 
+    ( System.getenv("bamboo_JAR_SIGNING_KEYRING") != null) && 
+    ( System.getenv("bamboo_JAR_SIGNING_PASSWORD")!=null ) && 
+    ( System.getenv("bamboo_SONATYPE_USERNAME")!=null ) && 
+    ( System.getenv("bamboo_SONATYPE_PASSWORD")!=null ) ) {
 
-ext.repoUrl = snapshotUrl
 
-ext."signing.keyId" = 'FDEB5A45'
-ext."signing.secretKeyRingFile" = '/Users/mtamayorios/.gnupg/secring.gpg'
-ext."signing.password" = 'id'
+    apply plugin: "signing"
+    apply plugin: "maven-publish"
 
-if (ext.isReleaseVersion) {
-    signing {
-        sign configurations.archives
+    ext {
+        snapshotUrl = "https://oss.sonatype.org/content/repositories/snapshots"
+        releaseUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+        localUrl = "file:/${project.projectDir}/artifacts"
+    }
+
+    ext."signing.keyId" = 'FDEB5A45'
+    ext."signing.secretKeyRingFile" = "$System.env.bamboo_JAR_SIGNING_KEYRING"
+    ext."signing.password" = "$System.env.bamboo_JAR_SIGNING_PASSWORD"
+
+    configurations {
+        pom
     }
 
     signing {
-
-        sign configurations.pom
+        sign configurations.archives
     }
 
     publishing {
         repositories {
             maven { 
-                url repoUrl
+                url snapshotUrl
                 credentials {
-                    username = ''
-                    password = ''
+                    username = "$System.env.bamboo_SONATYPE_USERNAME"
+                    password = "$System.env.bamboo_SONATYPE_PASSWORD"
                 }
             }
         }
@@ -41,26 +47,21 @@ if (ext.isReleaseVersion) {
         publications {
             mavenJava(MavenPublication) {
                 from components.java
-                version '0.1.0-SNAPSHOT'
                 artifact ('README.md') {
                     classifier = 'README'
                     extension  = 'md'
                 }
 
                 artifact javadocJar
-                artifact sourceJar
+                artifact sourcesJar
 
                 pom.withXml {
                     asNode().children().last() + {
                         resolveStrategy = Closure.DELEGATE_FIRST
                         name 'fhe-core'
-                        description 'Light weight Java web framework'
+                        description 'Kryptnostic APIs for Fully Homomorphic Encryption'
                         url 'https://www.github.com/kryptnostic/fhe-core'
-                        scm {
-                            url 'https://www.github.com/kryptnostic/fhe-core'
-                            connection 'https://www.github.com/kryptnostic/fhe-core'
-                            developerConnection 'https://www.github.com/kryptnostic/fhe-core'
-                        }
+
                         licenses {
                             license {
                                 name 'Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License'
@@ -73,6 +74,16 @@ if (ext.isReleaseVersion) {
                                 id 'geekbeast'
                                 name 'Matthew Tamayo-Rios'
                                 email 'matthew@kryptnostic.com'
+                            }
+                            developer {
+                                id 'hubsmoke'
+                                name 'Sina Iman'
+                                email 'sina@kryptnostic.com'
+                            }
+                            developer {
+                                id 'nickdhewitt'
+                                name 'Nick Hewitt'
+                                email 'nick@kryptnostic.com'
                             }
                         }
                     }

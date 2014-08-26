@@ -61,7 +61,8 @@ public class Monomials {
     /**
      * Generate a list of monomials corresponding to every unique term possible for monomials of this order, at 
      * or below the order given.
-     * @param order
+     * @param size 
+     * @param maxOrder
      * @return
      */
     public static Set<Monomial> allMonomials(int size, int maxOrder) {
