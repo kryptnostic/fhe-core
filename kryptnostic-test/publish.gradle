@@ -13,11 +13,11 @@ ext {
 ext.repoUrl = snapshotUrl
 
 ext."signing.keyId" = 'FDEB5A45'
-ext."signing.secretKeyRingFile" = "$System.env.BAMBOO_JAR_SIGNING_KEYRING"
-ext."signing.password" = "$System.env.BAMBOO_JAR_SIGNING_PASSWORD"
+ext."signing.secretKeyRingFile" = "$System.env.bamboo_JAR_SIGNING_KEYRING"
+ext."signing.password" = "$System.env.bamboo_JAR_SIGNING_PASSWORD"
 
-logger.quiet("Username: $System.env.BAMBOO_SONATYPE_USERNAME")
-logger.quiet("Password: $System.env.BAMBOO_SONATYPE_PASSWORD")
+logger.quiet("Username: $System.env.bamboo_SONATYPE_USERNAME")
+logger.quiet("Password: $System.env.bamboo_SONATYPE_PASSWORD")
 
 if (ext.isReleaseVersion) {
 
