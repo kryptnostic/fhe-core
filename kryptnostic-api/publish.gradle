@@ -23,7 +23,7 @@ if ( ext."signing.secretKeyRingFile" != null && ext."signing.password"!=null ) {
     publishing {
         repositories {
             maven { 
-                url ext.snapshotUrl
+                url snapshotUrl
                 credentials {
                     username = "$System.env.bamboo_SONATYPE_USERNAME"
                     password = "$System.env.bamboo_SONATYPE_PASSWORD"
