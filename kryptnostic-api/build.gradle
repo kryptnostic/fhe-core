@@ -57,8 +57,7 @@ repositories {
   }
 }
 
-ext.hazelcastVersion='3.1.5'
-ext.jackson_version='2.3.0'
+ext.jackson_version='2.4.2'
 
 dependencies {
     /*
@@ -140,17 +139,17 @@ dependencies {
     compile 'com.esotericsoftware.kryo:kryo:2.22'
 
     /*
-     * HAZELCAST - DISTRIBUTED DATA GRID
-     * Transparent http clustering, distributed java.util collections
-     */
-
-    compile "com.hazelcast:hazelcast:${hazelcastVersion}"
-    compile "com.hazelcast:hazelcast-client:${hazelcastVersion}"
-    compile "com.hazelcast:hazelcast-wm:${hazelcastVersion}"
-
-    /*
      * TESTING
      */
     testCompile 'junit:junit:4.11'
-    testCompile project(":kryptnostic-test")
+    if( project.hasProperty('developmentMode') && project.developmentMode ) {
+        logger.quiet("$project.name is using project dependencies.")
+        testCompile( project(":fhe-core:kryptnostic-test") )
+    } else if( project.hasProperty( 'standaloneMode' ) && project.standaloneMode ) {
+        logger.quiet("$project.name is using standalone project dependencies.")
+        testCompile( project(":kryptnostic-test") )
+    } else {
+        logger.quiet(project.name + " using jar dependencies.")
+        testCompile "com.kryptnostic:kryptnostic-test:$version"
+    }
 }
