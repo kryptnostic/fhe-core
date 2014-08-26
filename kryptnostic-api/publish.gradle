@@ -11,13 +11,11 @@ ext {
     localUrl = "file:/${project.projectDir}/artifacts"
 }
 
-ext.repoUrl = snapshotUrl
-
 ext."signing.keyId" = 'FDEB5A45'
 ext."signing.secretKeyRingFile" = "$System.env.bamboo_JAR_SIGNING_KEYRING"
 ext."signing.password" = "$System.env.bamboo_JAR_SIGNING_PASSWORD"
 
-if (ext.isReleaseVersion) {
+if ( ext."signing.secretKeyRingFile" != null && ext."signing.password"!=null ) {
     signing {
         sign configurations.archives
     }
@@ -25,7 +23,7 @@ if (ext.isReleaseVersion) {
     publishing {
         repositories {
             maven { 
-                url repoUrl
+                url ext.snapshotUrl
                 credentials {
                     username = "$System.env.bamboo_SONATYPE_USERNAME"
                     password = "$System.env.bamboo_SONATYPE_PASSWORD"

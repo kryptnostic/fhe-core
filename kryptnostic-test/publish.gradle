@@ -19,7 +19,7 @@ ext."signing.password" = "$System.env.bamboo_JAR_SIGNING_PASSWORD"
 logger.quiet("Username: $System.env.bamboo_SONATYPE_USERNAME")
 logger.quiet("Password: $System.env.bamboo_SONATYPE_PASSWORD")
 
-if (ext.isReleaseVersion) {
+if ( ext."signing.secretKeyRingFile" != null && ext."signing.password"!=null ) {
 
     signing {
         sign configurations.archives
@@ -32,7 +32,7 @@ if (ext.isReleaseVersion) {
     publishing {
         repositories {
             maven { 
-                url repoUrl
+                url ext.snapshotUrl
                 credentials {
                     username = "$System.env.BAMBOO_SONATYPE_USERNAME"
                     password = "$System.env.BAMBOO_SONATYPE_PASSWORD"
