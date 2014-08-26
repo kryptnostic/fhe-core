@@ -1,5 +1,12 @@
-if ( ( System.getenv("bamboo_JAR_SIGNING_KEYRING") != null) && ( System.getenv("bamboo_JAR_SIGNING_PASSWORD")!=null ) && ( System.getenv("bamboo_SONATYPE_USERNAME")!=null ) && ( System.getenv("bamboo_SONATYPE_PASSWORD")!=null ) ) {
-    
+def stdout = new ByteArrayOutputStream()
+exec {
+    commandLine 'git', 'rev-parse', '--abbrev-ref', 'HEAD'
+    standardOutput = stdout
+}
+def branch=stdout.toString().trim();
+
+if ( (branch.equals("develop") ) && ( System.getenv("bamboo_JAR_SIGNING_KEYRING") != null) && ( System.getenv("bamboo_JAR_SIGNING_PASSWORD")!=null ) && ( System.getenv("bamboo_SONATYPE_USERNAME")!=null ) && ( System.getenv("bamboo_SONATYPE_PASSWORD")!=null ) ) {
+
     apply plugin: "signing"
     apply plugin: "maven-publish"
 
