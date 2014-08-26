@@ -13,11 +13,11 @@ ext {
 ext.repoUrl = snapshotUrl
 
 ext."signing.keyId" = 'FDEB5A45'
-ext."signing.secretKeyRingFile" = "$System.env.JAR_SIGNING_KEYRING"
-ext."signing.password" = "$System.env.JAR_SIGNING_PASSWORD"
+ext."signing.secretKeyRingFile" = "$System.env.BAMBOO_JAR_SIGNING_KEYRING"
+ext."signing.password" = "$System.env.BAMBOO_JAR_SIGNING_PASSWORD"
 
-logger.quiet("Username: $System.env.SONATYPE_USERNAME")
-logger.quiet("Password: $System.env.SONATYPE_PASSWORD")
+logger.quiet("Username: $System.env.BAMBOO_SONATYPE_USERNAME")
+logger.quiet("Password: $System.env.BAMBOO_SONATYPE_PASSWORD")
 
 if (ext.isReleaseVersion) {
 
@@ -34,8 +34,8 @@ if (ext.isReleaseVersion) {
             maven { 
                 url repoUrl
                 credentials {
-                    username = "$System.env.SONATYPE_USERNAME"
-                    password = "$System.env.SONATYPE_PASSWORD"
+                    username = "$System.env.BAMBOO_SONATYPE_USERNAME"
+                    password = "$System.env.BAMBOO_SONATYPE_PASSWORD"
                 }
             }
         }

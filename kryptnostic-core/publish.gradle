@@ -13,8 +13,8 @@ ext {
 ext.repoUrl = snapshotUrl
 
 ext."signing.keyId" = 'FDEB5A45'
-ext."signing.secretKeyRingFile" = "$System.env.JAR_SIGNING_KEYRING"
-ext."signing.password" = "$System.env.JAR_SIGNING_PASSWORD"
+ext."signing.secretKeyRingFile" = "$System.env.BAMBOO_JAR_SIGNING_KEYRING"
+ext."signing.password" = "$System.env.BAMBOO_JAR_SIGNING_PASSWORD"
 
 if (ext.isReleaseVersion) {
 
