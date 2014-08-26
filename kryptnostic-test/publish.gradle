@@ -5,7 +5,12 @@ exec {
 }
 def branch=stdout.toString().trim();
 
-if ( (branch.equals("develop") || branch.equals("master") ) && ( System.getenv("bamboo_JAR_SIGNING_KEYRING") != null) && ( System.getenv("bamboo_JAR_SIGNING_PASSWORD")!=null ) && ( System.getenv("bamboo_SONATYPE_USERNAME")!=null ) && ( System.getenv("bamboo_SONATYPE_PASSWORD")!=null ) ) {
+if( ( (branch.equals("develop") || branch.equals("master") ) ) && 
+    ( System.getenv("bamboo_JAR_SIGNING_KEYRING") != null) && 
+    ( System.getenv("bamboo_JAR_SIGNING_PASSWORD")!=null ) && 
+    ( System.getenv("bamboo_SONATYPE_USERNAME")!=null ) && 
+    ( System.getenv("bamboo_SONATYPE_PASSWORD")!=null ) ) {
+
     
     apply plugin: "maven-publish"
     apply plugin: "signing"
