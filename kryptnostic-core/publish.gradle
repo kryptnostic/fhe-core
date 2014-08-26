@@ -1,20 +1,21 @@
-apply plugin: "signing"
+if ( ( System.getenv("bamboo_JAR_SIGNING_KEYRING") != null) && ( System.getenv("bamboo_JAR_SIGNING_PASSWORD")!=null ) && ( System.getenv("bamboo_SONATYPE_USERNAME")!=null ) && ( System.getenv("bamboo_SONATYPE_PASSWORD")!=null ) ) {
+    
+    apply plugin: "signing"
+    apply plugin: "maven-publish"
 
-configurations {
-    pom
-}
+    ext {
+        snapshotUrl = "https://oss.sonatype.org/content/repositories/snapshots"
+        releaseUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+        localUrl = "file:/${project.projectDir}/artifacts"
+    }
 
-ext {
-    snapshotUrl = "https://oss.sonatype.org/content/repositories/snapshots"
-    releaseUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-    localUrl = "file:/${project.projectDir}/artifacts"
-}
+    ext."signing.keyId" = 'FDEB5A45'
+    ext."signing.secretKeyRingFile" = "$System.env.bamboo_JAR_SIGNING_KEYRING"
+    ext."signing.password" = "$System.env.bamboo_JAR_SIGNING_PASSWORD"
 
-ext."signing.keyId" = 'FDEB5A45'
-ext."signing.secretKeyRingFile" = "$System.env.bamboo_JAR_SIGNING_KEYRING"
-ext."signing.password" = "$System.env.bamboo_JAR_SIGNING_PASSWORD"
-
-if ( ext."signing.secretKeyRingFile" != null && ext."signing.password"!=null ) {
+    configurations {
+        pom
+    }
 
     signing {
         sign configurations.archives

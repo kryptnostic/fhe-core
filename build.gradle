@@ -19,7 +19,7 @@ group = "com.kryptnostic"
 version = getVersionName()
 
 allprojects { 
-    apply plugin: "maven-publish"
+    
     apply plugin: "java"
     apply plugin: "maven"
     apply plugin: "idea"
@@ -45,7 +45,6 @@ allprojects {
       from javadoc.destinationDir
     }
 
-    ext.isReleaseVersion = true
     ext.standaloneMode = true
 
     sourceCompatibility=JavaVersion.VERSION_1_6
