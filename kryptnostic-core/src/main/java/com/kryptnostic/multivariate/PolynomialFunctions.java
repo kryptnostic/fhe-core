@@ -206,25 +206,25 @@ public final class PolynomialFunctions {
     }
 
     /**
-     * Useful for constructing an Gf(2)^2n -> GF(2)^n function that takes the upper identity.
+     * Useful for constructing an Gf(2)^2n -&gt; GF(2)^n function that takes the upper identity.
      * 
      * @param inputLength
      * @return A polynomial function the takes the upper inputLength / 2 bits and outputs them without modifying them
      */
-    public static SimplePolynomialFunction upperIdentity(int monomialOrder) {
-        int baseIndex = monomialOrder >>> 1;
+    public static SimplePolynomialFunction upperIdentity(int inputLength) {
+        int baseIndex = inputLength >>> 1;
         Monomial[] monomials = new Monomial[baseIndex];
         BitVector[] contributions = new BitVector[baseIndex];
 
-        for (int i = baseIndex; i < monomialOrder; ++i) {
+        for (int i = baseIndex; i < inputLength; ++i) {
             int adjustedIndex = i - baseIndex;
-            monomials[adjustedIndex] = Monomial.linearMonomial(monomialOrder, i);
+            monomials[adjustedIndex] = Monomial.linearMonomial(inputLength, i);
             BitVector contribution = new BitVector(baseIndex);
             contribution.set(i - baseIndex);
             contributions[adjustedIndex] = contribution;
         }
 
-        return new OptimizedPolynomialFunctionGF2(monomialOrder, baseIndex, monomials, contributions);
+        return new OptimizedPolynomialFunctionGF2(inputLength, baseIndex, monomials, contributions);
     }
 
     /**
@@ -254,7 +254,7 @@ public final class PolynomialFunctions {
     }
 
     /**
-     * Useful for constructing an Gf(2)^2n -> GF(2)^n function that takes the lower identity.
+     * Useful for constructing an Gf(2)^2n -&gt; GF(2)^n function that takes the lower identity.
      * 
      * @param inputLength
      * @return A polynomial function the takes the lower inputLength / 2 bits and outputs them without modifying them
@@ -377,7 +377,6 @@ public final class PolynomialFunctions {
      * Static factory method for many-to-one functions that mix the upper and lower half of the inputs.
      * 
      * @param inputLength
-     * @param outputLength
      * @return Returns random linear combination of the upper half and lower half of the inputs.
      */
     public static SimplePolynomialFunction randomManyToOneLinearCombination(int inputLength) {
@@ -485,8 +484,6 @@ public final class PolynomialFunctions {
      * 
      * @param inner
      *            The initial internal basis for using in the partition of the first function.
-     * @param innerSecond
-     *            The initial internal basis for using in the partition of the second function.
      * @param functions
      *            The sequence of functions to convert into a pipeline of partitioned functions
      * @return a sequences of functions that evaluations to the same {@code functions}.

@@ -13,8 +13,8 @@ ext {
 ext.repoUrl = snapshotUrl
 
 ext."signing.keyId" = 'FDEB5A45'
-ext."signing.secretKeyRingFile" = '/Users/mtamayorios/.gnupg/secring.gpg'
-ext."signing.password" = 'id'
+ext."signing.secretKeyRingFile" = "$System.env.JAR_SIGNING_KEYRING"
+ext."signing.password" = "$System.env.JAR_SIGNING_PASSWORD"
 
 if (ext.isReleaseVersion) {
 
@@ -31,8 +31,8 @@ if (ext.isReleaseVersion) {
             maven { 
                 url repoUrl
                 credentials {
-                    username = ''
-                    password = ''
+                    username = "$System.env.SONATYPE_USERNAME"
+                    password = "$System.env.SONATYPE_PASSWORD"
                 }
             }
         }
@@ -40,20 +40,19 @@ if (ext.isReleaseVersion) {
         publications {
             mavenJava(MavenPublication) {
                 from components.java
-                version '0.1.0-SNAPSHOT'
                 artifact ('README.md') {
                     classifier = 'README'
                     extension  = 'md'
                 }
 
                 artifact javadocJar
-                artifact sourceJar
+                artifact sourcesJar
 
                 pom.withXml {
                     asNode().children().last() + {
                         resolveStrategy = Closure.DELEGATE_FIRST
                         name 'fhe-core'
-                        description 'Light weight Java web framework'
+                        description 'Kryptnostic implementations of Fully Homomorphic Encryption'
                         url 'https://www.github.com/kryptnostic/fhe-core'
                         scm {
                             url 'https://www.github.com/kryptnostic/fhe-core'
@@ -72,6 +71,16 @@ if (ext.isReleaseVersion) {
                                 id 'geekbeast'
                                 name 'Matthew Tamayo-Rios'
                                 email 'matthew@kryptnostic.com'
+                            }
+                            developer {
+                                id 'hubsmoke'
+                                name 'Sina Iman'
+                                email 'sina@kryptnostic.com'
+                            }
+                            developer {
+                                id 'nickdhewitt'
+                                name 'Nick Hewitt'
+                                email 'nick@kryptnostic.com'
                             }
                         }
                     }
