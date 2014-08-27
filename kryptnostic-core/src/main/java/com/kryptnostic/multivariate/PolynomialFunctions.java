@@ -1,9 +1,12 @@
 package com.kryptnostic.multivariate;
 
+import java.nio.ByteBuffer;
+import java.nio.LongBuffer;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +18,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Longs;
 import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
@@ -29,6 +33,9 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
  */
 public final class PolynomialFunctions {
     private static final Logger logger = LoggerFactory.getLogger(PolynomialFunctions.class);
+    private static final int INTEGER_BYTES = Integer.SIZE / Byte.SIZE;
+    private static final int INTEGER_BYTES_X4 = INTEGER_BYTES * 4;
+    private static final Base64 codec = new Base64();
 
     private PolynomialFunctions() {
     }
@@ -435,25 +442,26 @@ public final class PolynomialFunctions {
         return fromMonomialContributionMap(first.getInputLength(), combinedOutputLength, monomialContributionMap);
 
     }
-    
+
     /**
      * This is a potentially unsafe method for generating liner combinations, where if the linear combination is known,
-     * it maybe possible to find subspace kernels that reaveal information about the remaining variables. It is fine 
-     * for the purposes for generating the hash function for indexing.
+     * it maybe possible to find subspace kernels that reaveal information about the remaining variables. It is fine for
+     * the purposes for generating the hash function for indexing.
+     * 
      * @param inputLength
      * @param outputLength
      * @return
      */
-    public static SimplePolynomialFunction unsafeRandomManyToOneLinearCombination( int inputLength, int outputLength ) {
-        return EnhancedBitMatrix.randomMatrix( outputLength , inputLength ).multiply( PolynomialFunctions.identity( inputLength ) );
+    public static SimplePolynomialFunction unsafeRandomManyToOneLinearCombination(int inputLength, int outputLength) {
+        return EnhancedBitMatrix.randomMatrix(outputLength, inputLength).multiply(
+                PolynomialFunctions.identity(inputLength));
     }
-    
-    public static SimplePolynomialFunction linearCombination( EnhancedBitMatrix c1 , EnhancedBitMatrix c2 ) {
-        return c1.multiply( lowerIdentity( c1.cols() << 1) )
-                .xor( c2.multiply( upperIdentity( c2.cols() << 1 ) ) );
+
+    public static SimplePolynomialFunction linearCombination(EnhancedBitMatrix c1, EnhancedBitMatrix c2) {
+        return c1.multiply(lowerIdentity(c1.cols() << 1)).xor(c2.multiply(upperIdentity(c2.cols() << 1)));
 
     }
-    
+
     public static Pair<SimplePolynomialFunction, SimplePolynomialFunction> randomlyPartitionMVQ(
             SimplePolynomialFunction f) {
         Preconditions.checkArgument(f.getMaximumMonomialOrder() == 2);
@@ -534,5 +542,65 @@ public final class PolynomialFunctions {
             result.put(monomials[i].clone(), contributions[i].copy());
         }
         return result;
+    }
+
+    public static SimplePolynomialFunction unmarshalSimplePolynomialFunction(String input) {
+        byte[] decoded = Base64.decodeBase64(input.getBytes());
+        ByteBuffer buf = ByteBuffer.wrap(decoded);
+        int inputLength = buf.getInt();
+        int outputLength = buf.getInt();
+        int monomialLength = buf.getInt();
+        int contributionLength = buf.getInt();
+
+        LongBuffer longBuffer = buf.asLongBuffer();
+
+        Monomial[] monomials = new Monomial[monomialLength];
+        for (int i = 0; i < monomials.length; i++) {
+            long[] monomialLongs = new long[inputLength >> 6];
+            longBuffer.get(monomialLongs);
+            monomials[i] = new Monomial(monomialLongs, inputLength);
+        }
+
+        BitVector[] contributions = new BitVector[contributionLength];
+        for (int i = 0; i < contributions.length; i++) {
+            long[] contributionLongs = new long[outputLength >> 6];
+            longBuffer.get(contributionLongs);
+            contributions[i] = new BitVector(contributionLongs, outputLength);
+        }
+
+        return new OptimizedPolynomialFunctionGF2(inputLength, outputLength, monomials, contributions);
+    }
+
+    public static String marshalSimplePolynomialFunction(SimplePolynomialFunction input) {
+        Monomial[] monomials = input.getMonomials();
+        BitVector[] contributions = input.getContributions();
+
+        int inputLength = input.getInputLength();
+        int outputLength = input.getOutputLength();
+
+        long[] monomialData = new long[monomials.length * ( inputLength >> 6 )];
+        LongBuffer monomialBuffer = LongBuffer.wrap(monomialData);
+        for (int i = 0; i < monomials.length; i++) {
+            monomialBuffer.put(monomials[i].elements());
+        }
+
+        long[] contributionData = new long[contributions.length * ( outputLength >> 6 )];
+        LongBuffer contributionBuffer = LongBuffer.wrap(contributionData);
+        for (int i = 0; i < contributions.length; i++) {
+            contributionBuffer.put(contributions[i].elements());
+        }
+
+        byte[] target = new byte[( monomialData.length << 3 ) + ( contributionData.length << 3 ) + INTEGER_BYTES_X4];
+        ByteBuffer buf = ByteBuffer.wrap(target);
+        buf.putInt(inputLength);
+        buf.putInt(outputLength);
+        buf.putInt(monomials.length);
+        buf.putInt(contributions.length);
+
+        LongBuffer longBuffer = buf.asLongBuffer();
+        longBuffer.put(monomialData);
+        longBuffer.put(contributionData);
+
+        return new String(codec.encode(target));
     }
 }

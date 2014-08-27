@@ -12,6 +12,7 @@ public class BitVectorsTests {
     private static final int LENGTH = 512;
 
     @Test
+    // TODO: make a test that 2 unequal BVs are marshaled differently
     public void testBitvectorMarshalUnmarshal() {
         BitVector original = BitUtils.randomVector(LENGTH);
 
