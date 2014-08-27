@@ -545,6 +545,9 @@ public final class PolynomialFunctions {
     }
 
     public static SimplePolynomialFunction unmarshalSimplePolynomialFunction(String input) {
+        if (input == null) {
+            return null;
+        }
         byte[] decoded = Base64.decodeBase64(input.getBytes());
         ByteBuffer buf = ByteBuffer.wrap(decoded);
         int inputLength = buf.getInt();
@@ -572,6 +575,9 @@ public final class PolynomialFunctions {
     }
 
     public static String marshalSimplePolynomialFunction(SimplePolynomialFunction input) {
+        if (input == null) {
+            return null;
+        }
         Monomial[] monomials = input.getMonomials();
         BitVector[] contributions = input.getContributions();
 

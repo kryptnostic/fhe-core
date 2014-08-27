@@ -460,6 +460,16 @@ public class PolynomialFunctionTests {
     }
 
     @Test
+    public void testSimplePolynomialFunctionMarshalWithNull() {
+        Assert.assertNull(PolynomialFunctions.marshalSimplePolynomialFunction(null));
+    }
+
+    @Test
+    public void testSimplePolynomialFunctionUnmarshalWithNull() {
+        Assert.assertNull(PolynomialFunctions.unmarshalSimplePolynomialFunction(null));
+    }
+
+    @Test
     // TODO: make a test that also makes sure two different, unequal SPFs are not marshaled the same
     public void testSimplePolynomialFunctionMarshalUnmarshal() {
         SimplePolynomialFunction original = PolynomialFunctions.randomFunction(INPUT_LENGTH, OUTPUT_LENGTH);

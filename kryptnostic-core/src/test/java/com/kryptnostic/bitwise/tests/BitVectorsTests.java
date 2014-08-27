@@ -36,4 +36,14 @@ public class BitVectorsTests {
 
         Assert.assertEquals(original, result);
     }
+
+    @Test
+    public void testBitvectorMarshalNull() {
+        Assert.assertNull(BitVectors.marshalBitvector(null));
+    }
+
+    @Test
+    public void testBitvectorUnmarshalNull() {
+        Assert.assertNull(BitVectors.unmarshalBitvector(null));
+    }
 }

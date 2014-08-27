@@ -14,6 +14,7 @@ import com.google.common.collect.Iterables;
 public final class BitVectors {
     private static final int INTEGER_BYTES = Integer.SIZE / Byte.SIZE;
     private static final Base64 codec = new Base64();
+
     private BitVectors() {
     }
 
@@ -59,6 +60,9 @@ public final class BitVectors {
      *         bit_vector_bits[1]:long, ..., bit_vector_bits[n]:long }
      */
     public static String marshalBitvector(BitVector input) {
+        if (input == null) {
+            return null;
+        }
         long[] data = input.elements();
         byte[] target = new byte[data.length << 3 + INTEGER_BYTES];
         ByteBuffer buf = ByteBuffer.wrap(target);
@@ -76,6 +80,9 @@ public final class BitVectors {
      * @return The unmarshaled BitVector
      */
     public static BitVector unmarshalBitvector(String input) {
+        if (input == null) {
+            return null;
+        }
         byte[] decoded = Base64.decodeBase64(input.getBytes());
         ByteBuffer buf = ByteBuffer.wrap(decoded);
         int size = buf.getInt();
