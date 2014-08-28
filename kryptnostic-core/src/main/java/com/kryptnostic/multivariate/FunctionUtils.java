@@ -123,7 +123,8 @@ public class FunctionUtils {
         BitVector[] contributions = new BitVector[ monomials.length ];
         
         for( int i = 0 ; i < lhsMonomials.length ; ++i ) {
-            monomials[ i ] = new Monomial( Arrays.copyOf( lhsMonomials[ i ].elements() , newMonomialArrayLength ) , combinedInputLength );
+        	// TODO bug! ParameterizedFunctions have a longer monomials than function length, so this creates a monomial with a larger backing size than combinedInputLength
+            monomials[ i ] = new Monomial( Arrays.copyOf( lhsMonomials[ i ].elements() , newMonomialArrayLength ) , combinedInputLength ); 
             contributions[ i ] = new BitVector( Arrays.copyOf( lhsContributions[ i ].elements() , newContributionArrayLength ) , combinedOutputLength ); 
         }
         

@@ -16,7 +16,7 @@ public class PolynomialFunctionTestsDriver extends AbstractInstrumentedTest  {
     public void runCompose() {
         for( int i = 0 ; i < 1 ; ++i ) { 
             tests.quadraticComposeTest();
-//            tests.generalComposeTest();
+            tests.generalComposeTest(); 
         }
     }
     

@@ -19,7 +19,12 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 public class KeyTests {
     private static final Logger logger = LoggerFactory.getLogger( KeyTests.class );
     private static final PrivateKey privKey = new PrivateKey( 128 , 64 );
+	private static final SimplePolynomialFunction decryptor = privKey.getDecryptor();
     private static final PublicKey pubKey = new PublicKey( privKey );
+    private static final SimplePolynomialFunction encryptor = pubKey.getEncrypter();
+    
+    private static final Integer LENGTH = 64;
+
     
     @Test
     public void testConstruction() throws SingularMatrixException {
@@ -66,4 +71,36 @@ public class KeyTests {
         logger.trace( "Decrypted ciphertext: {}" , decryptedPlaintext );
         Assert.assertEquals( decryptedPlaintext , plaintext );
     }
+    
+    @Test
+    public void testComputeHomomorphicFunctions() {
+    	SimplePolynomialFunction identity = PolynomialFunctions.identity( LENGTH );
+    	SimplePolynomialFunction homomorphicFunction = privKey.computeHomomorphicFunction( identity );
+    	
+    	for (int i = 0; i < 100; i++) {
+			BitVector plainText = BitUtils.randomVector(LENGTH);
+			
+			// pad the input to encryptor if necessary
+			BitVector extendedPlainText = plainText.copy();
+			if (encryptor.getInputLength() > plainText.size()) {
+				extendedPlainText.setSize( encryptor.getInputLength() );
+			}
+			BitVector cipherText = encryptor.apply(extendedPlainText);
+			BitVector cipherResult = homomorphicFunction.apply(cipherText);
+			BitVector found = decryptor.apply(cipherResult);
+			
+			Assert.assertEquals(found, plainText);
+		}
+    }
+    
+    // TODO uncomment when bug in concatenate ParameterizedPolynomialFunctionGF2 is fixed
+//    @Test
+//    public void testComputeBinaryHomomorphicFunction() {
+//    	SimplePolynomialFunction binaryXor = PolynomialFunctions.BINARY_XOR( LENGTH );
+//    	SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs(decryptor, decryptor);
+//    	SimplePolynomialFunction composed = binaryXor.compose( concatenated );
+//    	
+//    	SimplePolynomialFunction homomorphicBinaryXor = privKey.encryptBinary( composed );
+//    }
+
 }
