@@ -18,7 +18,6 @@ description = "Java Framework for building clustered RESTful web applications"
 group = "com.kryptnostic"
 version = getVersionName()
 
-apply plugin: "maven-publish"
 apply plugin: "application"
 apply plugin: "java"
 apply plugin: "maven"
@@ -124,12 +123,25 @@ dependencies {
      * Kryo serialization -- faster generic Java serialization
      */
     compile 'com.esotericsoftware.kryo:kryo:2.22'  
-    compile( project(":kryptnostic-api") )
+    
 
     /*
      * TESTING
      */
-
+     
     testCompile 'junit:junit:4.11'
-    testCompile project(":kryptnostic-test")
+    if( project.hasProperty('developmentMode') && project.developmentMode ) {
+        logger.quiet("$project.name is using project dependencies.")
+        compile( project(":fhe-core:kryptnostic-api") )
+        testCompile( project(":fhe-core:kryptnostic-test") )
+    } else if( project.hasProperty( 'standaloneMode' ) && project.standaloneMode ) {
+        logger.quiet("$project.name is using standalone project dependencies.")
+        compile( project(":kryptnostic-api") )
+        testCompile( project(":kryptnostic-test") )
+    
+    } else {
+        logger.quiet("$project.name is using jar dependencies.")
+        compile "com.kryptnostic:kryptnostic-api:$version"
+        testCompile "com.kryptnostic:kryptnostic-test:$version"
+    }
 }

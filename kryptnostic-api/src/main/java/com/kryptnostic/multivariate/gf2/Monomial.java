@@ -64,8 +64,8 @@ public class Monomial extends BitVector {
     
     /**
      * Evaluates input vector
-     * @param input
-     * @return
+     * @param input on which to evaluate the monomial.
+     * @return True if the monomial has all corresponding input bits set to 1, false otherwise.
      */
     public boolean eval( BitVector input ) {
         Preconditions.checkArgument( size() == input.size() , "Number of terms in input doesn't not much number of terms in Monomial." );
@@ -108,7 +108,7 @@ public class Monomial extends BitVector {
     }
     
     /**
-     * Creates a list of N choose K monomials, where N is the order of this monomial and K is a chosen order < N.
+     * Creates a list of N choose K monomials, where N is the order of this monomial and K is a chosen order &lt; N.
      * @param order
      * @return
      */

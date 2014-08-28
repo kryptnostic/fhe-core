@@ -18,7 +18,6 @@ description = "Java Framework for building clustered RESTful web applications"
 group = "com.kryptnostic"
 version = getVersionName()
 
-apply plugin: "maven-publish"
 apply plugin: "application"
 apply plugin: "java"
 apply plugin: "maven"

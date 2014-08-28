@@ -32,7 +32,7 @@ public class MultivariateLearning {
 	/**
 	 * Given a polynomial and an assumed order of that polynomial, computes the inverse.
 	 * @param function
-	 * @param order
+	 * @param orderOfInverse
 	 * @return Pair of inverse function and training data over which it was valid
 	 */
 	public static Pair<SimplePolynomialFunction, List <BitVector>> learnInverse(PolynomialFunction function, Integer orderOfInverse) {
@@ -140,7 +140,7 @@ public class MultivariateLearning {
 	 * Returns a list of random inputs and the corresponding list of outputs for the given function.
 	 * @param function
 	 * @param quantity
-	 * @return
+	 * @return a paired list of input and output bitvectors, chosen randomly from {@code function}.
 	 */
 	private static Pair<List<BitVector>, List<BitVector>> getTrainingData(
 			PolynomialFunction function, int quantity) {

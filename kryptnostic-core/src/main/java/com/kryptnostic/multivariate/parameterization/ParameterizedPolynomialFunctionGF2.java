@@ -28,7 +28,7 @@ public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunct
      * @param outputLength
      * @param monomials
      * @param contributions
-     * @param pipeline
+     * @param pipelines
      */
     public ParameterizedPolynomialFunctionGF2(int inputLength, int outputLength,Monomial[] monomials, BitVector[] contributions, Iterable<CompoundPolynomialFunction> pipelines) {
         super( inputLength, outputLength, monomials, contributions);

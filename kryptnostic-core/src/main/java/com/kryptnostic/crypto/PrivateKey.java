@@ -52,7 +52,6 @@ public class PrivateKey {
      * @param cipherTextBlockLength Length of the ciphertext output block, should be multiples of 64 bits. 
      * @param plainTextBlockLength Length of the ciphertext output block, should be multiples of 64 bits.
      * @param complexityChainLength Number of multivariate quadratic equations in the complexity chain.
-     * @throws SingularMatrixException 
      */
     public PrivateKey( int cipherTextBlockLength , int plainTextBlockLength , int complexityChainLength ) {
         Preconditions.checkArgument( 

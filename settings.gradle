@@ -1,4 +1,4 @@
 rootProject.name='kryptnostic'
-include 'kryptnostic-api'
-include 'kryptnostic-core'
-include 'kryptnostic-test'
+include ':kryptnostic-api'
+include ':kryptnostic-core'
+include ':kryptnostic-test'
