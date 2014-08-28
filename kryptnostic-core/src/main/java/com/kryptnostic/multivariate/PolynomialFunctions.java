@@ -559,14 +559,14 @@ public final class PolynomialFunctions {
 
         Monomial[] monomials = new Monomial[monomialLength];
         for (int i = 0; i < monomials.length; i++) {
-            long[] monomialLongs = new long[inputLength >> 6];
+            long[] monomialLongs = new long[inputLength >>> 6];
             longBuffer.get(monomialLongs);
             monomials[i] = new Monomial(monomialLongs, inputLength);
         }
 
         BitVector[] contributions = new BitVector[contributionLength];
         for (int i = 0; i < contributions.length; i++) {
-            long[] contributionLongs = new long[outputLength >> 6];
+            long[] contributionLongs = new long[outputLength >>> 6];
             longBuffer.get(contributionLongs);
             contributions[i] = new BitVector(contributionLongs, outputLength);
         }
