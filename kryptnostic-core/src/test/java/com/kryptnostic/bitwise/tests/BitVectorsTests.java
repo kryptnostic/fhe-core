@@ -19,7 +19,7 @@ public class BitVectorsTests {
         String data = null;
 
         long start = System.nanoTime();
-        int runs = 500000;
+        int runs = 300;
         for (int i = 0; i < runs; i++) {
             data = BitVectors.marshalBitvector(original);
         }
@@ -34,6 +34,8 @@ public class BitVectorsTests {
         time = System.nanoTime() - start;
         System.out.printf("Average time to unmarshal was %.1f us%n", time / runs / 1e3);
 
+        Assert.assertArrayEquals(original.elements(), result.elements());
+        
         Assert.assertEquals(original, result);
     }
 

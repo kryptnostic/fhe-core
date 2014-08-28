@@ -64,7 +64,7 @@ public final class BitVectors {
             return null;
         }
         long[] data = input.elements();
-        byte[] target = new byte[data.length << 3 + INTEGER_BYTES];
+        byte[] target = new byte[(data.length << 3) + INTEGER_BYTES];
         ByteBuffer buf = ByteBuffer.wrap(target);
         buf.putInt(input.size());
         buf.asLongBuffer().put(data);
@@ -87,7 +87,7 @@ public final class BitVectors {
         ByteBuffer buf = ByteBuffer.wrap(decoded);
         int size = buf.getInt();
         LongBuffer longBuffer = buf.asLongBuffer();
-        long[] longs = new long[longBuffer.capacity()];
+        long[] longs = new long[(decoded.length - INTEGER_BYTES) >>> 3];
         longBuffer.get(longs);
         return new BitVector(longs, size);
     }
