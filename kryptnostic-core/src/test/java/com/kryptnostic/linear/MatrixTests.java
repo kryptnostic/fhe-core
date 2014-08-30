@@ -1,4 +1,4 @@
-package com.kryptnostic.linear.tests;
+package com.kryptnostic.linear;
 
 import org.junit.Test;
 import org.slf4j.Logger;

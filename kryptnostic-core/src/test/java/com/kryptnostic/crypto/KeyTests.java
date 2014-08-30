@@ -1,4 +1,4 @@
-package com.kryptnostic.crypto.tests;
+package com.kryptnostic.crypto;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
@@ -65,5 +65,6 @@ public class KeyTests {
         String decryptedPlaintext = new String( decryptedBytes );
         logger.trace( "Decrypted ciphertext: {}" , decryptedPlaintext );
         Assert.assertEquals( decryptedPlaintext , plaintext );
+        Assert.assertArrayEquals(decryptedPlaintext.getBytes(), plaintext.getBytes());
     }
 }

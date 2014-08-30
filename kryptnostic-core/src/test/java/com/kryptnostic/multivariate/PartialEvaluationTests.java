@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate.test;
+package com.kryptnostic.multivariate;
 
 import org.junit.Assert;
 import org.springframework.context.annotation.Bean;
