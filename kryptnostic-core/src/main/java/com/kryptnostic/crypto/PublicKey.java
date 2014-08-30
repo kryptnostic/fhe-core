@@ -61,7 +61,7 @@ public class PublicKey {
         return new Ciphertext( encrypt( plaintext ) , encrypt( lengthArray ) );
     }
     
-    public byte[] encrypt( byte[] plaintext ) {
+    byte[] encrypt( byte[] plaintext ) {
         Preconditions.checkNotNull( plaintext , "Plaintext to be encrypted cannot be null." );
         
         /* 
@@ -93,7 +93,7 @@ public class PublicKey {
         return outBuf.array();
     }
     
-    public long[] encrypt( long[] plaintext ) {
+    long[] encrypt( long[] plaintext ) {
         logger.debug( "Expected plaintext block length: {}" , encrypter.getInputLength() );
         logger.debug( "Observed plaintext block length: {}" , plaintext.length * 8 * 8 );
         Preconditions.checkArgument( (plaintext.length<<3) == ( encrypter.getInputLength() >>> 3 ) , "Cannot directly encrypt block of incorrect length." );

@@ -1,4 +1,4 @@
-package com.kryptnostic.crypto.tests;
+package com.kryptnostic.crypto;
 
 public class EncryptDecryptTests {
 
