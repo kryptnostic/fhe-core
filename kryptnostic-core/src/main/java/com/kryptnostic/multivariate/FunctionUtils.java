@@ -4,13 +4,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import cern.colt.bitvector.BitVector;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
+import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-
-import cern.colt.bitvector.BitVector;
 
 public class FunctionUtils {
 	private FunctionUtils() {}
@@ -101,47 +102,34 @@ public class FunctionUtils {
         
         return PolynomialFunctions.fromMonomialContributionMap( monomialSize , lines.size() , monomialContributionsMap );
     }
-    
+ 
     public static SimplePolynomialFunction concatenateInputsAndOutputs( SimplePolynomialFunction lhs , SimplePolynomialFunction rhs ) {
-        int lhsInputLength = lhs.getInputLength();
-        int rhsInputLength = rhs.getInputLength();
-        int lhsOutputLength = lhs.getOutputLength(); 
-        int rhsOutputLength = rhs.getOutputLength();
-        int combinedInputLength = lhsInputLength + rhsInputLength;
-        int combinedOutputLength = lhsOutputLength + rhsOutputLength;
+        int combinedInputLength = lhs.getInputLength() + rhs.getInputLength();
         Monomial[] lhsMonomials = lhs.getMonomials();
         Monomial[] rhsMonomials = rhs.getMonomials();
+        int numMonomials = lhsMonomials.length + rhsMonomials.length;
+        Monomial[] newMonomials = new Monomial[numMonomials];
+        for (int i = 0; i < lhsMonomials.length; i++) {
+            newMonomials[i] = lhsMonomials[i].extend(combinedInputLength);
+        }
+        
+        for (int i = 0; i < rhsMonomials.length; i++) {
+            newMonomials[i + lhsMonomials.length] = rhsMonomials[i].extendAndShift(combinedInputLength, lhs.getInputLength());
+        }
+        
+        int combinedOutputLength = lhs.getOutputLength() + rhs.getOutputLength();
         BitVector[] lhsContributions = lhs.getContributions();
         BitVector[] rhsContributions = rhs.getContributions();
-        int lhsElementLength = lhsMonomials[ 0 ].elements().length;
-        int rhsElementLength = rhsMonomials[ 0 ].elements().length;
-        int lhsContributionLength = lhsContributions[ 0 ].elements().length;
-        int rhsContributionLength = rhsContributions[ 0 ].elements().length;
-        int newMonomialArrayLength = lhsElementLength + rhsElementLength;
-        int newContributionArrayLength = lhsContributionLength + rhsContributionLength;
-        Monomial[] monomials = new Monomial[ lhsMonomials.length + rhsMonomials.length ];
-        BitVector[] contributions = new BitVector[ monomials.length ];
-        
-        for( int i = 0 ; i < lhsMonomials.length ; ++i ) {
-        	// TODO bug! ParameterizedFunctions have a longer monomials than function length, so this creates a monomial with a larger backing size than combinedInputLength
-            monomials[ i ] = new Monomial( Arrays.copyOf( lhsMonomials[ i ].elements() , newMonomialArrayLength ) , combinedInputLength ); 
-            contributions[ i ] = new BitVector( Arrays.copyOf( lhsContributions[ i ].elements() , newContributionArrayLength ) , combinedOutputLength ); 
+        int numContributions = lhsContributions.length + rhsContributions.length;
+        BitVector[] newContributions = new BitVector[numContributions];
+        for(int i = 0; i < lhsContributions.length; i++) {
+            newContributions[i] = BitUtils.extend(lhsContributions[i], combinedOutputLength);
         }
         
-        for( int i = 0 ; i < rhsMonomials.length ; ++i ) {
-            long[] newElements = new long[ newMonomialArrayLength ];
-            long[] newContributionElements = new long[ newMonomialArrayLength ];
-            
-            for( int j = lhsElementLength ; j < newMonomialArrayLength ; ++j ) {
-                newElements[ j ] = rhsMonomials[ i ].elements()[ j - lhsElementLength ];
-                for( int k = lhsContributionLength ; k < newContributionArrayLength ; ++k ) {
-                    newContributionElements[ k ] = rhsContributions[ i ].elements()[ k - rhsContributionLength ];
-                }
-            }
-            monomials[ i + lhsMonomials.length ] = new Monomial( newElements , combinedInputLength );
-            contributions[ i + lhsContributions.length ] = new BitVector( newContributionElements , combinedOutputLength );
+        for (int i = 0; i < rhsContributions.length; i++) {
+            newContributions[i + lhsContributions.length] = BitUtils.extendAndShift(rhsContributions[i], combinedOutputLength, lhs.getOutputLength());
         }
-        
-        return new OptimizedPolynomialFunctionGF2( combinedInputLength , combinedOutputLength , monomials , contributions );
+        // TODO bug! ParameterizedFunctions have a longer monomials than function length, so this creates a monomial with a larger backing size than combinedInputLength
+        return new OptimizedPolynomialFunctionGF2( combinedInputLength, combinedOutputLength, newMonomials, newContributions );
     }
 }
