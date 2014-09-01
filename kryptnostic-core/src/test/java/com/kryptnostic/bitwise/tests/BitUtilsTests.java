@@ -36,14 +36,4 @@ public class BitUtilsTests {
             Assert.assertEquals(expected.get(i), extended.get(i));
         }
     }
-    
-    @Test
-    public void testExtendAndShift() {
-        long[] values = {r.nextLong()};
-        BitVector expected = new BitVector(values, 64);
-        BitVector extendedShifted = BitUtils.extendAndShift(expected, 128, 64);
-        for (int i = 0; i < expected.size(); i++) {
-            Assert.assertEquals(expected.get(i), extendedShifted.get(i + 64));
-        }
-    }
 }

@@ -149,22 +149,7 @@ public class Monomial extends BitVector {
         return copy;
     }
     
-    public Monomial extendAndShift( int newSize , int shiftSize ) {
-        return extendAndShift( newSize , 0 , shiftSize );
-    }
     
-    public Monomial extendAndShift( int newSize , int baseIndex, int shiftSize ) {
-//        Preconditions.checkArgument( baseIndex + shiftSize <= newSize, "Size difference must be greater than shift size." );
-        Monomial copy = clone();
-        copy.setSize( newSize );
-        int indexShift = shiftSize >>> 6;
-        int base = baseIndex >>> 6;
-        for( int i = 0; i < indexShift; ++i ) {
-            copy.bits[ base + i ] = 0L;
-            copy.bits[ base + i + indexShift ] = bits[ base + i ];
-        }
-        return copy;
-    }
     
     public Monomial extendAndMapRanges( int newSize , int[][] srcRanges , int[][] dstRanges ) {
         Preconditions.checkArgument( srcRanges.length == dstRanges.length , "Source and destination ranges must be of the same length." );
@@ -193,6 +178,33 @@ public class Monomial extends BitVector {
         }
         
         return monomial;
+    }
+    
+    public Monomial extendAndShift(int newSize, int shiftSize) {
+        return extendAndShift(newSize, 0, shiftSize);
+    }
+    
+    public Monomial extendAndShift(int newSize, int baseIndex, int shiftSize) {
+        BitVector extendedShifted = extendAndShift(this, newSize, baseIndex, shiftSize);
+        return new Monomial(extendedShifted.elements(), extendedShifted.size());
+    }
+    
+    public static BitVector extendAndShift(BitVector v, int newSize, int shiftSize) {
+        return extendAndShift(v, newSize, 0, shiftSize);
+    }
+    
+    public static BitVector extendAndShift(BitVector v, int newSize , int baseIndex, int shiftSize) {
+        Preconditions.checkArgument( baseIndex + shiftSize + v.size() <= newSize, "Size difference must be greater than shift size." );
+        Monomial m = new Monomial(newSize);
+        int startIndex = baseIndex + shiftSize;
+        int endIndex = startIndex + v.size() - baseIndex - 1;
+        if (baseIndex > 0) {
+            BitVector unshifted = v.partFromTo(0, baseIndex - 1);
+            m.replaceFromToWith(0, baseIndex - 1, unshifted, 0);
+        }
+        BitVector shifted = v.partFromTo(baseIndex, v.size() - 1);
+        m.replaceFromToWith(startIndex, endIndex, shifted, 0);
+        return m;
     }
     
     public static Monomial constantMonomial( int size ) {
@@ -246,5 +258,4 @@ public class Monomial extends BitVector {
         
         return m;
     }
-
 }

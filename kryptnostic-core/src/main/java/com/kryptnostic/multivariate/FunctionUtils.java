@@ -127,7 +127,7 @@ public class FunctionUtils {
         }
         
         for (int i = 0; i < rhsContributions.length; i++) {
-            newContributions[i + lhsContributions.length] = BitUtils.extendAndShift(rhsContributions[i], combinedOutputLength, lhs.getOutputLength());
+            newContributions[i + lhsContributions.length] = Monomial.extendAndShift(rhsContributions[i], combinedOutputLength, lhs.getOutputLength());
         }
         // TODO bug! ParameterizedFunctions have a longer monomials than function length, so this creates a monomial with a larger backing size than combinedInputLength
         return new OptimizedPolynomialFunctionGF2( combinedInputLength, combinedOutputLength, newMonomials, newContributions );

@@ -4,6 +4,8 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
+import cern.colt.bitvector.BitVector;
+
 import com.google.common.collect.Sets;
 import com.kryptnostic.multivariate.gf2.Monomial;
 
@@ -75,5 +77,23 @@ public class MonomialTests {
         Assert.assertEquals( m , m2 );
     }
     
+
+    @Test
+    public void testExtendAndShift() {
+        long[] values = {56, 34667};
+        BitVector expected = new BitVector(values, 128);
+        BitVector extendedShifted = Monomial.extendAndShift(expected, 192, 64);
+        for (int i = 0; i < expected.size(); i++) {
+            Assert.assertEquals(expected.get(i), extendedShifted.get(i + 64));
+        }
+        
+        BitVector extendedShiftedFromBase = Monomial.extendAndShift(expected, 256, 64, 64);
+        for (int i = 0; i < 64; i++) {
+            Assert.assertEquals(expected.get(i), extendedShiftedFromBase.get(i));
+        }
+        for (int i = 64; i < 128; i++) {
+            Assert.assertEquals(expected.get(i), extendedShiftedFromBase.get(i + 64));
+        }
+    }
     
 }

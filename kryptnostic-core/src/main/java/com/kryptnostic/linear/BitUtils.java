@@ -3,10 +3,10 @@ package com.kryptnostic.linear;
 import java.util.Arrays;
 import java.util.Random;
 
+import cern.colt.bitvector.BitVector;
+
 import com.google.common.base.Preconditions;
 import com.kryptnostic.multivariate.MultivariateUtils;
-
-import cern.colt.bitvector.BitVector;
 
 public final class BitUtils {
     private BitUtils() {}
@@ -37,6 +37,12 @@ public final class BitUtils {
         return MultivariateUtils.randomVector(length);
     }
     
+    /**
+     * @param from, the index in the backing long array to start from
+     * @param to, the last index in the backing long array to copy
+     * @return BitVector
+     */
+    // TODO consider refactoring this so as not to reach into implementation.
     public static BitVector subVector( BitVector v , int from , int to ) {
         return new BitVector( Arrays.copyOfRange( v.elements() , from , to ) , (to - from) << 6 ); 
     }
@@ -59,21 +65,4 @@ public final class BitUtils {
         result.setSize(newSize);
         return result;
     }
-    
-    public static BitVector extendAndShift(BitVector v, int newSize, int shiftSize) {
-        return extendAndShift(v, newSize, 0, shiftSize);
-    }
-    
-    public static BitVector extendAndShift(BitVector v, int newSize , int baseIndex, int shiftSize ) {
-        Preconditions.checkArgument(newSize >= baseIndex + shiftSize, "Cannot shift to index greater than new max.");
-        BitVector extended = extend(v, newSize);
-        int indexShift = shiftSize >>> 6;
-        int base = baseIndex >>> 6;
-        for( int i = 0; i < indexShift; ++i ) {
-            extended.elements()[ base + i ] = 0L;
-            extended.elements()[ base + i + indexShift ] = v.elements()[ base + i ];
-        }
-        return extended;
-    }
-    
  }
