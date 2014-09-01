@@ -529,9 +529,9 @@ public class PolynomialFunctionTests {
 	@Timed
 	public void testConcatenateInputsAndOutputs() {
 		SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction(128,
-				128);
+				64);
 		SimplePolynomialFunction rhs = PolynomialFunctions.randomFunction(128,
-				128);
+				64);
 
 		SimplePolynomialFunction concatenated = FunctionUtils
 				.concatenateInputsAndOutputs(lhs, rhs);
@@ -545,14 +545,8 @@ public class PolynomialFunctionTests {
 		BitVector lhsResult = lhs.apply(lhsInput);
 		BitVector rhsResult = rhs.apply(rhsInput);
 
-		Assert.assertEquals(lhsResult.elements()[0],
-				concatenatedResult.elements()[0]);
-		Assert.assertEquals(lhsResult.elements()[1],
-				concatenatedResult.elements()[1]);
-		Assert.assertEquals(rhsResult.elements()[0],
-				concatenatedResult.elements()[2]);
-		Assert.assertEquals(rhsResult.elements()[1],
-				concatenatedResult.elements()[3]);
+		Assert.assertEquals(lhsResult.elements()[0], concatenatedResult.elements()[0]);
+        Assert.assertEquals(rhsResult.elements()[0], concatenatedResult.elements()[1]);
 	}
 
 	@Timed
