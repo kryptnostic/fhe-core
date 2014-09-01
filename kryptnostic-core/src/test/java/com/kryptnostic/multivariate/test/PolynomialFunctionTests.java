@@ -192,13 +192,13 @@ public class PolynomialFunctionTests {
 	@Timed
     public void partialComposeTest() {
         SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(INPUT_LENGTH, OUTPUT_LENGTH, 10, 2);
-        SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(INPUT_LENGTH >> 1, INPUT_LENGTH >> 1);
+        SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(INPUT_LENGTH, INPUT_LENGTH >> 1);
 
         SimplePolynomialFunction composed = outer.partialCompose(inner);
 
         for (int i = 0; i < 25; ++i) {
-            BitVector randomInput1 = BitUtils.randomVector(INPUT_LENGTH >> 1);
-            BitVector randomInput2 = BitUtils.randomVector(INPUT_LENGTH >> 1);
+            BitVector randomInput1 = BitUtils.randomVector(inner.getInputLength());
+            BitVector randomInput2 = BitUtils.randomVector(composed.getInputLength() - inner.getInputLength());
             
             BitVector innerResult = inner.apply(randomInput1);
             BitVector expected = outer.apply(innerResult, randomInput2);
