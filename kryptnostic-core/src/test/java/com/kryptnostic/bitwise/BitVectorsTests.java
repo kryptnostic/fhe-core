@@ -1,4 +1,4 @@
-package com.kryptnostic.bitwise.tests;
+package com.kryptnostic.bitwise;
 
 import org.junit.Assert;
 import org.junit.Test;

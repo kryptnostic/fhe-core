@@ -136,7 +136,7 @@ public class PrivateKey {
                 .xor( E2.multiply( R ) );
     }
     
-    public SimplePolynomialFunction encrypt( SimplePolynomialFunction input ) {
+    SimplePolynomialFunction encrypt( SimplePolynomialFunction input ) {
         return encrypt( input , G );
     }
     
@@ -189,7 +189,7 @@ public class PrivateKey {
         return  randomL.multiply( Preconditions.checkNotNull( E1 , "E1 must not be null.") ).inverse().multiply( randomL );  //Normalize
     }
     
-    public byte[] decrypt( byte[] ciphertext ) {
+    byte[] decrypt( byte[] ciphertext ) {
         ByteBuffer buffer = ByteBuffer.wrap( ciphertext );
         ByteBuffer decryptedBytes = ByteBuffer.allocate( ciphertext.length >>> 1);
         while( buffer.hasRemaining() ) {

@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate.test;
+package com.kryptnostic.multivariate;
 
 import java.util.List;
 import java.util.Map;

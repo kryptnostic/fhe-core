@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate.learning.test;
+package com.kryptnostic.multivariate.learning;
 
 public class Main {
 	
