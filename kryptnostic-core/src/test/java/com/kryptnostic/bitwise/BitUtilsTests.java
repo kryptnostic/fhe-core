@@ -36,4 +36,21 @@ public class BitUtilsTests {
             Assert.assertEquals(expected.get(i), extended.get(i));
         }
     }
+    
+    @Test
+    public void testSortByMapping() {
+        long[] values = {r.nextLong()};
+        BitVector original = new BitVector(values, 64);
+        int[] mapping = new int[original.size()];
+        for (int i = 0; i < mapping.length; i++) {
+            int index = (i + 10) % mapping.length;
+            mapping[i] = index;
+        }
+        
+        BitVector sorted = BitUtils.sortByMapping(original, mapping);
+        
+        for (int i = 0; i < original.size(); i++) {
+            Assert.assertEquals(original.get(i), sorted.get(mapping[i]));
+        }
+    }
 }
