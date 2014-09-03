@@ -688,13 +688,21 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
     }
 
     @Override
-    public SimplePolynomialFunction partialCompose(SimplePolynomialFunction inner) {
+    public SimplePolynomialFunction partialComposeLeft(SimplePolynomialFunction inner) {
         Preconditions.checkArgument(inner.getOutputLength() <= getInputLength(),
                 "Inner function output length cannot be larger than outer function input length.");
         SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
-        SimplePolynomialFunction extended = FunctionUtils.concatenateInputsAndOutputs(inner, identity);
+        SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs(inner, identity);
+        return this.compose(concatenated);
+    }
 
-        return this.compose(extended);
+    @Override
+    public SimplePolynomialFunction partialComposeRight(SimplePolynomialFunction inner) {
+        Preconditions.checkArgument(inner.getOutputLength() <= getInputLength(),
+                "Inner function output length cannot be larger than outer function input length.");
+        SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
+        SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs(identity, inner);
+        return this.compose(concatenated);
     }
 
 }

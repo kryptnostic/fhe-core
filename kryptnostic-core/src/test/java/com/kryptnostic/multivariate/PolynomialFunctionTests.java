@@ -177,20 +177,26 @@ public class PolynomialFunctionTests {
 
     @Timed
     public void partialComposeTest() {
-        // SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(INPUT_LENGTH, OUTPUT_LENGTH, 10, 2);
-        // SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(INPUT_LENGTH, INPUT_LENGTH >> 1);
-        //
-        // SimplePolynomialFunction composed = outer.partialCompose(inner);
-        //
-        // for (int i = 0; i < 25; ++i) {
-        // BitVector randomInput1 = BitUtils.randomVector(inner.getInputLength());
-        // BitVector randomInput2 = BitUtils.randomVector(composed.getInputLength() - inner.getInputLength());
-        //
-        // BitVector innerResult = inner.apply(randomInput1);
-        // BitVector expected = outer.apply(innerResult, randomInput2);
-        // BitVector found = composed.apply(randomInput1, randomInput2);
-        // Assert.assertEquals(expected, found);
-        // }
+        SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(INPUT_LENGTH, INPUT_LENGTH, 10, 2);
+        SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(INPUT_LENGTH, INPUT_LENGTH >> 1);
+
+        SimplePolynomialFunction composedLeft = outer.partialComposeLeft(inner);
+        SimplePolynomialFunction composedRight = outer.partialComposeRight(inner);
+
+        for (int i = 0; i < 25; ++i) {
+            BitVector innerInput = BitUtils.randomVector(inner.getInputLength());
+            BitVector remainderInput = BitUtils.randomVector(composedLeft.getInputLength() - inner.getInputLength());
+
+            BitVector leftInnerResult = inner.apply(innerInput);
+            BitVector composedLeftExpected = outer.apply(leftInnerResult, remainderInput);
+            BitVector composedLeftFound = composedLeft.apply(innerInput, remainderInput);
+            Assert.assertEquals(composedLeftExpected, composedLeftFound);
+            
+            BitVector rightInnerResult = inner.apply(innerInput);
+            BitVector composedRightExpected = outer.apply(remainderInput, rightInnerResult);
+            BitVector composedRightFound = composedRight.apply(remainderInput, innerInput);
+            Assert.assertEquals(composedRightExpected, composedRightFound);
+        }
     }
 
     @Timed
