@@ -38,6 +38,7 @@ public class PolynomialFunctionTestsDriver extends AbstractInstrumentedTest  {
             tests.testConcatenateOutputs();
             tests.monomialSetProductTest();
             tests.testRowProduct();
+            tests.testInterleaveFunctions();
         }
     }
     
