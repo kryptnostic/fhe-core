@@ -70,21 +70,25 @@ public final class BitUtils {
         result.setSize(newSize);
         return result;
     }
+    
+    public static BitVector sortByMapping(BitVector v, int[] mapping) {
+        return sortByMapping(v, mapping, v.size());
+    }
 
     /**
      * Given a mapping from old indices to new indices, creates a new BitVector sorted by this mapping.
      * 
      * @return BitVector
      */
-    public static BitVector sortByMapping(BitVector v, int[] mapping) {
-        Preconditions.checkArgument(mapping.length == v.size(), "Must map exactly every variable in the monomial to a new index.");
+    public static BitVector sortByMapping(BitVector v, int[] mapping, int newSize) {
+        Preconditions.checkArgument(mapping.length == newSize, "Must map exactly every variable in the monomial to a new index.");
         Set<Integer> elements = Sets.newHashSet();
-        BitVector sorted = new BitVector(v.size());
+        BitVector sorted = new BitVector(newSize);
         for (int i = 0; i < v.size(); i++) {
             int index = mapping[i];
             Preconditions.checkArgument(!elements.contains(index), "Cannot map two variables to the same index.");
             elements.add(index);
-            Preconditions.checkArgument(mapping[i] < v.size(), "Cannot map to index greater than size of input vector.");
+            Preconditions.checkArgument(index < newSize, "Cannot map to index greater than new size.");
             if (v.get(i)) {
                 sorted.set(index);
             }
