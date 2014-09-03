@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import cern.colt.bitvector.BitVector;
 
 import com.google.common.base.Preconditions;
@@ -108,38 +110,31 @@ public class FunctionUtils {
      */
     public static SimplePolynomialFunction concatenateInputsAndOutputs(SimplePolynomialFunction lhs,
             SimplePolynomialFunction rhs) {
-        int combinedInputLength = lhs.getInputLength() + rhs.getInputLength();
-        Monomial[] lhsMonomials = lhs.getMonomials();
-        Monomial[] rhsMonomials = rhs.getMonomials();
-        int numMonomials = lhsMonomials.length + rhsMonomials.length;
-        Monomial[] newMonomials = new Monomial[numMonomials];
+        Pair<int[], int[]> inputMaps = getSplitMap(lhs.getInputLength(), rhs.getInputLength());
+        Pair<int[], int[]> outputMaps = getSplitMap(lhs.getOutputLength(), rhs.getOutputLength());
 
-        // TODO use input map to order monomials
-        for (int i = 0; i < lhsMonomials.length; i++) {
-            newMonomials[i] = lhsMonomials[i].extend(combinedInputLength);
-        }
-        for (int i = 0; i < rhsMonomials.length; i++) {
-            newMonomials[i + lhsMonomials.length] = rhsMonomials[i].extendAndShift(combinedInputLength,
-                    lhs.getInputLength());
-        }
+        return interleaveFunctions(lhs, rhs, inputMaps.getLeft(), inputMaps.getRight(), outputMaps.getLeft(),
+                outputMaps.getRight());
+    }
 
-        int combinedOutputLength = lhs.getOutputLength() + rhs.getOutputLength();
-        BitVector[] lhsContributions = lhs.getContributions();
-        BitVector[] rhsContributions = rhs.getContributions();
-        int numContributions = lhsContributions.length + rhsContributions.length;
-        BitVector[] newContributions = new BitVector[numContributions];
-        for (int i = 0; i < lhsContributions.length; i++) {
-            newContributions[i] = BitUtils.extend(lhsContributions[i], combinedOutputLength);
+    /**
+     * Generates a tuple of mappings the first array maps the lhLength indices, and the second array maps to the
+     * rhLength indices.
+     * 
+     * @return Pair of lhMap and rhMap
+     */
+    private static Pair<int[], int[]> getSplitMap(int lhLength, int rhLength) {
+        int totalLength = lhLength + rhLength;
+        int[] lhMap = new int[totalLength];
+        int[] rhMap = new int[totalLength];
+        for (int i = 0; i < totalLength; i++) {
+            if (i < lhLength) {
+                lhMap[i] = i;
+            } else {
+                rhMap[i - lhLength] = i;
+            }
         }
-
-        for (int i = 0; i < rhsContributions.length; i++) {
-            newContributions[i + lhsContributions.length] = Monomial.extendAndShift(rhsContributions[i],
-                    combinedOutputLength, lhs.getOutputLength());
-        }
-        // TODO bug! ParameterizedFunctions have a longer monomials than function length, so this creates a monomial
-        // with a larger backing size than combinedInputLength
-        return new OptimizedPolynomialFunctionGF2(combinedInputLength, combinedOutputLength, newMonomials,
-                newContributions);
+        return Pair.of(lhMap, rhMap);
     }
 
     /**
@@ -157,8 +152,8 @@ public class FunctionUtils {
 
         mapAndAddTerms(newMonomials, newContributions, combinedInputLength, combinedOutputLength, 0, lhs, lhsInputMap,
                 lhsOutputMap);
-        mapAndAddTerms(newMonomials, newContributions, combinedInputLength, combinedOutputLength, lhs.getMonomials().length, rhs, rhsInputMap,
-                rhsOutputMap);
+        mapAndAddTerms(newMonomials, newContributions, combinedInputLength, combinedOutputLength,
+                lhs.getMonomials().length, rhs, rhsInputMap, rhsOutputMap);
 
         return new OptimizedPolynomialFunctionGF2(combinedInputLength, combinedOutputLength, newMonomials,
                 newContributions);
