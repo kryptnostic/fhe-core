@@ -178,10 +178,10 @@ public class FunctionUtils {
         
         Monomial[] monomials = inner.getMonomials();
         for (int i = 0; i < monomials.length; i++) {
-            BitVector backingVector = BitUtils.sortByMapping(monomials[i], inputMap, combinedInputLength);
+            BitVector backingVector = BitUtils.extendAndOrder(monomials[i], inputMap, combinedInputLength);
             Monomial newMonomial = new Monomial(combinedInputLength);
             newMonomial.xor(backingVector);
-            BitVector newContribution = BitUtils.sortByMapping(inner.getContributions()[i], outputMap,
+            BitVector newContribution = BitUtils.extendAndOrder(inner.getContributions()[i], outputMap,
                     combinedOutputLength);
 
             newMonomials[baseIndex + i] = newMonomial;

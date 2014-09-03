@@ -70,17 +70,13 @@ public final class BitUtils {
         result.setSize(newSize);
         return result;
     }
-    
-    public static BitVector sortByMapping(BitVector v, int[] mapping) {
-        return sortByMapping(v, mapping, v.size());
-    }
 
     /**
-     * Given a mapping from old indices to new indices, creates a new BitVector sorted by this mapping.
+     * Given a mapping from old indices to new indices, creates a new BitVector ordered by this mapping.
      * 
      * @return BitVector
      */
-    public static BitVector sortByMapping(BitVector v, int[] mapping, int newSize) {
+    public static BitVector extendAndOrder(BitVector v, int[] mapping, int newSize) {
         Preconditions.checkArgument(mapping.length == newSize, "Must map exactly every variable in the monomial to a new index.");
         Set<Integer> elements = Sets.newHashSet();
         BitVector sorted = new BitVector(newSize);
