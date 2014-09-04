@@ -125,8 +125,8 @@ public class FunctionUtils {
      */
     private static Pair<int[], int[]> getSplitMap(int lhLength, int rhLength) {
         int totalLength = lhLength + rhLength;
-        int[] lhMap = new int[totalLength];
-        int[] rhMap = new int[totalLength];
+        int[] lhMap = new int[lhLength];
+        int[] rhMap = new int[rhLength];
         for (int i = 0; i < totalLength; i++) {
             if (i < lhLength) {
                 lhMap[i] = i;

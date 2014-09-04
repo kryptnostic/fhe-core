@@ -77,7 +77,7 @@ public final class BitUtils {
      * @return BitVector
      */
     public static BitVector extendAndOrder(BitVector v, int[] mapping, int newSize) {
-        Preconditions.checkArgument(mapping.length == newSize, "Must map exactly every variable in the monomial to a new index.");
+        Preconditions.checkArgument(mapping.length == v.size(), "Must map exactly every bit in the vector to a new index.");
         Set<Integer> elements = Sets.newHashSet();
         BitVector sorted = new BitVector(newSize);
         for (int i = 0; i < v.size(); i++) {

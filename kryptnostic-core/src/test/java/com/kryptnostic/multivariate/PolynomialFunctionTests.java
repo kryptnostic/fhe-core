@@ -227,14 +227,14 @@ public class PolynomialFunctionTests {
         SimplePolynomialFunction lhs = PolynomialFunctions.denseRandomMultivariateQuadratic(inputLength, outputLength);
         SimplePolynomialFunction rhs = PolynomialFunctions.denseRandomMultivariateQuadratic(inputLength, outputLength);
 
-        int[] lhsInputMap = new int[inputLength << 1];
-        int[] rhsInputMap = new int[inputLength << 1];
+        int[] lhsInputMap = new int[inputLength];
+        int[] rhsInputMap = new int[inputLength];
         for (int i = 0; i < inputLength; i++) {
             lhsInputMap[i] = i;
             rhsInputMap[i] = i + inputLength;
         }
-        int[] lhsOutputMap = new int[outputLength << 1];
-        int[] rhsOutputMap = new int[outputLength << 1];
+        int[] lhsOutputMap = new int[outputLength];
+        int[] rhsOutputMap = new int[outputLength];
         for (int i = 0; i < outputLength; i++) {
             lhsOutputMap[i] = i;
             rhsOutputMap[i] = i + outputLength;
@@ -523,21 +523,25 @@ public class PolynomialFunctionTests {
 
     @Timed
     public void testConcatenateInputsAndOutputs() {
-        SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction(128, 64);
+        SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction(256, 256);
         SimplePolynomialFunction rhs = PolynomialFunctions.randomFunction(128, 64);
 
         SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs(lhs, rhs);
-        long[] src = new long[] { r.nextLong(), r.nextLong(), r.nextLong(), r.nextLong() };
-        BitVector input = new BitVector(src, 256);
-        BitVector lhsInput = new BitVector(new long[] { src[0], src[1] }, 128);
-        BitVector rhsInput = new BitVector(new long[] { src[2], src[3] }, 128);
+        long[] src = new long[] { r.nextLong(), r.nextLong(), r.nextLong(), r.nextLong(), r.nextLong(), r.nextLong() };
+        BitVector input = new BitVector(src, 384);
+        BitVector lhsInput = new BitVector(new long[] { src[0], src[1], src[2], src[3]}, 256);
+        BitVector rhsInput = new BitVector(new long[] { src[4], src[5] }, 128);
 
         BitVector concatenatedResult = concatenated.apply(input);
         BitVector lhsResult = lhs.apply(lhsInput);
         BitVector rhsResult = rhs.apply(rhsInput);
 
         Assert.assertEquals(lhsResult.elements()[0], concatenatedResult.elements()[0]);
-        Assert.assertEquals(rhsResult.elements()[0], concatenatedResult.elements()[1]);
+        Assert.assertEquals(lhsResult.elements()[1], concatenatedResult.elements()[1]);
+        Assert.assertEquals(lhsResult.elements()[2], concatenatedResult.elements()[2]);
+        Assert.assertEquals(lhsResult.elements()[3], concatenatedResult.elements()[3]);
+        Assert.assertEquals(rhsResult.elements()[0], concatenatedResult.elements()[4]);
+
     }
 
     @Timed
