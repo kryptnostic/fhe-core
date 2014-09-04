@@ -224,8 +224,8 @@ public class PolynomialFunctionTests {
         final int inputLength = 256;
         final int outputLength = 128;
 
-        SimplePolynomialFunction lhs = PolynomialFunctions.denseRandomMultivariateQuadratic(inputLength, outputLength);
-        SimplePolynomialFunction rhs = PolynomialFunctions.denseRandomMultivariateQuadratic(inputLength, outputLength);
+        SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction(inputLength, outputLength, 10, 2);
+        SimplePolynomialFunction rhs = PolynomialFunctions.randomFunction(inputLength, outputLength, 10, 2);
 
         int[] lhsInputMap = new int[inputLength];
         int[] rhsInputMap = new int[inputLength];
