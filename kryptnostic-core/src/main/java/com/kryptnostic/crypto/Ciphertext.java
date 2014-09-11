@@ -1,5 +1,7 @@
 package com.kryptnostic.crypto;
 
+import java.io.Serializable;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -8,7 +10,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * 
  * @author Matthew Tamayo-Rios
  */
-public class Ciphertext {
+public class Ciphertext implements Serializable {
+    private static final long serialVersionUID = -2800319660607639843L;
     public static final String FIELD_CONTENTS = "contents";
     public static final String FIELD_LENGTH = "length";
 
