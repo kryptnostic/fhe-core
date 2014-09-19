@@ -281,6 +281,41 @@ public final class PolynomialFunctions {
         return new OptimizedPolynomialFunctionGF2(inputLength, maxIndex, monomials, contributions);
     }
 
+    public static SimplePolynomialFunction rightTruncatingIdentity(int inputLength, int outputLength) {
+        Preconditions.checkArgument(inputLength > outputLength,
+                "Output length must be less than input length to truncate.");
+        Preconditions.checkArgument(outputLength >= 0, "Output length cannot be less than 0.");
+        Monomial[] monomials = new Monomial[inputLength];
+        BitVector[] contributions = new BitVector[inputLength];
+        for (int i = 0; i < inputLength; i++) {
+            monomials[i] = Monomial.linearMonomial(inputLength, i);
+            BitVector contribution = new BitVector(outputLength);
+            if (i < outputLength) {
+                contribution.set(i);
+            }
+            contributions[i] = contribution;
+        }
+        return new BasePolynomialFunction(inputLength, outputLength, monomials, contributions);
+    }
+
+    public static SimplePolynomialFunction leftTruncatingIdentity(int inputLength, int outputLength) {
+        Preconditions.checkArgument(inputLength > outputLength,
+                "Output length must be less than input length to truncate.");
+        Preconditions.checkArgument(outputLength >= 0, "Output length cannot be less than 0.");
+        Monomial[] monomials = new Monomial[inputLength];
+        BitVector[] contributions = new BitVector[inputLength];
+        int offset = inputLength - outputLength;
+        for (int i = 0; i < inputLength; i++) {
+            monomials[i] = Monomial.linearMonomial(inputLength, i);
+            BitVector contribution = new BitVector(outputLength);
+            if (i >= offset) {
+                contribution.set(i - offset);
+            }
+            contributions[i] = contribution;
+        }
+        return new BasePolynomialFunction(inputLength, outputLength, monomials, contributions);
+    }
+
     /**
      * Generates random polynomial functions containing a maximum of 16 terms of max order 3.
      * 
