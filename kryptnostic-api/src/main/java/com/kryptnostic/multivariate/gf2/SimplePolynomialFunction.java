@@ -32,14 +32,6 @@ public interface SimplePolynomialFunction extends PolynomialFunction {
     SimplePolynomialFunction partialComposeLeft(SimplePolynomialFunction inner);
     
     /**
-     * 
-     * @return a new function that represents the partial composition of this function and 
-     * inner, such that evaluating it is equivalent to {@code this.evaluate(lhs, inner.evaluate( rhs ))}  
-     */
-    @Timed 
-    SimplePolynomialFunction partialComposeRight(SimplePolynomialFunction inner);
-    
-    /**
      * Computes this( [ lhs( x ) , rhs( y) ] ) 
      * @param lhs
      * @param rhs
