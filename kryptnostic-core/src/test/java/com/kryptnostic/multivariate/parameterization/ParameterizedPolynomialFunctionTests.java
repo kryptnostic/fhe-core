@@ -13,7 +13,7 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 public class ParameterizedPolynomialFunctionTests {
 
     @Test
-    public void testConcatenateInputsAndOutputs() {
+    public void testConcatenateInputsAndOutputs() throws Exception {
         SimplePolynomialFunction function = PolynomialFunctions.randomFunction(128, 64);
         SimplePolynomialFunction function2 = PolynomialFunctions.randomFunction(128, 128);
         SimplePolynomialFunction[] pipeline = { function2 };
@@ -21,8 +21,8 @@ public class ParameterizedPolynomialFunctionTests {
         ParameterizedPolynomialFunctionGF2 parameterized = (ParameterizedPolynomialFunctionGF2) ParameterizedPolynomialFunctions
                 .fromUnshiftedVariables(function.getInputLength(), function, pipeline);
 
-        SimplePolynomialFunction concat = ParameterizedPolynomialFunctions.concatenateInputsAndOutputs(function2,
-                parameterized);
+        SimplePolynomialFunction concat = ParameterizedPolynomialFunctions.concatenateInputsAndOutputs(parameterized,
+                function2);
 
         BitVector input1 = BitUtils.randomVector(128);
         BitVector input2 = BitUtils.randomVector(128);
