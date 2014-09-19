@@ -281,7 +281,7 @@ public final class PolynomialFunctions {
         return new OptimizedPolynomialFunctionGF2(inputLength, maxIndex, monomials, contributions);
     }
 
-    public static SimplePolynomialFunction rightTruncatingIdentity(int inputLength, int outputLength) {
+    public static SimplePolynomialFunction lowerTruncatingIdentity(int inputLength, int outputLength) {
         Preconditions.checkArgument(inputLength > outputLength,
                 "Output length must be less than input length to truncate.");
         Preconditions.checkArgument(outputLength >= 0, "Output length cannot be less than 0.");
@@ -298,7 +298,10 @@ public final class PolynomialFunctions {
         return new BasePolynomialFunction(inputLength, outputLength, monomials, contributions);
     }
 
-    public static SimplePolynomialFunction leftTruncatingIdentity(int inputLength, int outputLength) {
+    /**
+     * @return function that preserves the msb
+     */
+    public static SimplePolynomialFunction upperTruncatingIdentity(int inputLength, int outputLength) {
         Preconditions.checkArgument(inputLength > outputLength,
                 "Output length must be less than input length to truncate.");
         Preconditions.checkArgument(outputLength >= 0, "Output length cannot be less than 0.");
