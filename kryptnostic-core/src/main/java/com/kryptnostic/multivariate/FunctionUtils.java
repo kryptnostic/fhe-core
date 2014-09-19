@@ -8,12 +8,14 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import cern.colt.bitvector.BitVector;
 
+import com.esotericsoftware.minlog.Log;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
 import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
 
 public class FunctionUtils {
     private FunctionUtils() {
@@ -110,6 +112,13 @@ public class FunctionUtils {
      */
     public static SimplePolynomialFunction concatenateInputsAndOutputs(SimplePolynomialFunction lhs,
             SimplePolynomialFunction rhs) {
+        if (lhs.isParameterized() || rhs.isParameterized()) {
+            try {
+                return ParameterizedPolynomialFunctions.concatenateInputsAndOutputs(lhs, rhs);
+            } catch (Exception e) {
+                Log.error("Exception in parameterized function concatenation.");
+            }
+        }
         Pair<int[], int[]> inputMaps = getSplitMap(lhs.getInputLength(), rhs.getInputLength());
         Pair<int[], int[]> outputMaps = getSplitMap(lhs.getOutputLength(), rhs.getOutputLength());
 
