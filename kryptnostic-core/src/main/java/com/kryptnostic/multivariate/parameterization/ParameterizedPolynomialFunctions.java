@@ -11,199 +11,289 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.kryptnostic.multivariate.CompoundPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.CompoundPolynomialFunctions;
+import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 public final class ParameterizedPolynomialFunctions {
-    private ParameterizedPolynomialFunctions(){}
-
-    public static SimplePolynomialFunction extend( int extendedSize , SimplePolynomialFunction f ) {
-        Preconditions.checkArgument( extendedSize%64 == 0, "Extension size must be multiple of 64." );
-        Monomial[] originalMonomials = f.getMonomials();
-        BitVector[] originalContributions = f.getContributions();
-        Monomial[] newMonomials = new Monomial[ originalMonomials.length ];
-        BitVector[] newContributions = new BitVector[ originalContributions.length ];
-
-        for( int i = 0 ; i < newMonomials.length ; ++i ) {
-            newMonomials[ i ] = originalMonomials[ i ].extend( extendedSize );
-            newContributions[ i ] = originalContributions[ i ].copy();
-        }
-
-        return new OptimizedPolynomialFunctionGF2( extendedSize , f.getOutputLength() , newMonomials , newContributions );
+    private ParameterizedPolynomialFunctions() {
     }
 
-    public static SimplePolynomialFunction extendAndShift( int extendedSize, int shiftSize , SimplePolynomialFunction f ) {
-        Preconditions.checkArgument( shiftSize%64 == 0, "Shift size must be multiple of 64." );
+    public static SimplePolynomialFunction extend(int extendedSize, SimplePolynomialFunction f) {
+        Preconditions.checkArgument(extendedSize % 64 == 0, "Extension size must be multiple of 64.");
         Monomial[] originalMonomials = f.getMonomials();
         BitVector[] originalContributions = f.getContributions();
-        Monomial[] newMonomials = new Monomial[ originalMonomials.length ];
-        BitVector[] newContributions = new BitVector[ originalContributions.length ];
+        Monomial[] newMonomials = new Monomial[originalMonomials.length];
+        BitVector[] newContributions = new BitVector[originalContributions.length];
 
-        for( int i = 0 ; i < newMonomials.length ; ++i ) {
-            newMonomials[ i ] = originalMonomials[ i ].extendAndShift( extendedSize , shiftSize );
-            newContributions[ i ] = originalContributions[ i ].copy();
+        for (int i = 0; i < newMonomials.length; ++i) {
+            newMonomials[i] = originalMonomials[i].extend(extendedSize);
+            newContributions[i] = originalContributions[i].copy();
         }
 
-        return new OptimizedPolynomialFunctionGF2( extendedSize , f.getOutputLength() , newMonomials , newContributions );
+        return new OptimizedPolynomialFunctionGF2(extendedSize, f.getOutputLength(), newMonomials, newContributions);
     }
 
-    public static SimplePolynomialFunction extendAndShift( int extendedSize, int baseIndex, int shiftSize , SimplePolynomialFunction f ) {
-        Preconditions.checkArgument( shiftSize%64 == 0, "Shift size must be multiple of 64." );
+    public static SimplePolynomialFunction extendAndShift(int extendedSize, int shiftSize, SimplePolynomialFunction f) {
+        Preconditions.checkArgument(shiftSize % 64 == 0, "Shift size must be multiple of 64.");
         Monomial[] originalMonomials = f.getMonomials();
         BitVector[] originalContributions = f.getContributions();
-        Monomial[] newMonomials = new Monomial[ originalMonomials.length ];
-        BitVector[] newContributions = new BitVector[ originalContributions.length ];
+        Monomial[] newMonomials = new Monomial[originalMonomials.length];
+        BitVector[] newContributions = new BitVector[originalContributions.length];
 
-        for( int i = 0 ; i < newMonomials.length ; ++i ) {
-            newMonomials[ i ] = originalMonomials[ i ].extendAndShift( extendedSize , baseIndex, shiftSize );
-            newContributions[ i ] = originalContributions[ i ].copy();
+        for (int i = 0; i < newMonomials.length; ++i) {
+            newMonomials[i] = originalMonomials[i].extendAndShift(extendedSize, shiftSize);
+            newContributions[i] = originalContributions[i].copy();
         }
 
-        return new OptimizedPolynomialFunctionGF2( extendedSize , f.getOutputLength() , newMonomials , newContributions );
+        return new OptimizedPolynomialFunctionGF2(extendedSize, f.getOutputLength(), newMonomials, newContributions);
     }
 
-    public static CompoundPolynomialFunction extendAndMap( int extendedSize, int[][] srcRanges, int[][] dstRanges , CompoundPolynomialFunction f ) {
+    public static SimplePolynomialFunction extendAndShift(int extendedSize, int baseIndex, int shiftSize,
+            SimplePolynomialFunction f) {
+        Preconditions.checkArgument(shiftSize % 64 == 0, "Shift size must be multiple of 64.");
+        Monomial[] originalMonomials = f.getMonomials();
+        BitVector[] originalContributions = f.getContributions();
+        Monomial[] newMonomials = new Monomial[originalMonomials.length];
+        BitVector[] newContributions = new BitVector[originalContributions.length];
+
+        for (int i = 0; i < newMonomials.length; ++i) {
+            newMonomials[i] = originalMonomials[i].extendAndShift(extendedSize, baseIndex, shiftSize);
+            newContributions[i] = originalContributions[i].copy();
+        }
+
+        return new OptimizedPolynomialFunctionGF2(extendedSize, f.getOutputLength(), newMonomials, newContributions);
+    }
+
+    public static CompoundPolynomialFunction extendAndMap(int extendedSize, int[][] srcRanges, int[][] dstRanges,
+            CompoundPolynomialFunction f) {
         Iterator<PolynomialFunction> fIter = f.getFunctions().iterator();
         PolynomialFunction pf = fIter.next();
         SimplePolynomialFunction extended = null;
-        for( int i = 0 ; i < srcRanges.length ; ++i ) {
-            Preconditions.checkState( pf instanceof SimplePolynomialFunction , "All functions in compound polynomial function must be polynomials." );
+        for (int i = 0; i < srcRanges.length; ++i) {
+            Preconditions.checkState(pf instanceof SimplePolynomialFunction,
+                    "All functions in compound polynomial function must be polynomials.");
             SimplePolynomialFunction original = (SimplePolynomialFunction) pf;
             Monomial[] originalMonomials = original.getMonomials();
             BitVector[] originalContributions = original.getContributions();
-            Monomial[] newMonomials = new Monomial[ originalMonomials.length ];
-            BitVector[] newContributions = new BitVector[ originalContributions.length ];
-            for( int j = 0 ; j < originalMonomials.length ; ++j ) {
-                newMonomials[ j ] = originalMonomials[ j ].extendAndMapRanges( extendedSize , srcRanges , dstRanges );
-                newContributions[ j ] = originalContributions[ j ].copy();
+            Monomial[] newMonomials = new Monomial[originalMonomials.length];
+            BitVector[] newContributions = new BitVector[originalContributions.length];
+            for (int j = 0; j < originalMonomials.length; ++j) {
+                newMonomials[j] = originalMonomials[j].extendAndMapRanges(extendedSize, srcRanges, dstRanges);
+                newContributions[j] = originalContributions[j].copy();
             }
-            extended = new OptimizedPolynomialFunctionGF2( extendedSize , pf.getOutputLength() , newMonomials , newContributions );
+            extended = new OptimizedPolynomialFunctionGF2(extendedSize, pf.getOutputLength(), newMonomials,
+                    newContributions);
 
         }
 
-        List<PolynomialFunction> newFunctions = Lists.newArrayListWithCapacity( f.getFunctions().size() );
-        newFunctions.add( extended );
-        while( fIter.hasNext() ) {
-            newFunctions.add( fIter.next() );
-        }
-
-        return new CompoundPolynomialFunctionGF2( newFunctions );
-    }
-
-    public static CompoundPolynomialFunction extendAndShift( int extendedSize , int baseIndex, int shiftSize , CompoundPolynomialFunction f ) {
-        List<PolynomialFunction> functions = f.getFunctions();
-        List<PolynomialFunction> newFunctions = Lists.newArrayListWithCapacity( functions.size() );
-        for( PolynomialFunction pf : functions ) {
-            Preconditions.checkState( pf instanceof SimplePolynomialFunction , "Every function in pipeline " );
-            SimplePolynomialFunction spf = (SimplePolynomialFunction)pf;
-            newFunctions.add( extendAndShift( extendedSize , baseIndex , shiftSize , spf ) );
+        List<PolynomialFunction> newFunctions = Lists.newArrayListWithCapacity(f.getFunctions().size());
+        newFunctions.add(extended);
+        while (fIter.hasNext()) {
+            newFunctions.add(fIter.next());
         }
 
         return new CompoundPolynomialFunctionGF2(newFunctions);
     }
 
+    public static CompoundPolynomialFunction extendAndShift(int extendedSize, int baseIndex, int shiftSize,
+            CompoundPolynomialFunction f) {
+        List<PolynomialFunction> functions = f.getFunctions();
+        List<PolynomialFunction> newFunctions = Lists.newArrayListWithCapacity(functions.size());
+        for (PolynomialFunction pf : functions) {
+            Preconditions.checkState(pf instanceof SimplePolynomialFunction, "Every function in pipeline ");
+            SimplePolynomialFunction spf = (SimplePolynomialFunction) pf;
+            newFunctions.add(extendAndShift(extendedSize, baseIndex, shiftSize, spf));
+        }
 
-    public static SimplePolynomialFunction xor( SimplePolynomialFunction f, SimplePolynomialFunction g) {
-        Preconditions.checkArgument( f.isParameterized() || g.isParameterized() , "At least one of the functions should be parameterized!" );
-        Preconditions.checkArgument( f.getInputLength() == g.getInputLength() , "Input lengths must match in order to compute the XOR of two functions.");
-        Preconditions.checkArgument( f.getOutputLength() == g.getOutputLength() , "Output lengths must match in order to compute the XOR of two functions.");
-        if( f.isParameterized() && g.isParameterized() ) {
+        return new CompoundPolynomialFunctionGF2(newFunctions);
+    }
+
+    public static SimplePolynomialFunction xor(SimplePolynomialFunction f, SimplePolynomialFunction g) {
+        Preconditions.checkArgument(f.isParameterized() || g.isParameterized(),
+                "At least one of the functions should be parameterized!");
+        Preconditions.checkArgument(f.getInputLength() == g.getInputLength(),
+                "Input lengths must match in order to compute the XOR of two functions.");
+        Preconditions.checkArgument(f.getOutputLength() == g.getOutputLength(),
+                "Output lengths must match in order to compute the XOR of two functions.");
+        if (f.isParameterized() && g.isParameterized()) {
             /*
-             * Both functions are parameterized.  We need to check whether the pipelines are equal or whether one pipeline will have to be concatenated with the other.
+             * Both functions are parameterized. We need to check whether the pipelines are equal or whether one
+             * pipeline will have to be concatenated with the other.
              */
-            ParameterizedPolynomialFunctionGF2 ppfF = (ParameterizedPolynomialFunctionGF2)f;
-            ParameterizedPolynomialFunctionGF2 ppfG = (ParameterizedPolynomialFunctionGF2)g;
+            ParameterizedPolynomialFunctionGF2 ppfF = (ParameterizedPolynomialFunctionGF2) f;
+            ParameterizedPolynomialFunctionGF2 ppfG = (ParameterizedPolynomialFunctionGF2) g;
 
-            if( ppfF.getPipelines().equals( ppfG.getPipelines() ) ) {
-                //Pipelines are the same no need for concatenation, we can just xor directly.
-                SimplePolynomialFunction partialResult =  wrapAsNonParameterizedFunction( ppfF ).xor( wrapAsNonParameterizedFunction( ppfG ) );
-                return new ParameterizedPolynomialFunctionGF2( f.getInputLength() , f.getOutputLength() , partialResult.getMonomials() , partialResult.getContributions() , ppfF.getPipelines() );
+            if (ppfF.getPipelines().equals(ppfG.getPipelines())) {
+                // Pipelines are the same no need for concatenation, we can just xor directly.
+                SimplePolynomialFunction partialResult = wrapAsNonParameterizedFunction(ppfF).xor(
+                        wrapAsNonParameterizedFunction(ppfG));
+                return new ParameterizedPolynomialFunctionGF2(f.getInputLength(), f.getOutputLength(),
+                        partialResult.getMonomials(), partialResult.getContributions(), ppfF.getPipelines());
             } else {
-                //Pipelines are not equal. Append g to f.
-                int extendedSize = ppfF.getInputLength() + ppfF.getPipelineOutputLength() + ppfG.getPipelineOutputLength();
-                SimplePolynomialFunction shiftedRhs = ParameterizedPolynomialFunctions.extendAndShift( extendedSize , g.getInputLength(), ppfF.getPipelineOutputLength() , g );
-                SimplePolynomialFunction extendedLhs = ParameterizedPolynomialFunctions.extend( extendedSize, f );
-                SimplePolynomialFunction partialResult = shiftedRhs.xor( extendedLhs );
-                Iterable<CompoundPolynomialFunction> pipelines = Iterables.concat( ppfF.getPipelines() , ppfG.getPipelines() );
-                return new ParameterizedPolynomialFunctionGF2( ppfF.getInputLength() , ppfF.getOutputLength() , partialResult.getMonomials() , partialResult.getContributions() , pipelines );
+                // Pipelines are not equal. Append g to f.
+                int extendedSize = ppfF.getInputLength() + ppfF.getPipelineOutputLength()
+                        + ppfG.getPipelineOutputLength();
+                SimplePolynomialFunction shiftedRhs = ParameterizedPolynomialFunctions.extendAndShift(extendedSize,
+                        g.getInputLength(), ppfF.getPipelineOutputLength(), g);
+                SimplePolynomialFunction extendedLhs = ParameterizedPolynomialFunctions.extend(extendedSize, f);
+                SimplePolynomialFunction partialResult = shiftedRhs.xor(extendedLhs);
+                Iterable<CompoundPolynomialFunction> pipelines = Iterables.concat(ppfF.getPipelines(),
+                        ppfG.getPipelines());
+                return new ParameterizedPolynomialFunctionGF2(ppfF.getInputLength(), ppfF.getOutputLength(),
+                        partialResult.getMonomials(), partialResult.getContributions(), pipelines);
             }
-        } else if ( f.isParameterized() && !g.isParameterized() ) {
-            //Problem is that extendedLhs
-            ParameterizedPolynomialFunctionGF2 ppfF = (ParameterizedPolynomialFunctionGF2)f;
+        } else if (f.isParameterized() && !g.isParameterized()) {
+            // Problem is that extendedLhs
+            ParameterizedPolynomialFunctionGF2 ppfF = (ParameterizedPolynomialFunctionGF2) f;
             int extendedSize = ppfF.getInputLength() + ppfF.getPipelineOutputLength();
-            SimplePolynomialFunction extendedLhs = ParameterizedPolynomialFunctions.extend( extendedSize, g );
-            SimplePolynomialFunction partialResult = wrapAsNonParameterizedFunction( f ).xor( extendedLhs );
-            return new ParameterizedPolynomialFunctionGF2( ppfF.getInputLength() , ppfF.getOutputLength() , partialResult.getMonomials() , partialResult.getContributions() , ppfF.getPipelines() );
-        } else if ( !f.isParameterized() && g.isParameterized() ) {
-            return xor( g , f );
-        } 
+            SimplePolynomialFunction extendedLhs = ParameterizedPolynomialFunctions.extend(extendedSize, g);
+            SimplePolynomialFunction partialResult = wrapAsNonParameterizedFunction(f).xor(extendedLhs);
+            return new ParameterizedPolynomialFunctionGF2(ppfF.getInputLength(), ppfF.getOutputLength(),
+                    partialResult.getMonomials(), partialResult.getContributions(), ppfF.getPipelines());
+        } else if (!f.isParameterized() && g.isParameterized()) {
+            return xor(g, f);
+        }
 
-        //We should never reach her, since it will result in an exception at the beginning of the function if neither function is parameterized.
+        // We should never reach her, since it will result in an exception at the beginning of the function if neither
+        // function is parameterized.
         return null;
     }
 
-    //TODO: Figure out a way to merge with XOR extension logic.
-    public static SimplePolynomialFunction and( SimplePolynomialFunction f, SimplePolynomialFunction g ) {
-        Preconditions.checkArgument( f.isParameterized() || g.isParameterized() , "At least one of the functions should be parameterized!" );
-        Preconditions.checkArgument( f.getInputLength() == g.getInputLength() , "Input lengths must match in order to compute the XOR of two functions.");
-        Preconditions.checkArgument( f.getOutputLength() == g.getOutputLength() , "Output lengths must match in order to compute the XOR of two functions.");
-        if( f.isParameterized() && g.isParameterized() ) {
+    // TODO: Figure out a way to merge with XOR extension logic.
+    public static SimplePolynomialFunction and(SimplePolynomialFunction f, SimplePolynomialFunction g) {
+        Preconditions.checkArgument(f.isParameterized() || g.isParameterized(),
+                "At least one of the functions should be parameterized!");
+        Preconditions.checkArgument(f.getInputLength() == g.getInputLength(),
+                "Input lengths must match in order to compute the XOR of two functions.");
+        Preconditions.checkArgument(f.getOutputLength() == g.getOutputLength(),
+                "Output lengths must match in order to compute the XOR of two functions.");
+        if (f.isParameterized() && g.isParameterized()) {
             /*
-             * Both functions are parameterized.  We need to check whether the pipelines are equal or whether one pipeline will have to be concatenated with the other.
+             * Both functions are parameterized. We need to check whether the pipelines are equal or whether one
+             * pipeline will have to be concatenated with the other.
              */
-            ParameterizedPolynomialFunctionGF2 ppfF = (ParameterizedPolynomialFunctionGF2)f;
-            ParameterizedPolynomialFunctionGF2 ppfG = (ParameterizedPolynomialFunctionGF2)g;
+            ParameterizedPolynomialFunctionGF2 ppfF = (ParameterizedPolynomialFunctionGF2) f;
+            ParameterizedPolynomialFunctionGF2 ppfG = (ParameterizedPolynomialFunctionGF2) g;
 
-            if( ppfF.getPipelines().equals( ppfG.getPipelines() ) ) {
-                //Pipelines are the same no need for concatenation, we can just xor directly.
-                SimplePolynomialFunction partialResult =  wrapAsNonParameterizedFunction( ppfF ).and( wrapAsNonParameterizedFunction( ppfG ) );
-                return new ParameterizedPolynomialFunctionGF2( f.getInputLength() , f.getOutputLength() , partialResult.getMonomials() , partialResult.getContributions() , ppfF.getPipelines() );
+            if (ppfF.getPipelines().equals(ppfG.getPipelines())) {
+                // Pipelines are the same no need for concatenation, we can just xor directly.
+                SimplePolynomialFunction partialResult = wrapAsNonParameterizedFunction(ppfF).and(
+                        wrapAsNonParameterizedFunction(ppfG));
+                return new ParameterizedPolynomialFunctionGF2(f.getInputLength(), f.getOutputLength(),
+                        partialResult.getMonomials(), partialResult.getContributions(), ppfF.getPipelines());
             } else {
                 /*
                  * Pipelines are not equal so we allocate monomials such that variables corresponding to g's pipeline
-                 * are positioned after the f's pipeline variables. 
+                 * are positioned after the f's pipeline variables.
                  */
-                int extendedSize = ppfF.getInputLength() + ppfF.getPipelineOutputLength() + ppfG.getPipelineOutputLength();
-                SimplePolynomialFunction shiftedRhs = ParameterizedPolynomialFunctions.extendAndShift( extendedSize , g.getInputLength(), ppfF.getPipelineOutputLength() , g );
-                SimplePolynomialFunction extendedLhs = ParameterizedPolynomialFunctions.extend( extendedSize, f );
-                SimplePolynomialFunction partialResult = shiftedRhs.and( extendedLhs );
-                Iterable<CompoundPolynomialFunction> pipelines = Iterables.concat( ppfF.getPipelines() , ppfG.getPipelines() );
-                return new ParameterizedPolynomialFunctionGF2( ppfF.getInputLength() , ppfF.getOutputLength() , partialResult.getMonomials() , partialResult.getContributions() , pipelines );
+                int extendedSize = ppfF.getInputLength() + ppfF.getPipelineOutputLength()
+                        + ppfG.getPipelineOutputLength();
+                SimplePolynomialFunction shiftedRhs = ParameterizedPolynomialFunctions.extendAndShift(extendedSize,
+                        g.getInputLength(), ppfF.getPipelineOutputLength(), g);
+                SimplePolynomialFunction extendedLhs = ParameterizedPolynomialFunctions.extend(extendedSize, f);
+                SimplePolynomialFunction partialResult = shiftedRhs.and(extendedLhs);
+                Iterable<CompoundPolynomialFunction> pipelines = Iterables.concat(ppfF.getPipelines(),
+                        ppfG.getPipelines());
+                return new ParameterizedPolynomialFunctionGF2(ppfF.getInputLength(), ppfF.getOutputLength(),
+                        partialResult.getMonomials(), partialResult.getContributions(), pipelines);
             }
-        } else if ( f.isParameterized() && !g.isParameterized() ) {
-            //Problem is that extendedLhs
-            ParameterizedPolynomialFunctionGF2 ppfF = (ParameterizedPolynomialFunctionGF2)f;
+        } else if (f.isParameterized() && !g.isParameterized()) {
+            // Problem is that extendedLhs
+            ParameterizedPolynomialFunctionGF2 ppfF = (ParameterizedPolynomialFunctionGF2) f;
             int extendedSize = ppfF.getInputLength() + ppfF.getPipelineOutputLength();
-            SimplePolynomialFunction extendedLhs = ParameterizedPolynomialFunctions.extend( extendedSize, g );
-            SimplePolynomialFunction partialResult = wrapAsNonParameterizedFunction( f ).xor( extendedLhs );
-            return new ParameterizedPolynomialFunctionGF2( ppfF.getInputLength() , ppfF.getOutputLength() , partialResult.getMonomials() , partialResult.getContributions() , ppfF.getPipelines() );
-        } else if ( !f.isParameterized() && g.isParameterized() ) {
-            return xor( g , f );
-        } 
+            SimplePolynomialFunction extendedLhs = ParameterizedPolynomialFunctions.extend(extendedSize, g);
+            SimplePolynomialFunction partialResult = wrapAsNonParameterizedFunction(f).xor(extendedLhs);
+            return new ParameterizedPolynomialFunctionGF2(ppfF.getInputLength(), ppfF.getOutputLength(),
+                    partialResult.getMonomials(), partialResult.getContributions(), ppfF.getPipelines());
+        } else if (!f.isParameterized() && g.isParameterized()) {
+            return xor(g, f);
+        }
 
-        //We should never reach here, since it will result in an exception at the beginning of the function if neither function is parameterized.
+        // We should never reach here, since it will result in an exception at the beginning of the function if neither
+        // function is parameterized.
         return null;
     }
 
-    public static SimplePolynomialFunction fromUnshiftedVariables( int inputLength, SimplePolynomialFunction base , SimplePolynomialFunction[] pipelines ) {
+    public static SimplePolynomialFunction fromUnshiftedVariables(int inputLength, SimplePolynomialFunction base,
+            SimplePolynomialFunction[] pipelines) {
         /*
-         * Need to create parameterized function by shifting newXorVariables 
+         * Need to create parameterized function by shifting newXorVariables
          */
-        CompoundPolynomialFunction pipeline = CompoundPolynomialFunctions.fromFunctions( pipelines );
+        CompoundPolynomialFunction pipeline = CompoundPolynomialFunctions.fromFunctions(pipelines);
         int extendedSize = inputLength + pipeline.getOutputLength();
-        SimplePolynomialFunction shiftedBase = ParameterizedPolynomialFunctions.extendAndShift( extendedSize , pipeline.getInputLength() , base );
-        return new ParameterizedPolynomialFunctionGF2( inputLength , shiftedBase.getOutputLength() , shiftedBase.getMonomials() , shiftedBase.getContributions() , ImmutableList.of( pipeline ) );
+        SimplePolynomialFunction shiftedBase = ParameterizedPolynomialFunctions.extendAndShift(extendedSize,
+                pipeline.getInputLength(), base);
+        return new ParameterizedPolynomialFunctionGF2(inputLength, shiftedBase.getOutputLength(),
+                shiftedBase.getMonomials(), shiftedBase.getContributions(), ImmutableList.of(pipeline));
     }
 
-    private static SimplePolynomialFunction wrapAsNonParameterizedFunction( SimplePolynomialFunction f ) {
-        Preconditions.checkArgument( Preconditions.checkNotNull( f , "Function cannot be null." ).isParameterized() , "Function must be paramterized to wrap.");
-        ParameterizedPolynomialFunctionGF2 ppfF = (ParameterizedPolynomialFunctionGF2)f;
+    private static SimplePolynomialFunction wrapAsNonParameterizedFunction(SimplePolynomialFunction f) {
+        Preconditions.checkArgument(Preconditions.checkNotNull(f, "Function cannot be null.").isParameterized(),
+                "Function must be paramterized to wrap.");
+        ParameterizedPolynomialFunctionGF2 ppfF = (ParameterizedPolynomialFunctionGF2) f;
         int extendedSize = ppfF.getInputLength() + ppfF.getPipelineOutputLength();
-        return new OptimizedPolynomialFunctionGF2(extendedSize, f.getOutputLength(), f.getMonomials(), f.getContributions() );  
+        return new OptimizedPolynomialFunctionGF2(extendedSize, f.getOutputLength(), f.getMonomials(),
+                f.getContributions());
     }
 
+    public static SimplePolynomialFunction concatenateInputsAndOutputs(SimplePolynomialFunction lhs,
+            SimplePolynomialFunction rhs) {
+        Preconditions.checkArgument(lhs.isParameterized() || rhs.isParameterized(),
+                "At least one of the functions should be parameterized!");
+        if (lhs.isParameterized() && !rhs.isParameterized()) {
+            // TODO
+        }
+        if (rhs.isParameterized() && !lhs.isParameterized()) {
+            int actualRhsInputSize = rhs.getMonomials()[0].size();
+            int extendedSize = actualRhsInputSize + ( lhs.getInputLength() << 1 );
+            // extend rh monomials, extend and shift lh monomials TODO shift by additional input length
+            SimplePolynomialFunction extendedShiftedRhs = extendAndShift(extendedSize, lhs.getInputLength(), rhs);
+            SimplePolynomialFunction extendedShiftedLhs = extendAndShift(extendedSize,
+                    actualRhsInputSize + lhs.getInputLength(), lhs);
+            // extend lh contributions, extend and shift rh contributions
+            BitVector[] lhContributions = lhs.getContributions();
+            BitVector[] rhContributions = rhs.getContributions();
+            Monomial[] newMonomials = new Monomial[lhs.getMonomials().length + rhs.getMonomials().length];
+            BitVector[] newContributions = new BitVector[lhs.getContributions().length + rhs.getContributions().length];
+            for (int i = 0; i < rhContributions.length; i++) {
+                newMonomials[i] = extendedShiftedRhs.getMonomials()[i];
+                newContributions[i] = rhContributions[i].copy();
+                newContributions[i].setSize(lhs.getOutputLength() + rhs.getOutputLength());
+            }
+            for (int i = rhContributions.length, j = 0; j < lhContributions.length; i++, j++) {
+                newMonomials[i] = extendedShiftedLhs.getMonomials()[j];
+                newContributions[i] = new BitVector(lhs.getOutputLength() + rhs.getOutputLength());
+                newContributions[i].replaceFromToWith(rhs.getOutputLength(),
+                        rhs.getOutputLength() + lhs.getOutputLength() - 1, lhContributions[j], 0);
+            }
+            ParameterizedPolynomialFunctionGF2 ppfR = (ParameterizedPolynomialFunctionGF2) rhs;
+            // create deep copy of pipelines
+            List<CompoundPolynomialFunction> pipelines = Lists.newArrayList();
+            for (CompoundPolynomialFunction pipeline : ppfR.getPipelines()) {
+                pipelines.add(pipeline.copy());
+            }
+            // prepend right truncating identity function to old CPFs to resize input to old length
+            for (CompoundPolynomialFunction pipeline : pipelines) {
+                SimplePolynomialFunction rightTruncatingIdentity = PolynomialFunctions.rightTruncatingIdentity(
+                        lhs.getInputLength() + rhs.getInputLength(), rhs.getInputLength());
+                pipeline.prefix(rightTruncatingIdentity);
+            }
+            // append pipeline of left truncating identity function to list of pipelines to pass lh function its input
+            CompoundPolynomialFunction leftTruncatingIdentity = new CompoundPolynomialFunctionGF2(
+                    Lists.newArrayList(PolynomialFunctions.leftTruncatingIdentity(
+                            lhs.getInputLength() + rhs.getInputLength(), lhs.getInputLength())));
+            pipelines.add(leftTruncatingIdentity);
+
+            return new ParameterizedPolynomialFunctionGF2(lhs.getInputLength() + rhs.getInputLength(),
+                    lhs.getOutputLength() + rhs.getOutputLength(), newMonomials, newContributions, pipelines);
+        }
+        // throw an exception or something, bc we don handle this shit yet
+        return null;
+    }
 
 }
