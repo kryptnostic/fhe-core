@@ -619,7 +619,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
             } else {
                 // Don't use the outer monomial directly since it maybe the wrong size.
                 // mList.add( monomials[ constantOuterMonomialIndex.get() ] );
-                mList.add(Monomial.constantMonomial(inner.getInputLength()));
+                mList.add(Monomial.constantMonomial(inner.getMonomials()[0].size()));
                 unfilteredContributions.add(contributions[constantOuterMonomialIndex.get()]);
             }
         }
