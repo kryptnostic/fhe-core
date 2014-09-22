@@ -18,7 +18,6 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.primitives.Longs;
 import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
@@ -279,6 +278,60 @@ public final class PolynomialFunctions {
 
         // No need to use
         return new OptimizedPolynomialFunctionGF2(inputLength, maxIndex, monomials, contributions);
+    }
+
+    public static SimplePolynomialFunction lowerTruncatingIdentity(int inputLength, int outputLength) {
+        Preconditions.checkArgument(inputLength > outputLength,
+                "Output length must be less than input length to truncate.");
+        Preconditions.checkArgument(outputLength >= 0, "Output length cannot be less than 0.");
+        Monomial[] monomials = new Monomial[inputLength];
+        BitVector[] contributions = new BitVector[inputLength];
+        for (int i = 0; i < inputLength; i++) {
+            monomials[i] = Monomial.linearMonomial(inputLength, i);
+            BitVector contribution = new BitVector(outputLength);
+            if (i < outputLength) {
+                contribution.set(i);
+            }
+            contributions[i] = contribution;
+        }
+        return new BasePolynomialFunction(inputLength, outputLength, monomials, contributions);
+    }
+
+    /**
+     * @return function that preserves the msb
+     */
+    public static SimplePolynomialFunction upperTruncatingIdentity(int inputLength, int outputLength) {
+        Preconditions.checkArgument(inputLength > outputLength,
+                "Output length must be less than input length to truncate.");
+        Preconditions.checkArgument(outputLength >= 0, "Output length cannot be less than 0.");
+        Monomial[] monomials = new Monomial[inputLength];
+        BitVector[] contributions = new BitVector[inputLength];
+        int offset = inputLength - outputLength;
+        for (int i = 0; i < inputLength; i++) {
+            monomials[i] = Monomial.linearMonomial(inputLength, i);
+            BitVector contribution = new BitVector(outputLength);
+            if (i >= offset) {
+                contribution.set(i - offset);
+            }
+            contributions[i] = contribution;
+        }
+        return new BasePolynomialFunction(inputLength, outputLength, monomials, contributions);
+    }
+    
+    public static SimplePolynomialFunction identityRange( int start, int end, int inputLength , int outputLength) {
+        int len = end-start;
+        Monomial[] monomials = new Monomial[len];
+        BitVector[] contributions = new BitVector[len];
+
+        for (int i = 0; i < len; ++i) {
+//            int adjustedIndex = i + start;
+            monomials[i] = Monomial.linearMonomial(inputLength, i);
+            BitVector contribution = new BitVector(outputLength);
+            contribution.set(i);
+            contributions[i] = contribution;
+        }
+
+        return new OptimizedPolynomialFunctionGF2(inputLength, outputLength, monomials, contributions);
     }
 
     /**

@@ -12,6 +12,7 @@ import com.google.common.collect.Lists;
 import com.kryptnostic.multivariate.CompoundPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.CompoundPolynomialFunctions;
 import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
@@ -205,5 +206,84 @@ public final class ParameterizedPolynomialFunctions {
         return new OptimizedPolynomialFunctionGF2(extendedSize, f.getOutputLength(), f.getMonomials(), f.getContributions() );  
     }
 
+    public static SimplePolynomialFunction concatenateInputsAndOutputs(SimplePolynomialFunction lhs,
+            SimplePolynomialFunction rhs) throws Exception {
+        Preconditions.checkArgument(rhs.isParameterized() || lhs.isParameterized(),
+                "At least one of the functions should be parameterized!");
+        if (rhs.isParameterized() && !lhs.isParameterized()) {
+            throw new Exception();
+        }
+        if (lhs.isParameterized() && !rhs.isParameterized()) {
+            int actualLhsInputSize = lhs.getMonomials()[0].size();
+            int extendedSize = actualLhsInputSize + ( rhs.getInputLength() << 1 );
+            // extend rh monomials, extend and shift lh monomials TODO shift by additional input length
+            SimplePolynomialFunction extendedShiftedLhs = extendAndShift(extendedSize, rhs.getInputLength(), lhs);
+            SimplePolynomialFunction extendedShiftedRhs = extendAndShift(extendedSize,
+                    actualLhsInputSize + rhs.getInputLength(), rhs);
+            // extend lh contributions, extend and shift rh contributions
+            BitVector[] rhContributions = rhs.getContributions();
+            BitVector[] lhContributions = lhs.getContributions();
+            Monomial[] newMonomials = new Monomial[rhs.getMonomials().length + lhs.getMonomials().length];
+            BitVector[] newContributions = new BitVector[rhs.getContributions().length + lhs.getContributions().length];
+            for (int i = 0; i < lhContributions.length; i++) {
+                newMonomials[i] = extendedShiftedLhs.getMonomials()[i];
+                newContributions[i] = lhContributions[i].copy();
+                newContributions[i].setSize(rhs.getOutputLength() + lhs.getOutputLength());
+            }
+            for (int i = lhContributions.length, j = 0; j < rhContributions.length; i++, j++) {
+                newMonomials[i] = extendedShiftedRhs.getMonomials()[j];
+                newContributions[i] = new BitVector(rhs.getOutputLength() + lhs.getOutputLength());
+                newContributions[i].replaceFromToWith(lhs.getOutputLength(),
+                        lhs.getOutputLength() + rhs.getOutputLength() - 1, rhContributions[j], 0);
+            }
+            ParameterizedPolynomialFunctionGF2 ppfL = (ParameterizedPolynomialFunctionGF2) lhs;
+            // create deep copy of pipelines
+            List<CompoundPolynomialFunction> pipelines = Lists.newArrayList();
+            for (CompoundPolynomialFunction pipeline : ppfL.getPipelines()) {
+                pipelines.add(pipeline.copy());
+            }
+            // prepend left truncating identity function to old CPFs to resize input to old length
+            for (CompoundPolynomialFunction pipeline : pipelines) {
+                SimplePolynomialFunction leftTruncatingIdentity = PolynomialFunctions.lowerTruncatingIdentity(
+                        rhs.getInputLength() + lhs.getInputLength(), lhs.getInputLength());
+                pipeline.prefix(leftTruncatingIdentity);
+            }
+            // append pipeline of right truncating identity function to list of pipelines to pass rh function its input
+            CompoundPolynomialFunction rightTruncatingIdentity = new CompoundPolynomialFunctionGF2(
+                    Lists.newArrayList(PolynomialFunctions.upperTruncatingIdentity(
+                            rhs.getInputLength() + lhs.getInputLength(), rhs.getInputLength())));
+            pipelines.add(rightTruncatingIdentity);
 
+            return new ParameterizedPolynomialFunctionGF2(rhs.getInputLength() + lhs.getInputLength(),
+                    rhs.getOutputLength() + lhs.getOutputLength(), newMonomials, newContributions, pipelines);
+        }
+        
+        throw new Exception();
+    }
+    
+    public static SimplePolynomialFunction extendWithIdentity( SimplePolynomialFunction inner , int desiredLength , int outputLength ) {
+        Monomial[]  monomials = inner.getMonomials();
+        BitVector[] contributions = inner.getContributions();
+        
+        Monomial[] newMonomials = new Monomial[ monomials.length + desiredLength ];
+        BitVector[] newContributions = new BitVector[ newMonomials.length ];
+        
+        int difference = desiredLength - (((ParameterizedPolynomialFunctionGF2)inner).getPipelineOutputLength() + inner.getInputLength() );
+        int newOutputLength = inner.getOutputLength() + difference;
+        for( int i = 0 ; i < monomials.length; ++i ) {
+            newMonomials[ i ] = monomials[ i ].extend( desiredLength );
+            newContributions[ i ] = contributions[ i ].copy();
+            newContributions[ i ].setSize( newOutputLength );
+        }
+        
+        
+        for( int i = 0; i < difference  ; ++i ) {
+            int index = monomials.length + i;
+            newMonomials[ index ] = Monomial.linearMonomial( desiredLength , i + difference );
+            newContributions[ index ] = new BitVector( newOutputLength );
+            newContributions[ index ].set(  i + difference );
+        }
+        
+        return new ParameterizedPolynomialFunctionGF2( desiredLength , inner.getOutputLength() , newMonomials , newContributions , ((ParameterizedPolynomialFunctionGF2)inner).getPipelines() );
+    }
 }

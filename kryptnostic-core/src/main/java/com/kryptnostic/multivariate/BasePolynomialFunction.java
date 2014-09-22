@@ -1,6 +1,7 @@
 package com.kryptnostic.multivariate;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -565,7 +566,144 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         }
         return results;
     }
+    
+    public static class Bucket {
+        private final int minBucket;
+        private final BitVector value;
+        private final Bucket[] buckets;
+        private boolean hasBuckets;
+        
+        public Bucket( final int minBucket , int innerMonomialCount , final Bucket[] buckets ) {
+            this.minBucket = minBucket;
+            this.buckets = buckets;
+            value = new BitVector( innerMonomialCount );
+        }
+        
+        public Collection<BitVector> evaluate(BitVector result, List<Monomial> monomials, List<BitVector> rowContribs, ConcurrentMap<Monomial,Integer> indices ) {
+            Collection<BitVector> results = Lists.newArrayList();
+            //TODO: Don't go through every bucket if none exist.
+            for( int i = 0 ; i < buckets.length ; ++i ) {
+                Bucket b = buckets[i];
+                //If the bucket exists, then lets do the product and recursively evaluate 
+                if( b != null ) {
+                    BitVector nextResult = product( result, rowContribs.get( i ) , monomials, indices );
+                    results.addAll( b.evaluate( nextResult , monomials , rowContribs , indices ) );
+                }
+            }
 
+            results.add( product( result , value , monomials , indices ) );
+            
+            return results;
+        }
+        
+        /**
+         * Given contributions of outer and inner polynomials as well as the list of inner monomials, computes the product,
+         * updating the list of monomials, the map of monomials and returning the resultant contributions.
+         * 
+         * @param lhs
+         * @param rhs
+         * @param monomials
+         * @param indices
+         * @return
+         */
+        public BitVector product(BitVector lhs, BitVector rhs, List<Monomial> monomials,
+                ConcurrentMap<Monomial, Integer> indices) {
+            BitVector result = new BitVector(monomials.size());
+            for (int i = 0; i < lhs.size(); ++i) {
+                if (lhs.getQuick(i)) {
+                    for (int j = 0; j < rhs.size(); ++j) {
+                        if (rhs.getQuick(j)) {
+                            Monomial p = monomials.get(i).product(monomials.get(j));
+
+                            Integer indexObj = indices.get(p);
+                            int index;
+                            if (indexObj == null) {
+                                index = monomials.size();
+                                indexObj = indices.putIfAbsent(p, index);
+                                if (indexObj == null) {
+                                    monomials.add(p);
+                                    result.setSize(index);
+                                    indexObj = index;
+                                }
+                            }
+
+                            if (indexObj >= result.size()) {
+                                result.setSize(result.size() << 1);
+                            }
+
+                            if (result.getQuick(indexObj)) {
+                                result.clear(indexObj);
+                            } else {
+                                result.set(indexObj);
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+        
+        public void bucket( final Monomial m , final List<BitVector> rowContribs ) {
+            for( int i = minBucket ; i < m.size() ; ++i ) {
+                if( m.get( i ) ) {
+                    m.clear( i );
+                    if( m.isZero() ) {
+                        value.xor( rowContribs.get(i ) );
+                    } else {
+                        Bucket b = buckets[ i ]; 
+                        if( b == null ) {
+                            b = buckets[ i ] = new Bucket( minBucket + 1 , value.size() , new Bucket[ buckets.length - 1 ] );
+                        }
+                        b.bucket( m , rowContribs );
+                    }
+                }
+            }
+        }
+    }
+    
+    public Collection<BitVector> specialCompose(SimplePolynomialFunction inner) {
+        List<BitVector> rows = Lists.newArrayList( inner.getContributions() );
+        
+        ConcurrentMap<Monomial,Integer> indices = Maps.newConcurrentMap();
+        Monomial[] innerMonomials = inner.getMonomials();
+        
+        for( int i = 0 ; i < innerMonomials.length; ++i ) {
+            indices.put( innerMonomials[ i ] , i );
+        }
+        
+        Monomial constant = Monomial.constantMonomial( inner.getInputLength() ) ;
+        List<Monomial> mList = Lists.newArrayList( innerMonomials );
+        
+        Integer constantIndex = indices.get( constant );
+
+        if( constantIndex == null ) {
+            constantIndex = mList.size();
+            indices.put( constant, constantIndex );
+            mList.add( constant );
+            rows.add( new BitVector( inner.getOutputLength() ) );
+        }
+        
+        EnhancedBitMatrix.transpose( rows , inner.getOutputLength() );
+        Bucket b = bucket( rows );
+        
+        BitVector initial = rows.get(0).copy();
+        initial.clear();
+        initial.set( constantIndex );
+        
+        Collection<BitVector> results = b.evaluate( initial , mList , rows , indices );
+        return results;
+    }
+    
+    protected Bucket bucket( List<BitVector> rowContribs ) {
+        Bucket root = new Bucket( 0 , inputLength, new Bucket[ inputLength ] );
+
+        for( Monomial m : monomials ) {
+            root.bucket( m.clone() , rowContribs );
+        }
+        
+        return root;
+    }
+    
     protected SimplePolynomialFunction postProcessCompose(List<Monomial> mList, Map<Monomial, Integer> indices,
             BitVector[] results, SimplePolynomialFunction inner) {
         Optional<Integer> constantOuterMonomialIndex = Optional.absent();
@@ -686,16 +824,40 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         public BitVector[] innerRows;
 
     }
+    
+    @Override
+    public List<SimplePolynomialFunction> split(int... splitPoints) {
+        Preconditions.checkArgument( splitPoints.length > 0  );
+        List<SimplePolynomialFunction> functions = Lists.newArrayListWithCapacity( splitPoints.length + 1 );
+        int last = 0;
+        for( int i = 0 ; i < splitPoints.length; ++i ) {
+            Preconditions.checkArgument( splitPoints[ i ] < inputLength );
+            List<Monomial> newMonomials = Lists.newArrayListWithExpectedSize( monomials.length );
+            List<BitVector> newContributions = Lists.newArrayListWithExpectedSize( contributions.length );
+            for( int j = 0 ; j < contributions.length ; ++j ) {
+                BitVector newContribution =  contributions[ j ].partFromTo( last , splitPoints[ i ] );
+                if( newContribution.cardinality() != 0 ) { 
+                    newMonomials.add( monomials[ j ] );
+                    newContributions.add( newContribution );
+                } 
+            }
+            functions.add( new OptimizedPolynomialFunctionGF2( inputLength , outputLength , newMonomials.toArray( new Monomial[0] ) , newContributions.toArray( new BitVector[0] ) ) );
+        }
+        
+        return functions;
+    }
 
     @Override
     public SimplePolynomialFunction partialComposeLeft(SimplePolynomialFunction inner) {
         Preconditions.checkArgument(inner.getOutputLength() <= getInputLength(),
                 "Inner function output length cannot be larger than outer function input length.");
-        SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
+//        SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
+        SimplePolynomialFunction identity = PolynomialFunctions.identityRange( 64, 256 , 192, 192 );
         SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs(inner, identity);
         return this.compose(concatenated);
     }
 
+<<<<<<< Updated upstream
     @Override
     public SimplePolynomialFunction partialComposeRight(SimplePolynomialFunction inner) {
         Preconditions.checkArgument(inner.getOutputLength() <= getInputLength(),
@@ -705,4 +867,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         return this.compose(concatenated);
     }
 
+=======
+    
+>>>>>>> Stashed changes
 }
