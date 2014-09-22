@@ -30,6 +30,8 @@ import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
 
 @Configuration
 public class PolynomialFunctionTests {
@@ -173,6 +175,22 @@ public class PolynomialFunctionTests {
             logger.trace("Composed result: {}", composedResult);
             Assert.assertEquals(outerResult, composedResult);
         }
+    }
+    
+    @Timed
+    public void testGeneralComposeParameterized() {
+        SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(128, 64);
+        SimplePolynomialFunction other = PolynomialFunctions.randomFunction(128, 128);
+        SimplePolynomialFunction[] pipelines = {PolynomialFunctions.identity(128)};
+        SimplePolynomialFunction inner = ParameterizedPolynomialFunctions.fromUnshiftedVariables(other.getInputLength(), other, pipelines);
+        
+        SimplePolynomialFunction composed = outer.compose(inner);
+        
+        BitVector input = BitUtils.randomVector(128);
+        BitVector intermediate = inner.apply(input);
+        BitVector expected = outer.apply(intermediate);
+        BitVector actual = composed.apply(input);
+        Assert.assertEquals(expected, actual);
     }
 
     @Timed
