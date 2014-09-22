@@ -1,5 +1,7 @@
 package com.kryptnostic.multivariate.gf2;
 
+import java.util.List;
+
 import cern.colt.bitvector.BitVector;
 
 import com.codahale.metrics.annotation.Timed;
@@ -54,4 +56,6 @@ public interface SimplePolynomialFunction extends PolynomialFunction {
     int getTotalMonomialCount();
     int getMaximumMonomialOrder();
     boolean isParameterized();
+
+    List<SimplePolynomialFunction> split(int[] splitPoints);
 }
