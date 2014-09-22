@@ -69,7 +69,7 @@ public final class ParameterizedPolynomialFunctions {
         return new OptimizedPolynomialFunctionGF2(extendedSize, f.getOutputLength(), newMonomials, newContributions);
     }
 
-    public static CompoundPolynomialFunction extendAndMap(int extendedSize, int[][] srcRanges, int[][] dstRanges,
+    public static CompoundPolynomialFunction extendAndMap(int extendedSize, int[] srcRanges, int[][] dstRanges,
             CompoundPolynomialFunction f) {
         Iterator<PolynomialFunction> fIter = f.getFunctions().iterator();
         PolynomialFunction pf = fIter.next();

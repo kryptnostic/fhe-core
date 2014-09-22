@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.kryptnostic.linear.EnhancedBitMatrix;
+import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
@@ -714,9 +715,46 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
     public SimplePolynomialFunction partialComposeLeft(SimplePolynomialFunction inner) {
         Preconditions.checkArgument(inner.getOutputLength() <= getInputLength(),
                 "Inner function output length cannot be larger than outer function input length.");
-        SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
-        SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs(inner, identity);
-        return this.compose(concatenated);
+//        SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
+//        SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs(inner, identity);
+        SimplePolynomialFunction packed = partialComposePackInner( inner );
+        return this.compose(packed);
     }
-
+    
+    private SimplePolynomialFunction partialComposePackInner(SimplePolynomialFunction inner ) {
+        int innerPipelineOutputLength = ((ParameterizedPolynomialFunctionGF2)inner).getPipelineOutputLength();
+        int identityLength = inputLength - inner.getOutputLength();
+        int innerInputLength = inner.getInputLength() + innerPipelineOutputLength;
+        int paramInputLength = inner.getInputLength() + identityLength;
+        int newInputLength = innerInputLength + identityLength;
+        
+        Monomial[] unshiftedInnerMonomials = inner.getMonomials();
+        BitVector[] unshiftedInnerContributions = inner.getContributions();
+        
+        Monomial[] shiftedInnerMonomials = new Monomial[ unshiftedInnerContributions.length + inputLength - inner.getOutputLength() ];
+        BitVector[] shiftedInnerContributions = new BitVector[ unshiftedInnerContributions.length + inputLength - inner.getOutputLength() ];
+        
+        for( int i = 0 ; i < unshiftedInnerMonomials.length; ++i ) {
+            shiftedInnerMonomials[ i ] = unshiftedInnerMonomials[ i ].extendAndMapRanges( newInputLength , new int[]{0, inner.getInputLength() } , new int[][] {{0,inner.getInputLength() - 1 },{  paramInputLength , newInputLength - 1 } } );
+            BitVector contributionToExtend = unshiftedInnerContributions[ i ].copy();
+            contributionToExtend.setSize( inputLength );
+            shiftedInnerContributions[ i ] = contributionToExtend;
+        }
+        
+        for( int i = 0 ; i < identityLength; ++i ) {
+            shiftedInnerMonomials[ unshiftedInnerMonomials.length + i ] = Monomial.linearMonomial( newInputLength , i + inner.getInputLength() );
+            BitVector identityContribution = new BitVector( inputLength );
+            identityContribution.set( inner.getOutputLength() + i );
+            shiftedInnerContributions[ unshiftedInnerMonomials.length + i ] = identityContribution; 
+        }
+        
+        List<CompoundPolynomialFunction> cpfs = ((ParameterizedPolynomialFunctionGF2)inner).getPipelines();
+        List<CompoundPolynomialFunction> newCpfs = Lists.newArrayListWithCapacity( cpfs.size() );
+        
+        for( CompoundPolynomialFunction cpf : cpfs ) {
+            newCpfs.add( cpf.copy().prefix( PolynomialFunctions.lowerTruncatingIdentity( paramInputLength , inner.getInputLength() ) ) );
+        }
+        
+        return new ParameterizedPolynomialFunctionGF2( paramInputLength, inputLength , shiftedInnerMonomials , shiftedInnerContributions , newCpfs );
+    }
 }
