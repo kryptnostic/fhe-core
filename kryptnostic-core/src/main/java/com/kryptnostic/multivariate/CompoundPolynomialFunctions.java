@@ -3,7 +3,6 @@ package com.kryptnostic.multivariate;
 import java.util.Arrays;
 
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
-import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 public class CompoundPolynomialFunctions {
