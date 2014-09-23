@@ -117,7 +117,7 @@ public class MatrixTests {
     @Test 
     public void transposeTest() {
         EnhancedBitMatrix m = EnhancedBitMatrix.randomMatrix(63 , 65);
-        EnhancedBitMatrix mt = m.tranpose();
+        EnhancedBitMatrix mt = m.transpose();
         
         for( int row = 0 ; row < m.rows() ; ++row ) {
             for( int col = 0 ; col < m.cols() ; ++col ) {
@@ -126,7 +126,7 @@ public class MatrixTests {
         }
         
         m = EnhancedBitMatrix.randomMatrix(65 , 63);
-        mt = m.tranpose();
+        mt = m.transpose();
         
         for( int row = 0 ; row < m.rows() ; ++row ) {
             for( int col = 0 ; col < m.cols() ; ++col ) {
