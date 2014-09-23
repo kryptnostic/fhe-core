@@ -12,11 +12,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class Ciphertext implements Serializable {
     private static final long serialVersionUID = -2800319660607639843L;
-    public static final String FIELD_CONTENTS = "contents";
-    public static final String FIELD_LENGTH = "length";
+    protected static final String FIELD_CONTENTS = "contents";
+    protected static final String FIELD_LENGTH = "length";
 
-    private final byte[] contents; // Encrypted field
-    private final long[] length; // Encrypted field
+    protected final byte[] contents; // Encrypted field
+    protected final long[] length; // Encrypted field
 
     @JsonCreator
     public Ciphertext(@JsonProperty(FIELD_CONTENTS) byte[] contents, @JsonProperty(FIELD_LENGTH) long[] length) {
