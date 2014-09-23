@@ -108,9 +108,6 @@ public class KeyTests {
         BitVector expected = mvq.apply(plaintext);
         BitVector actual = composed.apply(FunctionUtils.concatenate(lhCipher, rhPlaintext));
         
-        BitVector recovered = decryptor.apply(lhCipher);
-        BitVector partialResult = mvq.apply(recovered, rhPlaintext);
-        
         Assert.assertEquals(expected, actual);
     }
     
