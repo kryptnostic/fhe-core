@@ -1,24 +1,20 @@
 package com.kryptnostic.multivariate;
 
+import org.junit.Assert;
 import org.junit.Test;
-
-import com.kryptnostic.linear.BitUtils;
-import com.kryptnostic.multivariate.CompoundPolynomialFunctionGF2;
-import com.kryptnostic.multivariate.CompoundPolynomialFunctions;
-import com.kryptnostic.multivariate.PolynomialFunctions;
-import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
-import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
 
-import org.junit.Assert;
+import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
+import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 public class CompoundPolynomialFunctionTests {
     @Test
     public void testCreateAndEvaluate() {
-        PolynomialFunction f = PolynomialFunctions.randomFunction( 128 , 512 );
-        PolynomialFunction g = PolynomialFunctions.randomFunction( 512 , 256 );
-        PolynomialFunction h = PolynomialFunctions.randomFunction( 256 , 64 );
+        SimplePolynomialFunction f = PolynomialFunctions.randomFunction( 128 , 512 );
+        SimplePolynomialFunction g = PolynomialFunctions.randomFunction( 512 , 256 );
+        SimplePolynomialFunction h = PolynomialFunctions.randomFunction( 256 , 64 );
         CompoundPolynomialFunction cpf = CompoundPolynomialFunctions.fromFunctions( f , g , h );
         
         Assert.assertEquals( 128 , cpf.getInputLength() );
@@ -31,9 +27,9 @@ public class CompoundPolynomialFunctionTests {
     
     @Test
     public void testComposeAndEvaluate() {
-        PolynomialFunction f = PolynomialFunctions.randomFunction( 128 , 512 );
-        PolynomialFunction g = PolynomialFunctions.randomFunction( 512 , 256 );
-        PolynomialFunction h = PolynomialFunctions.randomFunction( 256 , 64 );
+        SimplePolynomialFunction f = PolynomialFunctions.randomFunction( 128 , 512 );
+        SimplePolynomialFunction g = PolynomialFunctions.randomFunction( 512 , 256 );
+        SimplePolynomialFunction h = PolynomialFunctions.randomFunction( 256 , 64 );
         
         CompoundPolynomialFunction cpf = new CompoundPolynomialFunctionGF2()
                                                 .compose( h )

@@ -9,12 +9,12 @@ import java.util.List;
  * @author Matthew Tamayo-Rios
  */
 public interface CompoundPolynomialFunction extends PolynomialFunction {
-    List<PolynomialFunction> getFunctions();
+    List<SimplePolynomialFunction> getFunctions();
     void composeHeadDirectly( SimplePolynomialFunction inner);
-    CompoundPolynomialFunction compose( PolynomialFunction inner );
+    CompoundPolynomialFunction compose( SimplePolynomialFunction inner );
     CompoundPolynomialFunction compose( CompoundPolynomialFunction inner );
-    CompoundPolynomialFunction prefix( PolynomialFunction inner );
-    CompoundPolynomialFunction suffix( PolynomialFunction inner );
+    CompoundPolynomialFunction prefix( SimplePolynomialFunction inner );
+    CompoundPolynomialFunction suffix( SimplePolynomialFunction inner );
     CompoundPolynomialFunction copy();
     /**
      * @return The number of polynomial functions in this compoud polynomial function.

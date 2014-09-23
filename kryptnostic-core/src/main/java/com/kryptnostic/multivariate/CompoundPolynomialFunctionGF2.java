@@ -23,13 +23,13 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
  */
 public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction {
     
-    private final LinkedList<PolynomialFunction> functions;
+    private final LinkedList<SimplePolynomialFunction> functions;
     
     public CompoundPolynomialFunctionGF2() {
-        this( ImmutableList.<PolynomialFunction>of() );
+        this( ImmutableList.<SimplePolynomialFunction>of() );
     }
     
-    public CompoundPolynomialFunctionGF2( List<? extends PolynomialFunction> functions ) {
+    public CompoundPolynomialFunctionGF2( List<SimplePolynomialFunction> functions ) {
         this.functions = Lists.newLinkedList( functions );
     }
     
@@ -43,7 +43,7 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
     }
     
     @Override
-    public CompoundPolynomialFunction compose( PolynomialFunction inner ) {
+    public CompoundPolynomialFunction compose( SimplePolynomialFunction inner ) {
         validateForCompose( inner );
         CompoundPolynomialFunctionGF2 cpf = copy();
         cpf.functions.addFirst( inner );
@@ -51,13 +51,13 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
     }
     
     @Override
-    public CompoundPolynomialFunction prefix( PolynomialFunction inner ) {
+    public CompoundPolynomialFunction prefix( SimplePolynomialFunction inner ) {
         validateForCompose( inner );
         functions.addFirst( inner );
         return this;
     }
     @Override
-    public CompoundPolynomialFunction suffix(PolynomialFunction inner) {
+    public CompoundPolynomialFunction suffix( SimplePolynomialFunction inner) {
        Preconditions.checkArgument( 
                getOutputLength() == inner.getInputLength() , 
                "Function being appeneded must have the same length." ); 
@@ -116,7 +116,7 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
     }
 
     @Override
-    public List<PolynomialFunction> getFunctions() {
+    public List<SimplePolynomialFunction> getFunctions() {
         return Collections.unmodifiableList( functions );
     }
     

@@ -11,7 +11,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.kryptnostic.multivariate.CompoundPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.CompoundPolynomialFunctions;
-import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
@@ -71,7 +70,7 @@ public final class ParameterizedPolynomialFunctions {
 
     public static CompoundPolynomialFunction extendAndMap(int extendedSize, int[] srcRanges, int[][] dstRanges,
             CompoundPolynomialFunction f) {
-        Iterator<PolynomialFunction> fIter = f.getFunctions().iterator();
+        Iterator<SimplePolynomialFunction> fIter = f.getFunctions().iterator();
         PolynomialFunction pf = fIter.next();
         SimplePolynomialFunction extended = null;
         for (int i = 0; i < srcRanges.length; ++i) {
@@ -91,7 +90,7 @@ public final class ParameterizedPolynomialFunctions {
 
         }
 
-        List<PolynomialFunction> newFunctions = Lists.newArrayListWithCapacity(f.getFunctions().size());
+        List<SimplePolynomialFunction> newFunctions = Lists.newArrayListWithCapacity(f.getFunctions().size());
         newFunctions.add(extended);
         while (fIter.hasNext()) {
             newFunctions.add(fIter.next());
@@ -102,8 +101,8 @@ public final class ParameterizedPolynomialFunctions {
 
     public static CompoundPolynomialFunction extendAndShift(int extendedSize, int baseIndex, int shiftSize,
             CompoundPolynomialFunction f) {
-        List<PolynomialFunction> functions = f.getFunctions();
-        List<PolynomialFunction> newFunctions = Lists.newArrayListWithCapacity(functions.size());
+        List<SimplePolynomialFunction> functions = f.getFunctions();
+        List<SimplePolynomialFunction> newFunctions = Lists.newArrayListWithCapacity(functions.size());
         for (PolynomialFunction pf : functions) {
             Preconditions.checkState(pf instanceof SimplePolynomialFunction, "Every function in pipeline ");
             SimplePolynomialFunction spf = (SimplePolynomialFunction) pf;
