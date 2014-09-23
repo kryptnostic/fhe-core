@@ -35,7 +35,7 @@ public class EnhancedBitMatrix {
         rows = Lists.newArrayList();
     }
     
-    protected EnhancedBitMatrix( List<BitVector> rows ) {
+    protected EnhancedBitMatrix( Byte differentiator , List<BitVector> rows ) {
         this.rows = rows;
     }
     
@@ -179,7 +179,7 @@ public class EnhancedBitMatrix {
     
     public EnhancedBitMatrix transpose() {
         EnhancedBitMatrix transposed = new EnhancedBitMatrix( this ); 
-        transpose( transposed  );
+        transpose( transposed );
         return transposed;
     }
     
@@ -486,7 +486,7 @@ public class EnhancedBitMatrix {
      * @return an {@code EnhancedBitMatrix} whos rows are {@code rows} 
      */
     public static EnhancedBitMatrix directFromRows( List<BitVector> rows ) {
-        return new EnhancedBitMatrix( rows );
+        return new EnhancedBitMatrix(null, rows );
         
     }
     public static class SingularMatrixException extends Exception {
