@@ -566,52 +566,6 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         return results;
     }
 
-//    public SimplePolynomialFunction specialCompose(SimplePolynomialFunction inner) {
-//        RecursiveLinearizingComposer compose = new RecursiveLinearizingComposer( this , inner );
-//        return compose.compose();
-//        List<BitVector> rows = Lists.newArrayList( inner.getContributions() );
-//
-//        ConcurrentMap<Monomial, Integer> indices = Maps.newConcurrentMap();
-//        Monomial[] innerMonomials = inner.getMonomials();
-//
-//        for (int i = 0; i < innerMonomials.length; ++i) {
-//            indices.put( innerMonomials[i] , i );
-//        }
-//
-////        Monomial constant = Monomial.constantMonomial( inner.getInputLength() );
-//        List<Monomial> mList = Lists.newArrayList( innerMonomials );
-//
-////        Integer constantIndex = indices.get( constant );
-////
-////        if (constantIndex == null) {
-////            constantIndex = mList.size();
-////            indices.put( constant , constantIndex );
-////            mList.add( constant );
-////            rows.add( new BitVector( inner.getOutputLength() ) );
-////        }
-//
-//        rows = new EnhancedBitMatrix( rows ).transpose().getRows();
-//        RecursiveLinearizingComposer b = bucket( rows , inner.getInputLength() );
-//
-////        BitVector initial = rows.get( 0 ).copy();
-////        initial.clear();
-////        initial.set( constantIndex );
-//
-//        List<SimplePolynomialFunction> results = b.evaluate( null , mList , rows , indices );
-//        results.add(  b.getConstantFunction() );
-//        return results;
-//    }
-
-//    protected RecursiveLinearizingComposer bucket(List<BitVector> rowContribs, int innerInputLength) {
-//        BucketRoot root = new BucketRoot( 0 , innerInputLength , new Bucket[inputLength] );
-//
-//        for (int i = 0; i < monomials.length; ++i) {
-//            root.bucket( monomials[i].clone() , contributions[i].copy() , rowContribs );
-//        }
-//
-//        return root;
-//    }
-
     protected SimplePolynomialFunction postProcessCompose(List<Monomial> mList, Map<Monomial, Integer> indices,
             BitVector[] results, SimplePolynomialFunction inner) {
         Optional<Integer> constantOuterMonomialIndex = Optional.absent();
@@ -764,13 +718,4 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs( inner , identity );
         return this.compose( concatenated );
     }
-
-    // public SimplePolynomialFunction partialComposeRight(SimplePolynomialFunction inner) {
-    // Preconditions.checkArgument(inner.getOutputLength() <= getInputLength(),
-    // "Inner function output length cannot be larger than outer function input length.");
-    // SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
-    // SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs(identity, inner);
-    // return this.compose(concatenated);
-    // }
-
 }
