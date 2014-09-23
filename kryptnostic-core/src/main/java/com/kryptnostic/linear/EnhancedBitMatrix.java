@@ -35,9 +35,13 @@ public class EnhancedBitMatrix {
         rows = Lists.newArrayList();
     }
     
+    protected EnhancedBitMatrix( List<BitVector> rows ) {
+        this.rows = rows;
+    }
+    
     public EnhancedBitMatrix( int numRows, int numCols ) {
-        Preconditions.checkArgument( numRows > 0 ,  "Number of rows must be greater than zero.");
-        Preconditions.checkArgument( numCols > 0 ,  "Number of columns must be greater than zero.");
+        Preconditions.checkArgument( numRows >= 0 ,  "Number of rows must not be negative");
+        Preconditions.checkArgument( numCols >= 0 ,  "Number of columns must not be negative");
         rows = Lists.newArrayListWithExpectedSize( numRows );
         for( int i = 0 ; i < numRows ; ++i ) {
             rows.add( new BitVector( numCols ) ); 
@@ -128,7 +132,7 @@ public class EnhancedBitMatrix {
     public EnhancedBitMatrix getNullspaceBasis() {
         //TODO: Optimize this
         int rows = cols();
-        EnhancedBitMatrix rrefT = rowReducedEchelonForm().tranpose();
+        EnhancedBitMatrix rrefT = rowReducedEchelonForm().transpose();
         EnhancedBitMatrix identity = EnhancedBitMatrix.identity( rows );
         
         /*
@@ -156,7 +160,7 @@ public class EnhancedBitMatrix {
     }
     
     public EnhancedBitMatrix getLeftNullifyingMatrix() {
-        EnhancedBitMatrix nmat = tranpose().getNullspaceBasis().tranpose();
+        EnhancedBitMatrix nmat = transpose().getNullspaceBasis().transpose();
         Set<Integer> rowsToKeep = Sets.newHashSet();
         int rowCountToKeep = cols();
         while( rowsToKeep.size() != rowCountToKeep ) {
@@ -173,7 +177,7 @@ public class EnhancedBitMatrix {
         return new EnhancedBitMatrix( Arrays.asList( newRows ) );
     }
     
-    public EnhancedBitMatrix tranpose() {
+    public EnhancedBitMatrix transpose() {
         EnhancedBitMatrix transposed = new EnhancedBitMatrix( this ); 
         transpose( transposed  );
         return transposed;
@@ -476,6 +480,15 @@ public class EnhancedBitMatrix {
         return result;
     }
 
+    /**
+     * Efficient, but unsafe method for directly allocating a bit matrix from a list of rows
+     * @param rows the bitvectors being appropriated for the matrix
+     * @return an {@code EnhancedBitMatrix} whos rows are {@code rows} 
+     */
+    public static EnhancedBitMatrix directFromRows( List<BitVector> rows ) {
+        return new EnhancedBitMatrix( rows );
+        
+    }
     public static class SingularMatrixException extends Exception {
         private static final long serialVersionUID = -1261170128691437282L;
 
@@ -494,6 +507,12 @@ public class EnhancedBitMatrix {
 
     public BitVector getRow(int i) {
         return rows.get( i ).copy();
+    }
+    
+    public void addRow( BitVector row ) {
+        int numCols = cols();
+        Preconditions.checkArgument( (numCols==0) || (row.size() == numCols ) , "New row must have the same number of columns as matrix.");
+        rows.add( row );
     }
     
 }
