@@ -1,5 +1,5 @@
 kryptnostic-api
 ===============
 
-Interfaces and request model for interacting with Kryptnostic services.
+Interfaces and models for kryptnostic core crypto libraries.
 

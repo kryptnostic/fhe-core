@@ -1,5 +1,7 @@
 package com.kryptnostic.multivariate.gf2;
 
+import java.util.List;
+
 import cern.colt.bitvector.BitVector;
 
 import com.codahale.metrics.annotation.Timed;
@@ -32,14 +34,6 @@ public interface SimplePolynomialFunction extends PolynomialFunction {
     SimplePolynomialFunction partialComposeLeft(SimplePolynomialFunction inner);
     
     /**
-     * 
-     * @return a new function that represents the partial composition of this function and 
-     * inner, such that evaluating it is equivalent to {@code this.evaluate(lhs, inner.evaluate( rhs ))}  
-     */
-    @Timed 
-    SimplePolynomialFunction partialComposeRight(SimplePolynomialFunction inner);
-    
-    /**
      * Computes this( [ lhs( x ) , rhs( y) ] ) 
      * @param lhs
      * @param rhs
@@ -56,6 +50,9 @@ public interface SimplePolynomialFunction extends PolynomialFunction {
     
     @Timed
     SimplePolynomialFunction deoptimize();
+    
+    @Timed
+    List<SimplePolynomialFunction> split( int ... splitPoints );
     
     Monomial[] getMonomials();
     BitVector[] getContributions();

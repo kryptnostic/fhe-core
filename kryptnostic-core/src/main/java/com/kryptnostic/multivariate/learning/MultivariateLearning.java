@@ -106,8 +106,8 @@ public class MultivariateLearning {
 	public static EnhancedBitMatrix learnCoefficients(List<BitVector> inputs, List<BitVector> outputs) {
 		EnhancedBitMatrix coefficients;
 		
-		EnhancedBitMatrix outputsTransposed = new EnhancedBitMatrix( outputs ).tranpose();
-		EnhancedBitMatrix inputsTransposed = new EnhancedBitMatrix( inputs ).tranpose();
+		EnhancedBitMatrix outputsTransposed = new EnhancedBitMatrix( outputs ).transpose();
+		EnhancedBitMatrix inputsTransposed = new EnhancedBitMatrix( inputs ).transpose();
 		try {
 			EnhancedBitMatrix generalizedInverseInputs = inputsTransposed.rightGeneralizedInverse();
 			coefficients = outputsTransposed.multiply( generalizedInverseInputs );
