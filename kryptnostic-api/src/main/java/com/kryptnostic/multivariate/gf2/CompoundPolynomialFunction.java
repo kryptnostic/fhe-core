@@ -2,12 +2,15 @@ package com.kryptnostic.multivariate.gf2;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 
 
 /**
  * This funct 
  * @author Matthew Tamayo-Rios
  */
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 public interface CompoundPolynomialFunction extends PolynomialFunction {
     List<SimplePolynomialFunction> getFunctions();
     void composeHeadDirectly( SimplePolynomialFunction inner);

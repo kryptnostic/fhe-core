@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 
 import cern.colt.bitvector.BitVector;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -42,7 +44,12 @@ import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunc
  * @author Matthew Tamayo-Rios
  */
 public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 implements SimplePolynomialFunction {
-    private static final Logger logger = LoggerFactory.getLogger( BasePolynomialFunction.class );
+    private static final String INPUT_LENGTH_PROPERTY = "input-length";
+    private static final String OUTPUT_LENGTH_PROPERTY = "output-length";
+    private static final String MONOMIALS_PROPERTY = "monomials";
+    private static final String CONTRIBUTIONS_PROPERTY = "contributions";
+
+    private static final Logger logger = LoggerFactory.getLogger(BasePolynomialFunction.class);
     private final Lock productLock = new ReentrantLock();
     protected static final Predicate<BitVector> notNilContributionPredicate = new Predicate<BitVector>() {
         @Override
@@ -56,7 +63,10 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         }
     };
 
-    public BasePolynomialFunction(int inputLength, int outputLength, Monomial[] monomials, BitVector[] contributions) {
+    public BasePolynomialFunction(@JsonProperty(INPUT_LENGTH_PROPERTY) int inputLength,
+            @JsonProperty(OUTPUT_LENGTH_PROPERTY) int outputLength,
+            @JsonProperty(MONOMIALS_PROPERTY) Monomial[] monomials,
+            @JsonProperty(CONTRIBUTIONS_PROPERTY) BitVector[] contributions) {
         super(inputLength, outputLength, monomials, contributions);
 
     }
@@ -248,6 +258,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         return new BasePolynomialFunction(inputLength, outputLength, newMonomials, newContributions);
     }
 
+    @JsonIgnore
     @Override
     public int getTotalMonomialCount() {
         int count = 0;
@@ -257,6 +268,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         return count;
     }
 
+    @JsonIgnore
     @Override
     public int getMaximumMonomialOrder() {
         int maxOrder = 0;
@@ -472,6 +484,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         return new BasePolynomialFunction(monomials[0].size(), contributions.length, monomials, contributions);
     }
 
+    @JsonIgnore
     @Override
     public boolean isParameterized() {
         return false;
@@ -690,71 +703,79 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
 
     @Override
     public List<SimplePolynomialFunction> split(int... splitPoints) {
-        Preconditions.checkArgument( splitPoints.length > 0  );
-        List<SimplePolynomialFunction> functions = Lists.newArrayListWithCapacity( splitPoints.length + 1 );
+        Preconditions.checkArgument(splitPoints.length > 0);
+        List<SimplePolynomialFunction> functions = Lists.newArrayListWithCapacity(splitPoints.length + 1);
         int last = 0;
-        for( int i = 0 ; i < splitPoints.length; ++i ) {
-            Preconditions.checkArgument( splitPoints[ i ] < inputLength );
-            List<Monomial> newMonomials = Lists.newArrayListWithExpectedSize( monomials.length );
-            List<BitVector> newContributions = Lists.newArrayListWithExpectedSize( contributions.length );
-            for( int j = 0 ; j < contributions.length ; ++j ) {
-                BitVector newContribution =  contributions[ j ].partFromTo( last , splitPoints[ i ] );
-                if( newContribution.cardinality() != 0 ) { 
-                    newMonomials.add( monomials[ j ] );
-                    newContributions.add( newContribution );
-                } 
+        for (int i = 0; i < splitPoints.length; ++i) {
+            Preconditions.checkArgument(splitPoints[i] < inputLength);
+            List<Monomial> newMonomials = Lists.newArrayListWithExpectedSize(monomials.length);
+            List<BitVector> newContributions = Lists.newArrayListWithExpectedSize(contributions.length);
+            for (int j = 0; j < contributions.length; ++j) {
+                BitVector newContribution = contributions[j].partFromTo(last, splitPoints[i]);
+                if (newContribution.cardinality() != 0) {
+                    newMonomials.add(monomials[j]);
+                    newContributions.add(newContribution);
+                }
             }
-            functions.add( new OptimizedPolynomialFunctionGF2( inputLength , outputLength , newMonomials.toArray( new Monomial[0] ) , newContributions.toArray( new BitVector[0] ) ) );
-            last = splitPoints[ i ] + 1;
+            functions.add(new OptimizedPolynomialFunctionGF2(inputLength, outputLength, newMonomials
+                    .toArray(new Monomial[0]), newContributions.toArray(new BitVector[0])));
+            last = splitPoints[i] + 1;
         }
-        
+
         return functions;
     }
-    
+
     @Override
     public SimplePolynomialFunction partialComposeLeft(SimplePolynomialFunction inner) {
         Preconditions.checkArgument(inner.getOutputLength() <= getInputLength(),
                 "Inner function output length cannot be larger than outer function input length.");
-//        SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
-//        SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs(inner, identity);
-        SimplePolynomialFunction packed = partialComposePackInner( inner );
+        // SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
+        // SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs(inner, identity);
+        SimplePolynomialFunction packed = partialComposePackInner(inner);
         return this.compose(packed);
     }
-    
-    private SimplePolynomialFunction partialComposePackInner(SimplePolynomialFunction inner ) {
-        int innerPipelineOutputLength = ((ParameterizedPolynomialFunctionGF2)inner).getPipelineOutputLength();
+
+    private SimplePolynomialFunction partialComposePackInner(SimplePolynomialFunction inner) {
+        int innerPipelineOutputLength = ( (ParameterizedPolynomialFunctionGF2) inner ).getPipelineOutputLength();
         int identityLength = inputLength - inner.getOutputLength();
         int innerInputLength = inner.getInputLength() + innerPipelineOutputLength;
         int paramInputLength = inner.getInputLength() + identityLength;
         int newInputLength = innerInputLength + identityLength;
-        
+
         Monomial[] unshiftedInnerMonomials = inner.getMonomials();
         BitVector[] unshiftedInnerContributions = inner.getContributions();
-        
-        Monomial[] shiftedInnerMonomials = new Monomial[ unshiftedInnerContributions.length + inputLength - inner.getOutputLength() ];
-        BitVector[] shiftedInnerContributions = new BitVector[ unshiftedInnerContributions.length + inputLength - inner.getOutputLength() ];
-        
-        for( int i = 0 ; i < unshiftedInnerMonomials.length; ++i ) {
-            shiftedInnerMonomials[ i ] = unshiftedInnerMonomials[ i ].extendAndMapRanges( newInputLength , new int[]{0, inner.getInputLength() } , new int[][] {{0,inner.getInputLength() - 1 },{  paramInputLength , newInputLength - 1 } } );
-            BitVector contributionToExtend = unshiftedInnerContributions[ i ].copy();
-            contributionToExtend.setSize( inputLength );
-            shiftedInnerContributions[ i ] = contributionToExtend;
+
+        Monomial[] shiftedInnerMonomials = new Monomial[unshiftedInnerContributions.length + inputLength
+                - inner.getOutputLength()];
+        BitVector[] shiftedInnerContributions = new BitVector[unshiftedInnerContributions.length + inputLength
+                - inner.getOutputLength()];
+
+        for (int i = 0; i < unshiftedInnerMonomials.length; ++i) {
+            shiftedInnerMonomials[i] = unshiftedInnerMonomials[i].extendAndMapRanges(newInputLength, new int[] { 0,
+                    inner.getInputLength() }, new int[][] { { 0, inner.getInputLength() - 1 },
+                    { paramInputLength, newInputLength - 1 } });
+            BitVector contributionToExtend = unshiftedInnerContributions[i].copy();
+            contributionToExtend.setSize(inputLength);
+            shiftedInnerContributions[i] = contributionToExtend;
         }
-        
-        for( int i = 0 ; i < identityLength; ++i ) {
-            shiftedInnerMonomials[ unshiftedInnerMonomials.length + i ] = Monomial.linearMonomial( newInputLength , i + inner.getInputLength() );
-            BitVector identityContribution = new BitVector( inputLength );
-            identityContribution.set( inner.getOutputLength() + i );
-            shiftedInnerContributions[ unshiftedInnerMonomials.length + i ] = identityContribution; 
+
+        for (int i = 0; i < identityLength; ++i) {
+            shiftedInnerMonomials[unshiftedInnerMonomials.length + i] = Monomial.linearMonomial(newInputLength, i
+                    + inner.getInputLength());
+            BitVector identityContribution = new BitVector(inputLength);
+            identityContribution.set(inner.getOutputLength() + i);
+            shiftedInnerContributions[unshiftedInnerMonomials.length + i] = identityContribution;
         }
-        
-        List<CompoundPolynomialFunction> cpfs = ((ParameterizedPolynomialFunctionGF2)inner).getPipelines();
-        List<CompoundPolynomialFunction> newCpfs = Lists.newArrayListWithCapacity( cpfs.size() );
-        
-        for( CompoundPolynomialFunction cpf : cpfs ) {
-            newCpfs.add( cpf.copy().prefix( PolynomialFunctions.lowerTruncatingIdentity( paramInputLength , inner.getInputLength() ) ) );
+
+        List<CompoundPolynomialFunction> cpfs = ( (ParameterizedPolynomialFunctionGF2) inner ).getPipelines();
+        List<CompoundPolynomialFunction> newCpfs = Lists.newArrayListWithCapacity(cpfs.size());
+
+        for (CompoundPolynomialFunction cpf : cpfs) {
+            newCpfs.add(cpf.copy().prefix(
+                    PolynomialFunctions.lowerTruncatingIdentity(paramInputLength, inner.getInputLength())));
         }
-        
-        return new ParameterizedPolynomialFunctionGF2( paramInputLength, inputLength , shiftedInnerMonomials , shiftedInnerContributions , newCpfs );
+
+        return new ParameterizedPolynomialFunctionGF2(paramInputLength, inputLength, shiftedInnerMonomials,
+                shiftedInnerContributions, newCpfs);
     }
 }

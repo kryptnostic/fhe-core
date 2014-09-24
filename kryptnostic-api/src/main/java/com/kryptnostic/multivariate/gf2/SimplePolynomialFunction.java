@@ -5,7 +5,9 @@ import java.util.List;
 import cern.colt.bitvector.BitVector;
 
 import com.codahale.metrics.annotation.Timed;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 public interface SimplePolynomialFunction extends PolynomialFunction {
     @Timed
     SimplePolynomialFunction xor( SimplePolynomialFunction input );

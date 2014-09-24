@@ -7,6 +7,7 @@ import java.util.List;
 import cern.colt.bitvector.BitVector;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -94,6 +95,7 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
         return apply(FunctionUtils.concatenate(lhs, rhs));
     }
 
+    @JsonIgnore
     @Override
     public int getInputLength() {
         if (functions.isEmpty()) {
@@ -102,6 +104,7 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
         return functions.getFirst().getInputLength();
     }
 
+    @JsonIgnore
     @Override
     public int getOutputLength() {
         if (functions.isEmpty()) {
@@ -124,6 +127,7 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
         return Collections.unmodifiableList(functions);
     }
 
+    @JsonIgnore
     @Override
     public int count() {
         return functions.size();
