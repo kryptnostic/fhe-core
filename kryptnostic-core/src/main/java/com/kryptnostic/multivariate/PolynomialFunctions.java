@@ -317,7 +317,7 @@ public final class PolynomialFunctions {
         }
         return new BasePolynomialFunction(inputLength, outputLength, monomials, contributions);
     }
-    
+
     public static SimplePolynomialFunction identityRange( int start, int end, int inputLength , int outputLength) {
         int len = end-start;
         Monomial[] monomials = new Monomial[len];

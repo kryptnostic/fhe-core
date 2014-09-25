@@ -6,10 +6,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
+import cern.colt.bitvector.BitVector;
+
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.Monomial;
 
 public class Monomials {
@@ -98,5 +101,14 @@ public class Monomials {
      */
     public static Integer indexOfSorted(List<Monomial> monomials, Monomial m) {
     	return Collections.binarySearch(monomials, m, comparator);
+    }
+
+    public static String marshallMonomial(Monomial value) {
+        return BitVectors.marshalBitvector(value);
+    }
+
+    public static Monomial unmarshallMonomial(String input) {
+        BitVector parent = BitVectors.unmarshalBitvector(input);
+        return new Monomial(parent.elements(), parent.size());
     }
 }

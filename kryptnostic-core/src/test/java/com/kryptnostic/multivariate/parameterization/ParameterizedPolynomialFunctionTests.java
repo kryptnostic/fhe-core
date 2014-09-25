@@ -16,6 +16,7 @@ public class ParameterizedPolynomialFunctionTests {
     public void testConcatenateInputsAndOutputs() throws Exception {
         SimplePolynomialFunction function = PolynomialFunctions.randomFunction(128, 64);
         SimplePolynomialFunction function2 = PolynomialFunctions.randomFunction(128, 128);
+
         SimplePolynomialFunction function3 = PolynomialFunctions.randomFunction(128, 128);
         SimplePolynomialFunction[] pipeline = { function3 };
 

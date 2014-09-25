@@ -1,11 +1,11 @@
 package com.kryptnostic.multivariate.gf2;
 
-import java.util.List;
-
 import cern.colt.bitvector.BitVector;
 
 import com.codahale.metrics.annotation.Timed;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 public interface SimplePolynomialFunction extends PolynomialFunction {
     @Timed
     SimplePolynomialFunction xor( SimplePolynomialFunction input );
@@ -51,12 +51,10 @@ public interface SimplePolynomialFunction extends PolynomialFunction {
     @Timed
     SimplePolynomialFunction deoptimize();
     
-    @Timed
-    List<SimplePolynomialFunction> split( int ... splitPoints );
-    
     Monomial[] getMonomials();
     BitVector[] getContributions();
     int getTotalMonomialCount();
     int getMaximumMonomialOrder();
     boolean isParameterized();
+
 }

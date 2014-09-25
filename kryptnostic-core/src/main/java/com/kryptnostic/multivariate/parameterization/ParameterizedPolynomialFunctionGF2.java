@@ -5,6 +5,9 @@ import java.util.List;
 
 import cern.colt.bitvector.BitVector;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -20,7 +23,9 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
  * 
  * @author mtamayo
  */
-public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunctionGF2 {
+public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunctionGF2 implements SimplePolynomialFunction {
+    private static final String PIPELINES_PROPERTY = "property";
+    
     private final List<CompoundPolynomialFunction> pipelines;
     
     /**
@@ -30,7 +35,13 @@ public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunct
      * @param contributions
      * @param pipelines
      */
-    public ParameterizedPolynomialFunctionGF2(int inputLength, int outputLength,Monomial[] monomials, BitVector[] contributions, Iterable<CompoundPolynomialFunction> pipelines) {
+    @JsonCreator
+    public ParameterizedPolynomialFunctionGF2(
+            @JsonProperty( INPUT_LENGTH_PROPERTY ) int inputLength, 
+            @JsonProperty( OUTPUT_LENGTH_PROPERTY ) int outputLength,
+            @JsonProperty( MONOMIALS_PROPERTY ) Monomial[] monomials,
+            @JsonProperty( CONTRIBUTIONS_PROPERTY ) BitVector[] contributions,
+            @JsonProperty( PIPELINES_PROPERTY ) Iterable<CompoundPolynomialFunction> pipelines) {
         super( inputLength, outputLength, monomials, contributions);
         Preconditions.checkArgument( !Iterables.isEmpty( pipelines ) ,"There must be a least one function in the provided chain.");
         for( CompoundPolynomialFunction pipeline : pipelines ) {
@@ -67,10 +78,12 @@ public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunct
         return true;
     }
     
+    @JsonProperty( PIPELINES_PROPERTY )
     public List<CompoundPolynomialFunction> getPipelines() {
         return Collections.unmodifiableList( pipelines );
     }
     
+    @JsonIgnore
     public int getPipelineOutputLength() {
         int inputLength = 0;
         for( CompoundPolynomialFunction pipeline : pipelines ) {

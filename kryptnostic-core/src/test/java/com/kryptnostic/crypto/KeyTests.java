@@ -8,12 +8,11 @@ import org.slf4j.LoggerFactory;
 
 import cern.colt.bitvector.BitVector;
 
-import com.kryptnostic.crypto.Ciphertext;
-import com.kryptnostic.crypto.PrivateKey;
-import com.kryptnostic.crypto.PublicKey;
 import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
+import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctions;
+import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 public class KeyTests {
@@ -92,6 +91,32 @@ public class KeyTests {
 			
 			Assert.assertEquals(found, plainText);
 		}
+    }
+    
+    @Test
+    public void testComputePartialHomomorphism() {
+        SimplePolynomialFunction mvq = PolynomialFunctions.denseRandomMultivariateQuadratic(256, 64);
+        SimplePolynomialFunction composed = mvq.partialComposeLeft(decryptor);
+        
+        BitVector plaintext = BitUtils.randomVector(256);
+        BitVector rhPlaintext = BitUtils.subVector(plaintext, 1, 4);
+        long[] backingLhPlaintext = {plaintext.elements()[0]};
+        BitVector lhPlaintext = new BitVector(backingLhPlaintext, 64);
+        
+        BitVector lhCipher = encryptor.apply(lhPlaintext, BitUtils.randomVector(64));
+        
+        BitVector expected = mvq.apply(plaintext);
+        BitVector actual = composed.apply(FunctionUtils.concatenate(lhCipher, rhPlaintext));
+        
+        Assert.assertEquals(expected, actual);
+    }
+    
+    @Test
+    public void testEncryptDecryptAgain() {
+        BitVector plainText = BitUtils.randomVector(64);
+        BitVector cipherText = encryptor.apply(plainText, BitUtils.randomVector(64));
+        BitVector recovered = decryptor.apply(cipherText);
+        Assert.assertEquals(plainText, recovered);
     }
     
     // TODO uncomment when bug in concatenate ParameterizedPolynomialFunctionGF2 is fixed

@@ -30,6 +30,7 @@ import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
 
 @Configuration
 public class PolynomialFunctionTests {
@@ -174,6 +175,22 @@ public class PolynomialFunctionTests {
             Assert.assertEquals(outerResult, composedResult);
         }
     }
+    
+    @Timed
+    public void testGeneralComposeParameterized() {
+        SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(128, 64);
+        SimplePolynomialFunction other = PolynomialFunctions.randomFunction(128, 128);
+        SimplePolynomialFunction[] pipelines = {PolynomialFunctions.identity(128)};
+        SimplePolynomialFunction inner = ParameterizedPolynomialFunctions.fromUnshiftedVariables(other.getInputLength(), other, pipelines);
+        
+        SimplePolynomialFunction composed = outer.compose(inner);
+        
+        BitVector input = BitUtils.randomVector(128);
+        BitVector intermediate = inner.apply(input);
+        BitVector expected = outer.apply(intermediate);
+        BitVector actual = composed.apply(input);
+        Assert.assertEquals(expected, actual);
+    }
 
     @Timed
     public void partialComposeTest() {
@@ -181,7 +198,7 @@ public class PolynomialFunctionTests {
         SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(INPUT_LENGTH, INPUT_LENGTH >> 1);
 
         SimplePolynomialFunction composedLeft = outer.partialComposeLeft(inner);
-//        SimplePolynomialFunction composedRight = outer.partialComposeRight(inner);
+
 
         for (int i = 0; i < 25; ++i) {
             BitVector innerInput = BitUtils.randomVector(inner.getInputLength());
@@ -191,11 +208,6 @@ public class PolynomialFunctionTests {
             BitVector composedLeftExpected = outer.apply(leftInnerResult, remainderInput);
             BitVector composedLeftFound = composedLeft.apply(innerInput, remainderInput);
             Assert.assertEquals(composedLeftExpected, composedLeftFound);
-            
-            BitVector rightInnerResult = inner.apply(innerInput);
-            BitVector composedRightExpected = outer.apply(remainderInput, rightInnerResult);
-//            BitVector composedRightFound = composedRight.apply(remainderInput, innerInput);
-//            Assert.assertEquals(composedRightExpected, composedRightFound);
         }
     }
 

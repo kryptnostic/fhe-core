@@ -88,7 +88,7 @@ public class HomomorphicFunctions {
          *  [         decryptor inputLength        ]  ===> [                    newSize                     ]
          *  [ input monomials | pipeline monomials ]  ===> [ lhsInput| rhsInput | lhsPipeline | rhsPipeline ] 
          */
-        int [][] srcRanges = new int[][] {{ 0 , input } , { input, pipeline } };
+        int [] srcRanges = new int[] { 0 , input , input, pipeline } ;
         int [][] lhsDstRanges = new int[][] {{ 0 , lhsInput } , { rhsInput, lhsPipeline } };
         int [][] rhsDstRanges = new int[][] {{ lhsInput , rhsInput } , { lhsPipeline , rhsPipeline } };
         
@@ -96,8 +96,8 @@ public class HomomorphicFunctions {
         List<CompoundPolynomialFunction> newRhsPipeline = Lists.newArrayListWithCapacity( decryptor.getPipelines().size() );
         
         for( CompoundPolynomialFunction f : decryptor.getPipelines() ) {
-            newLhsPipeline.add( ParameterizedPolynomialFunctions.extendAndMap( rhsInput , new int[][] {{ 0 , input }}  ,  new int[][] {{ 0 , lhsInput }} , f ) );
-            newRhsPipeline.add( ParameterizedPolynomialFunctions.extendAndMap( rhsInput , new int[][] {{ 0 , input }} , new int[][] {{ lhsInput , rhsInput }} , f ) );
+            newLhsPipeline.add( ParameterizedPolynomialFunctions.extendAndMap( rhsInput , new int[] { 0 , input }  ,  new int[][] {{ 0 , lhsInput }} , f ) );
+            newRhsPipeline.add( ParameterizedPolynomialFunctions.extendAndMap( rhsInput , new int[] { 0 , input } , new int[][] {{ lhsInput , rhsInput }} , f ) );
         }
         
         for( int i = 0 ; i < monomials.length ; ++i ) {

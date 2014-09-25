@@ -20,10 +20,10 @@ import com.kryptnostic.multivariate.gf2.Monomial;
  * @author Matthew Tamayo-Rios
  */
 public class PolynomialFunctionRepresentationGF2 {
-    private static final String INPUT_LENGTH_PROPERTY = "input-length";
-    private static final String OUTPUT_LENGTH_PROPERTY = "output-length";
-    private static final String MONOMIALS_PROPERTY = "monomials";
-    private static final String CONTRIBUTIONS_PROPERTY = "contributions";
+    protected static final String INPUT_LENGTH_PROPERTY = "input-length";
+    protected static final String OUTPUT_LENGTH_PROPERTY = "output-length";
+    protected static final String MONOMIALS_PROPERTY = "monomials";
+    protected static final String CONTRIBUTIONS_PROPERTY = "contributions";
 
     protected final int inputLength;
     protected final int outputLength;

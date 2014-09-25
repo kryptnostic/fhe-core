@@ -9,6 +9,7 @@ import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 public class PolynomialFunctionsTests {
+
     @Test
     public void testLowerTruncatingIdentity() {
         SimplePolynomialFunction truncatingIdentity = PolynomialFunctions.lowerTruncatingIdentity(128, 64);
@@ -24,5 +25,5 @@ public class PolynomialFunctionsTests {
         BitVector output = truncatingIdentity.apply(input);
         Assert.assertEquals(BitUtils.subVector(input, 1, 2), output);
     }
-    
+
 }

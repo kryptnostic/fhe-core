@@ -157,17 +157,15 @@ public class Monomial extends BitVector {
         return copy;
     }
 
-    public Monomial extendAndMapRanges(int newSize, int[][] srcRanges, int[][] dstRanges) {
+    public Monomial extendAndMapRanges(int newSize, int[] srcRanges, int[][] dstRanges) {
         Preconditions.checkArgument(srcRanges.length == dstRanges.length,
                 "Source and destination ranges must be of the same length.");
-        Monomial copy = clone();
-        copy.setSize(newSize);
+        Monomial result = new Monomial( newSize );
+        result.setSize(newSize);
         for (int i = 0; i < srcRanges.length; ++i) {
-            int srcIndex = srcRanges[i][0] >>> 6;
-            int dstIndex = dstRanges[i][0] >>> 6;
-            copy.bits[dstIndex] = bits[srcIndex];
+            result.replaceFromToWith(dstRanges[i][0] , dstRanges[i][1] , this , srcRanges[i] );
         }
-        return copy;
+        return result;
     }
 
     public static Monomial randomMonomial(int size, int maxOrder) {
