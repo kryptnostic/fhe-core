@@ -19,11 +19,6 @@ import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
-    private static final String INPUT_LENGTH_PROPERTY = "input-length";
-    private static final String OUTPUT_LENGTH_PROPERTY = "output-length";
-    private static final String MONOMIALS_PROPERTY = "monomials";
-    private static final String CONTRIBUTIONS_PROPERTY = "contributions";
-
     private static final Logger logger = LoggerFactory.getLogger(OptimizedPolynomialFunctionGF2.class);
     protected static final int CONCURRENCY_LEVEL = Runtime.getRuntime().availableProcessors() - 1;
     protected static final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors

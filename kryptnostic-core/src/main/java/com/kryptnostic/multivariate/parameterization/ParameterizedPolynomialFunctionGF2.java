@@ -24,10 +24,6 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
  * @author mtamayo
  */
 public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunctionGF2 implements SimplePolynomialFunction {
-    private static final String INPUT_LENGTH_PROPERTY = "input-length";
-    private static final String OUTPUT_LENGTH_PROPERTY = "output-length";
-    private static final String MONOMIALS_PROPERTY = "monomials";
-    private static final String CONTRIBUTIONS_PROPERTY = "contributions";
     private static final String PIPELINES_PROPERTY = "property";
     
     private final List<CompoundPolynomialFunction> pipelines;

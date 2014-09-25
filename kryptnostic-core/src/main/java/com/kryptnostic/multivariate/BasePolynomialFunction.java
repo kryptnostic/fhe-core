@@ -40,11 +40,6 @@ import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunc
  * @author Matthew Tamayo-Rios
  */
 public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 implements SimplePolynomialFunction {
-    private static final String INPUT_LENGTH_PROPERTY = "input-length";
-    private static final String OUTPUT_LENGTH_PROPERTY = "output-length";
-    private static final String MONOMIALS_PROPERTY = "monomials";
-    private static final String CONTRIBUTIONS_PROPERTY = "contributions";
-
     private static final Logger logger = LoggerFactory.getLogger(BasePolynomialFunction.class);
     private final Lock productLock = new ReentrantLock();
     
