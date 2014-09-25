@@ -70,7 +70,7 @@ public final class ParameterizedPolynomialFunctions {
 
     public static CompoundPolynomialFunction extendAndMap(int extendedSize, int[] srcRanges, int[][] dstRanges,
             CompoundPolynomialFunction f) {
-        Iterator<SimplePolynomialFunction> fIter = f.getFunctions().iterator();
+        Iterator<PolynomialFunction> fIter = f.getFunctions().iterator();
         PolynomialFunction pf = fIter.next();
         SimplePolynomialFunction extended = null;
         for (int i = 0; i < srcRanges.length; ++i) {
@@ -90,7 +90,7 @@ public final class ParameterizedPolynomialFunctions {
 
         }
 
-        List<SimplePolynomialFunction> newFunctions = Lists.newArrayListWithCapacity(f.getFunctions().size());
+        List<PolynomialFunction> newFunctions = Lists.newArrayListWithCapacity(f.getFunctions().size());
         newFunctions.add(extended);
         while (fIter.hasNext()) {
             newFunctions.add(fIter.next());
@@ -101,8 +101,8 @@ public final class ParameterizedPolynomialFunctions {
 
     public static CompoundPolynomialFunction extendAndShift(int extendedSize, int baseIndex, int shiftSize,
             CompoundPolynomialFunction f) {
-        List<SimplePolynomialFunction> functions = f.getFunctions();
-        List<SimplePolynomialFunction> newFunctions = Lists.newArrayListWithCapacity(functions.size());
+        List<PolynomialFunction> functions = f.getFunctions();
+        List<PolynomialFunction> newFunctions = Lists.newArrayListWithCapacity(functions.size());
         for (PolynomialFunction pf : functions) {
             Preconditions.checkState(pf instanceof SimplePolynomialFunction, "Every function in pipeline ");
             SimplePolynomialFunction spf = (SimplePolynomialFunction) pf;

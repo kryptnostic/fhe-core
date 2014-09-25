@@ -12,12 +12,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 public interface CompoundPolynomialFunction extends PolynomialFunction {
-    List<SimplePolynomialFunction> getFunctions();
+    List<PolynomialFunction> getFunctions();
     void composeHeadDirectly( SimplePolynomialFunction inner);
-    CompoundPolynomialFunction compose( SimplePolynomialFunction inner );
+    CompoundPolynomialFunction compose( PolynomialFunction inner );
     CompoundPolynomialFunction compose( CompoundPolynomialFunction inner );
-    CompoundPolynomialFunction prefix( SimplePolynomialFunction inner );
-    CompoundPolynomialFunction suffix( SimplePolynomialFunction inner );
+    CompoundPolynomialFunction prefix( PolynomialFunction inner );
+    CompoundPolynomialFunction suffix( PolynomialFunction inner );
     CompoundPolynomialFunction copy();
     /**
      * @return The number of polynomial functions in this compoud polynomial function.

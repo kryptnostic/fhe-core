@@ -26,15 +26,15 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
  */
 public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction {
     private static final String FUNCTIONS_PROPERTY = "functions";
-    private final LinkedList<SimplePolynomialFunction> functions;
+    private final LinkedList<PolynomialFunction> functions;
 
     public CompoundPolynomialFunctionGF2() {
-        this(ImmutableList.<SimplePolynomialFunction> of());
+        this(ImmutableList.<PolynomialFunction> of());
     }
 
     @JsonCreator
     public CompoundPolynomialFunctionGF2(
-            @JsonProperty(FUNCTIONS_PROPERTY) List<SimplePolynomialFunction> functions) {
+            @JsonProperty(FUNCTIONS_PROPERTY) List<? extends PolynomialFunction> functions) {
         this.functions = Lists.newLinkedList(functions);
     }
 
@@ -48,7 +48,7 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
     }
 
     @Override
-    public CompoundPolynomialFunction compose(SimplePolynomialFunction inner) {
+    public CompoundPolynomialFunction compose(PolynomialFunction inner) {
         validateForCompose(inner);
         CompoundPolynomialFunctionGF2 cpf = copy();
         cpf.functions.addFirst(inner);
@@ -56,14 +56,14 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
     }
 
     @Override
-    public CompoundPolynomialFunction prefix(SimplePolynomialFunction inner) {
+    public CompoundPolynomialFunction prefix(PolynomialFunction inner) {
         validateForCompose(inner);
         functions.addFirst(inner);
         return this;
     }
 
     @Override
-    public CompoundPolynomialFunction suffix(SimplePolynomialFunction inner) {
+    public CompoundPolynomialFunction suffix(PolynomialFunction inner) {
         Preconditions.checkArgument(getOutputLength() == inner.getInputLength(),
                 "Function being appeneded must have the same length.");
         functions.addLast(inner);
@@ -123,7 +123,7 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
 
     @JsonProperty( FUNCTIONS_PROPERTY )
     @Override
-    public List<SimplePolynomialFunction> getFunctions() {
+    public List<PolynomialFunction> getFunctions() {
         return Collections.unmodifiableList(functions);
     }
 
@@ -135,7 +135,7 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
 
     @Override
     public void composeHeadDirectly(SimplePolynomialFunction inner) {
-        Preconditions.checkArgument(functions.getFirst() instanceof SimplePolynomialFunction,
+        Preconditions.checkArgument(functions.getFirst() instanceof PolynomialFunction,
                 "Cannot compose function that isn't of type SimplePolynomialFunction.");
         SimplePolynomialFunction outer = (SimplePolynomialFunction) functions.getFirst();
         functions.set(0, outer.compose(inner));
