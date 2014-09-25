@@ -699,30 +699,6 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
     }
 
     @Override
-    public List<SimplePolynomialFunction> split(int... splitPoints) {
-        Preconditions.checkArgument(splitPoints.length > 0);
-        List<SimplePolynomialFunction> functions = Lists.newArrayListWithCapacity(splitPoints.length + 1);
-        int last = 0;
-        for (int i = 0; i < splitPoints.length; ++i) {
-            Preconditions.checkArgument(splitPoints[i] < inputLength);
-            List<Monomial> newMonomials = Lists.newArrayListWithExpectedSize(monomials.length);
-            List<BitVector> newContributions = Lists.newArrayListWithExpectedSize(contributions.length);
-            for (int j = 0; j < contributions.length; ++j) {
-                BitVector newContribution = contributions[j].partFromTo(last, splitPoints[i]);
-                if (newContribution.cardinality() != 0) {
-                    newMonomials.add(monomials[j]);
-                    newContributions.add(newContribution);
-                }
-            }
-            functions.add(new OptimizedPolynomialFunctionGF2(inputLength, outputLength, newMonomials
-                    .toArray(new Monomial[0]), newContributions.toArray(new BitVector[0])));
-            last = splitPoints[i] + 1;
-        }
-
-        return functions;
-    }
-
-    @Override
     public SimplePolynomialFunction partialComposeLeft(SimplePolynomialFunction inner) {
         Preconditions.checkArgument(inner.getOutputLength() <= getInputLength(),
                 "Inner function output length cannot be larger than outer function input length.");
