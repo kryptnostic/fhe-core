@@ -33,6 +33,9 @@ allprojects {
             maxParallelForks = project.maxParallelForks as int
         if (project.hasProperty('forkEvery')) 
             forkEvery = project.forkEvery as int
+        testLogging {
+          events "passed", "skipped", "failed"
+        }
     }
 
     task sourcesJar (type : Jar) {
