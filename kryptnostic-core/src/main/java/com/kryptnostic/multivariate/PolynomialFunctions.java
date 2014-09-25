@@ -18,7 +18,6 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.primitives.Longs;
 import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
@@ -317,6 +316,22 @@ public final class PolynomialFunctions {
             contributions[i] = contribution;
         }
         return new BasePolynomialFunction(inputLength, outputLength, monomials, contributions);
+    }
+
+    public static SimplePolynomialFunction identityRange( int start, int end, int inputLength , int outputLength) {
+        int len = end-start;
+        Monomial[] monomials = new Monomial[len];
+        BitVector[] contributions = new BitVector[len];
+
+        for (int i = 0; i < len; ++i) {
+//            int adjustedIndex = i + start;
+            monomials[i] = Monomial.linearMonomial(inputLength, i);
+            BitVector contribution = new BitVector(outputLength);
+            contribution.set(i);
+            contributions[i] = contribution;
+        }
+
+        return new OptimizedPolynomialFunctionGF2(inputLength, outputLength, monomials, contributions);
     }
 
     /**

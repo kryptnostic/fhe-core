@@ -30,7 +30,6 @@ import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
 
 @Configuration
@@ -199,6 +198,7 @@ public class PolynomialFunctionTests {
         SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(INPUT_LENGTH, INPUT_LENGTH >> 1);
 
         SimplePolynomialFunction composedLeft = outer.partialComposeLeft(inner);
+
 
         for (int i = 0; i < 25; ++i) {
             BitVector innerInput = BitUtils.randomVector(inner.getInputLength());

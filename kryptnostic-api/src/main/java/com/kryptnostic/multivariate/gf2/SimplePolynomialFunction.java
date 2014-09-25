@@ -53,11 +53,13 @@ public interface SimplePolynomialFunction extends PolynomialFunction {
     @Timed
     SimplePolynomialFunction deoptimize();
     
+    @Timed
+    List<SimplePolynomialFunction> split( int ... splitPoints );
+    
     Monomial[] getMonomials();
     BitVector[] getContributions();
     int getTotalMonomialCount();
     int getMaximumMonomialOrder();
     boolean isParameterized();
 
-    List<SimplePolynomialFunction> split(int[] splitPoints);
 }

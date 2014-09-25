@@ -25,4 +25,5 @@ public class PolynomialFunctionsTests {
         BitVector output = truncatingIdentity.apply(input);
         Assert.assertEquals(BitUtils.subVector(input, 1, 2), output);
     }
+
 }

@@ -294,5 +294,30 @@ public final class ParameterizedPolynomialFunctions {
         
         throw new Exception();
     }
-
+    
+    public static SimplePolynomialFunction extendWithIdentity( SimplePolynomialFunction inner , int desiredLength , int outputLength ) {
+        Monomial[]  monomials = inner.getMonomials();
+        BitVector[] contributions = inner.getContributions();
+        
+        Monomial[] newMonomials = new Monomial[ monomials.length + desiredLength ];
+        BitVector[] newContributions = new BitVector[ newMonomials.length ];
+        
+        int difference = desiredLength - (((ParameterizedPolynomialFunctionGF2)inner).getPipelineOutputLength() + inner.getInputLength() );
+        int newOutputLength = inner.getOutputLength() + difference;
+        for( int i = 0 ; i < monomials.length; ++i ) {
+            newMonomials[ i ] = monomials[ i ].extend( desiredLength );
+            newContributions[ i ] = contributions[ i ].copy();
+            newContributions[ i ].setSize( newOutputLength );
+        }
+        
+        
+        for( int i = 0; i < difference  ; ++i ) {
+            int index = monomials.length + i;
+            newMonomials[ index ] = Monomial.linearMonomial( desiredLength , i + difference );
+            newContributions[ index ] = new BitVector( newOutputLength );
+            newContributions[ index ].set(  i + difference );
+        }
+        
+        return new ParameterizedPolynomialFunctionGF2( desiredLength , inner.getOutputLength() , newMonomials , newContributions , ((ParameterizedPolynomialFunctionGF2)inner).getPipelines() );
+    }
 }
