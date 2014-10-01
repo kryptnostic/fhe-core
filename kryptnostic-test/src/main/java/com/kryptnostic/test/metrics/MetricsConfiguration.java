@@ -23,7 +23,7 @@ import com.ryantenney.metrics.spring.config.annotation.EnableMetrics;
 import com.ryantenney.metrics.spring.config.annotation.MetricsConfigurer;
 
 @Configuration
-@EnableMetrics(proxyTargetClass=true)
+@EnableMetrics//(proxyTargetClass=true)
 public class MetricsConfiguration implements MetricsConfigurer {
     private static final Optional<Graphite> graphite; 
     private static final Logger logger = LoggerFactory.getLogger( MetricsConfiguration.class );
