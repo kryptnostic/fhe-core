@@ -1,6 +1,7 @@
 package com.kryptnostic.crypto;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -32,5 +33,35 @@ public class Ciphertext implements Serializable {
     @JsonProperty(FIELD_LENGTH)
     public long[] getLength() {
         return length;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.hashCode( contents );
+        result = prime * result + Arrays.hashCode( length );
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (!( obj instanceof Ciphertext )) {
+            return false;
+        }
+        Ciphertext other = (Ciphertext) obj;
+        if (!Arrays.equals( contents , other.contents )) {
+            return false;
+        }
+        if (!Arrays.equals( length , other.length )) {
+            return false;
+        }
+        return true;
     }
 }
