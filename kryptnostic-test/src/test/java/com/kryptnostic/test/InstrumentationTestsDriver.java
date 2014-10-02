@@ -17,7 +17,7 @@ public class InstrumentationTestsDriver extends AbstractInstrumentedTest {
 	@Test
 	public void exerciseDriver() throws InterruptedException {
 	    logger.info("Defined beans: " , Arrays.asList( getTestContext().getBeanDefinitionNames() ) );
-	    InstrumentationTests tests = getTestContext().getBean( InstrumentationTests.class );
+	    InstrumentationTestsApi tests = getTestContext().getBean( InstrumentationTestsApi.class );
 	    Assert.assertTrue( getTestContext().isActive() );
 	    Assert.assertNotNull( tests );
 	    for( int i = 0 ; i < 1000 ; ++i ) {
