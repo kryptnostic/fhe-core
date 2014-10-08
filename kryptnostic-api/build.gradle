@@ -64,8 +64,8 @@ dependencies {
      * Currently use Log4J through sl4j. 
      * TODO: Switch to logback
      */
-    compile group: 'org.slf4j', name: 'slf4j-log4j12', version:'1.7.5'
-    compile group: 'org.slf4j', name: 'slf4j-api', version:'1.7.5'
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version:'1.7.6'
+    compile group: 'org.slf4j', name: 'slf4j-api', version:'1.7.6'
 
 //    compile "ch.qos.logback:logback-classic:1.0.13"
     compile "log4j:log4j:1.2.17"
