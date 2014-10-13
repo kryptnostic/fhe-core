@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import cern.colt.bitvector.BitVector;
 
 import com.codahale.metrics.annotation.Timed;
-import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -38,7 +38,7 @@ public class PartialEvaluationTests {
     @Timed
     public void testResolve() { 
         SimplePolynomialFunction f = testFunction();
-        BitVector input = BitUtils.randomVector( INPUT_LENGTH );
+        BitVector input = BitVectors.randomVector( INPUT_LENGTH );
         BitVector resolveInput = input.partFromTo( 0 , (INPUT_LENGTH >>> 1) - 1 );
         BitVector resolveUpper = input.partFromTo( INPUT_LENGTH >>> 1 , INPUT_LENGTH - 1 );
         

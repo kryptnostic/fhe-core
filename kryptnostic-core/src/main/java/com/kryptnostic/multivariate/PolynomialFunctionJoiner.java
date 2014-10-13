@@ -1,6 +1,7 @@
 package com.kryptnostic.multivariate;
 
 import com.google.common.base.Preconditions;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
@@ -28,7 +29,7 @@ public class PolynomialFunctionJoiner implements PolynomialFunction {
 
     @Override
     public BitVector apply( BitVector lhs, BitVector rhs ) {
-        return apply( FunctionUtils.concatenate( lhs , rhs ) );
+        return apply( BitVectors.concatenate( lhs , rhs ) );
     }
     
     @Override

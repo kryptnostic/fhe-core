@@ -1,19 +1,17 @@
 package com.kryptnostic.linear;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cern.colt.bitvector.BitVector;
+
 import com.google.common.collect.Lists;
-import com.kryptnostic.linear.BitUtils;
-import com.kryptnostic.linear.EnhancedBitMatrix;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
-import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-
-import cern.colt.bitvector.BitVector;
-import org.junit.Assert;
 
 public class MatrixTests {
     private static final Logger logger = LoggerFactory.getLogger( MatrixTests.class );
@@ -190,9 +188,9 @@ public class MatrixTests {
         EnhancedBitMatrix m2 = EnhancedBitMatrix.randomMatrix( 512 , 256 );
         EnhancedBitMatrix m3 = EnhancedBitMatrix.randomMatrix( 128 , 256 );
         //Generate test vectors
-        BitVector v1 = BitUtils.randomVector( 256 );
-        BitVector v2 = BitUtils.randomVector( 256 );
-        BitVector v3 = BitUtils.randomVector( 256 );
+        BitVector v1 = BitVectors.randomVector( 256 );
+        BitVector v2 = BitVectors.randomVector( 256 );
+        BitVector v3 = BitVectors.randomVector( 256 );
         //Multiply vectorial polynomial function by matrix
         SimplePolynomialFunction r1 = m1.multiply( f );
         SimplePolynomialFunction r2 = m2.multiply( f );
@@ -219,5 +217,12 @@ public class MatrixTests {
         Assert.assertEquals( ev3 , av3 );
         
     }
-    
+ 
+    @Test
+    public void testSquareMatrixFromBitVector() {
+        BitVector expected = BitVectors.randomVector( 256 );
+        EnhancedBitMatrix m = EnhancedBitMatrix.squareMatrixfromBitVector( expected );
+        BitVector actual = BitVectors.fromSquareMatrix( m );
+        Assert.assertEquals( expected , actual );
+    }
 }

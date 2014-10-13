@@ -1,5 +1,6 @@
 package com.kryptnostic.linear;
 
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -10,24 +11,24 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cern.colt.bitvector.BitVector;
+
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
 
-import cern.colt.bitvector.BitVector;
-
 public class EnhancedBitMatrix {
-    //TODO: Replace with BouncyCastle RNG
-    //TODO: Re-enable seeding
-    private static final Random r = new Random( 0 );//System.currentTimeMillis() );
+    private static final Random r = new SecureRandom();
     private static final Logger logger = LoggerFactory.getLogger( EnhancedBitMatrix.class );
     protected final List<BitVector> rows;
     
@@ -123,6 +124,14 @@ public class EnhancedBitMatrix {
         
     }
     
+    public EnhancedBitMatrix rightInverse() { 
+        EnhancedBitMatrix workingSet = new EnhancedBitMatrix( this );
+        EnhancedBitMatrix inverse = identity( rows.size() );
+        rowReducedEchelonForm( workingSet , inverse );
+        
+        //TODO: Map rref workingSet onto basis vectors for each column inverse matrix. 
+        return null;
+    }
     public EnhancedBitMatrix rowReducedEchelonForm() {
         EnhancedBitMatrix current = new EnhancedBitMatrix( rows );
         rowReducedEchelonForm( current );
@@ -450,10 +459,54 @@ public class EnhancedBitMatrix {
 
     }
     
+    public static EnhancedBitMatrix randomLeftInvertibleMatrix( int rows , int cols , int attempts ) throws SingularMatrixException {
+        Preconditions.checkArgument( rows > cols, "A left invertible matrix requires more rows than columns." );
+        Preconditions.checkArgument( attempts > 0, "Number of attempts must be greater than zero." );
+        
+        EnhancedBitMatrix result = EnhancedBitMatrix.randomMatrix( rows , cols );
+        for( int i = 0 ; i < 25 ; ++i ) {
+            try {
+                if( EnhancedBitMatrix.determinant( EnhancedBitMatrix.randomMatrix( cols , rows ).multiply(  result  ) ) ) {
+                    return result;
+                }
+            } catch (NonSquareMatrixException e) {
+                assert false;
+            }
+        }
+        throw new SingularMatrixException( "Unable to generate random left invertible matrix." );
+    }
+    
+    public static EnhancedBitMatrix randomRightInvertibleMatrix( int rows , int cols, int attempts ) throws SingularMatrixException {
+        Preconditions.checkArgument( cols > rows, "A right invertible matrix requires more rows than columns." );
+        Preconditions.checkArgument( attempts > 0, "Number of attempts must be greater than zero." );
+        
+        EnhancedBitMatrix result = EnhancedBitMatrix.randomMatrix( rows , cols );
+        for( int i = 0 ; i < 25 ; ++i ) {
+            try {
+                if( EnhancedBitMatrix.determinant( result.multiply( EnhancedBitMatrix.randomMatrix( cols , rows ) ) ) ) {
+                    return result;
+                }
+            } catch (NonSquareMatrixException e) {
+                assert false;
+            }
+        }
+        throw new SingularMatrixException( "Unable to generate random left invertible matrix." );
+    }
+    
+    public static EnhancedBitMatrix squareMatrixfromBitVector( BitVector v ) {
+        final int rows = (int) Math.sqrt( v.size() );
+        Preconditions.checkArgument( (rows*rows) == v.size() , "BitVector size must be a perfect square" );
+        ImmutableList.Builder<BitVector> rowsBuilder = ImmutableList.builder();
+        for( int i = 0 ; i < rows; ++i ) {
+            rowsBuilder.add( v.partFromTo( i*rows , (i*rows)+rows - 1 ) );
+        }
+        return new EnhancedBitMatrix( rowsBuilder.build() );
+    }
+    
     public static EnhancedBitMatrix randomSqrMatrix( int size ) { 
         List<BitVector> rows = Lists.newArrayListWithExpectedSize( size );
         for( int i = 0 ; i < size ; ++i ) {
-            rows.add( BitUtils.randomVector( size ) );
+            rows.add( BitVectors.randomVector( size ) );
         }
         return new EnhancedBitMatrix( rows );
     }
@@ -461,7 +514,7 @@ public class EnhancedBitMatrix {
     public static EnhancedBitMatrix randomMatrix( int numRows , int numCols ) {
         List<BitVector> rows = Lists.newArrayListWithExpectedSize( numRows );
         for( int i = 0 ; i < numRows ; ++i ) {
-            rows.add( BitUtils.randomVector( numCols ) );
+            rows.add( BitVectors.randomVector( numCols ) );
         }
         return new EnhancedBitMatrix( rows );
     }

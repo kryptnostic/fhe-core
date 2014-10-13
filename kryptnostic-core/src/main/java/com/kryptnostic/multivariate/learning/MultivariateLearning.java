@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import cern.colt.bitvector.BitVector;
 
 import com.google.common.collect.Lists;
-import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.Monomials;
@@ -147,7 +147,7 @@ public class MultivariateLearning {
 		List<BitVector> inputs = Lists.newArrayList();
 		List<BitVector> outputs = Lists.newArrayList();
 		for (int i = 0; i < quantity; i++) {
-			inputs.add( BitUtils.randomVector( function.getInputLength() ) );
+			inputs.add( BitVectors.randomVector( function.getInputLength() ) );
 		}
 		
 		for (BitVector input : inputs) {

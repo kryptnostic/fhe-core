@@ -3,7 +3,7 @@ package com.kryptnostic.multivariate;
 import cern.colt.bitvector.BitVector;
 
 import com.google.common.collect.ImmutableList;
-import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.CompoundPolynomialFunctions;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -34,7 +34,7 @@ public class ParameterizedPolynomialFunctionTests {
 		
 		SimplePolynomialFunction fg;
 		
-		BitVector input = BitUtils.randomVector(inputLength);
+		BitVector input = BitVectors.randomVector(inputLength);
 		BitVector expected = f.apply(input);
 		expected.and(g.apply(input));
 		

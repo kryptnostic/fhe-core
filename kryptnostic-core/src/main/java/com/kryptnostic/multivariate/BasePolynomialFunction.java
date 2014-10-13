@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
@@ -183,7 +184,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
 
     @Override
     public BitVector apply(BitVector lhs, BitVector rhs) {
-        return apply( FunctionUtils.concatenate( lhs , rhs ) );
+        return apply( BitVectors.concatenate( lhs , rhs ) );
     }
 
     @Override

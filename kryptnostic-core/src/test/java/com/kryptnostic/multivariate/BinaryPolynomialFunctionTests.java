@@ -6,13 +6,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.BinaryPolynomialFunction;
-import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
+
 import org.junit.Assert;
 
 public class BinaryPolynomialFunctionTests {
@@ -29,13 +29,13 @@ public class BinaryPolynomialFunctionTests {
                                             op ,
                                             g );
                                              
-        BitVector lhs = BitUtils.randomVector( 128 );
-        BitVector rhs = BitUtils.randomVector( 128 );
-        BitVector input = FunctionUtils.concatenate(lhs, rhs);
+        BitVector lhs = BitVectors.randomVector( 128 );
+        BitVector rhs = BitVectors.randomVector( 128 );
+        BitVector input = BitVectors.concatenate(lhs, rhs);
         
         BitVector lhsResult = f.apply( lhs );
         BitVector rhsResult = g.apply( rhs );
-        BitVector opResult= op.apply( FunctionUtils.concatenate( lhsResult , rhsResult ) );
+        BitVector opResult= op.apply( BitVectors.concatenate( lhsResult , rhsResult ) );
         BitVector binaryResult = h.apply( lhs, rhs );
         
         Assert.assertEquals( opResult , binaryResult );

@@ -18,7 +18,6 @@ import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
 
 /**

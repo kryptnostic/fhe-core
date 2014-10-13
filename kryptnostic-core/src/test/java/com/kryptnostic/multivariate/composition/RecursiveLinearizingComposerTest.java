@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import cern.colt.bitvector.BitVector;
 
 import com.google.common.base.Stopwatch;
-import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.BasePolynomialFunction;
 import com.kryptnostic.multivariate.PolynomialFunctions;
@@ -31,7 +31,7 @@ public class RecursiveLinearizingComposerTest {
         SimplePolynomialFunction composed = composer.compose( inner );
         logger.info( "Compose time: {} ms" , watch.elapsed( TimeUnit.MILLISECONDS ) );
         
-        BitVector input =  BitUtils.randomVector( inner.getInputLength() );
+        BitVector input =  BitVectors.randomVector( inner.getInputLength() );
         BitVector expected = f.apply( inner.apply( input ) );
         BitVector actual = composed.apply( input );
         
