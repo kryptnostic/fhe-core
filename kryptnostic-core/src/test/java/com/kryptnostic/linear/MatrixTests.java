@@ -144,7 +144,7 @@ public class MatrixTests {
     @Test 
     public void nullifyingTest() throws SingularMatrixException {
         EnhancedBitMatrix m = EnhancedBitMatrix.randomMatrix( 210 , 65  );
-        while( m.nullspace().rows() == 0 ) {
+        while( m.nullspace().rows() < 65 ) {
             m = EnhancedBitMatrix.randomMatrix( 210 , 65  );
         }
         EnhancedBitMatrix nsBasis = m.getLeftNullifyingMatrix();

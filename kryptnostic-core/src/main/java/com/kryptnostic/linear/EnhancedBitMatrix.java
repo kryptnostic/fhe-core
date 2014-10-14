@@ -312,7 +312,7 @@ public class EnhancedBitMatrix {
         EnhancedBitMatrix nmat = nullspace();
         Set<Integer> rowsToKeep = Sets.newHashSet();
         int rowCountToKeep = cols();
-        Preconditions.checkState( rowCountToKeep >= nmat.rows() , "Cannot keep more rows than exist."  );
+        Preconditions.checkState( rowCountToKeep <= nmat.rows() , "Cannot keep more rows than exist."  );
         while( rowsToKeep.size() != rowCountToKeep ) {
             rowsToKeep.add(r.nextInt( rowCountToKeep ) );
         }
