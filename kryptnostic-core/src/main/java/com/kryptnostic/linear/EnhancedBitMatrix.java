@@ -312,14 +312,17 @@ public class EnhancedBitMatrix {
         EnhancedBitMatrix nmat = nullspace();
         Set<Integer> rowsToKeep = Sets.newHashSet();
         int rowCountToKeep = cols();
+        Preconditions.checkState( rowCountToKeep >= nmat.rows() , "Cannot keep more rows than exist."  );
         while( rowsToKeep.size() != rowCountToKeep ) {
             rowsToKeep.add(r.nextInt( rowCountToKeep ) );
         }
         
+        
         BitVector[] newRows = new BitVector[ rowCountToKeep ];
 
-        for( int i = 0 ; i < newRows.length ; ++i ) {
-            newRows[ i ] = nmat.rows.get( r.nextInt( nmat.getRows().size() ) );
+        int i = 0;
+        for( int rowToKeep : rowsToKeep ){
+            newRows[ i++ ] = nmat.rows.get( rowToKeep );
         }
         
         return new EnhancedBitMatrix( Arrays.asList( newRows ) );
