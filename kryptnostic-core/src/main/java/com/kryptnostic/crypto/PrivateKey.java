@@ -70,7 +70,7 @@ public class PrivateKey {
                 dgen = e1gen.getLeftNullifyingMatrix();
                 Preconditions.checkState( dgen.multiply( e1gen ).isZero() , "Generated D matrix must nullify E1." );
                 
-                e2gen = dgen.rightGeneralizedInverse();
+                e2gen = dgen.rightInverse();
                 Preconditions.checkState( dgen.multiply( e2gen ).isIdentity(), "Generated D matrix must be left generalized inverse of E2." );
                 
                 lgen = e2gen.getLeftNullifyingMatrix();

@@ -157,11 +157,6 @@ public class MatrixTests {
         logger.trace(  "Nullified: {}" , result );
     }
     
-    @Test
-    public void leftInvertibilityTest() {
-        
-    }
-    
     @Test 
     public void nullspaceTest() {
         EnhancedBitMatrix m = EnhancedBitMatrix.randomMatrix( 65 , 210 );
@@ -233,6 +228,32 @@ public class MatrixTests {
     }
     
     @Test
+    public void testLeftInverse() {
+        EnhancedBitMatrix m = null;
+        EnhancedBitMatrix mInv = null;
+        for( int i = 0 ; i < 100; ++i ) {
+            int notDone = 1000;
+
+            while( notDone > 0 ) {
+                m = EnhancedBitMatrix.randomMatrix( 256 , 128 );
+                
+                try {
+                    mInv = m.leftInverse();
+                    Assert.assertNotNull( mInv );
+                    EnhancedBitMatrix result = mInv.multiply( m );
+                    Assert.assertTrue( result.isIdentity() );
+                    notDone = 0;
+                } catch (SingularMatrixException e) {
+                    m = null;
+                    mInv = null;
+                    logger.trace( "Encountered singluar matrix... trying again." );
+                    --notDone;
+                }
+            }
+        }
+    }
+    
+    @Test
     public void testRightInverse() {
         EnhancedBitMatrix m = null;
         EnhancedBitMatrix mInv = null;
@@ -240,7 +261,7 @@ public class MatrixTests {
             int notDone = 1000;
 
             while( notDone > 0 ) {
-                m = EnhancedBitMatrix.randomMatrix( 4 , 8 );
+                m = EnhancedBitMatrix.randomMatrix( 128 , 256 );
                 
                 try {
                     mInv = m.rightInverse();
@@ -251,7 +272,7 @@ public class MatrixTests {
                 } catch (SingularMatrixException e) {
                     m = null;
                     mInv = null;
-                    logger.info( "Encountered singluar matrix... trying again." );
+                    logger.trace( "Encountered singluar matrix... trying again." );
                     --notDone;
                 }
             }
