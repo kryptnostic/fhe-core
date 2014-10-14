@@ -142,10 +142,12 @@ public class MatrixTests {
     }
     
     @Test 
-    public void nullifyingTest() {
+    public void nullifyingTest() throws SingularMatrixException {
         EnhancedBitMatrix m = EnhancedBitMatrix.randomMatrix( 210 , 65  );
+        while( m.nullspace().rows() == 0 ) {
+            m = EnhancedBitMatrix.randomMatrix( 210 , 65  );
+        }
         EnhancedBitMatrix nsBasis = m.getLeftNullifyingMatrix();
-        
         Assert.assertEquals( nsBasis.rows() , m.cols() );
         Assert.assertEquals( nsBasis.cols() , m.rows() );
         logger.trace( "Nullifying matrix ({},{}): {}" , nsBasis.rows() , nsBasis.cols() , nsBasis );
@@ -164,6 +166,10 @@ public class MatrixTests {
     public void nullspaceTest() {
         EnhancedBitMatrix m = EnhancedBitMatrix.randomMatrix( 65 , 210 );
         EnhancedBitMatrix nsBasis = m.getNullspaceBasis();
+        while( nsBasis.rows() == 0) {
+            m = EnhancedBitMatrix.randomMatrix( 65 , 210 );
+            nsBasis = m.getNullspaceBasis();
+        }
         logger.trace( "Nullspace basis ({},{}): {}" , nsBasis.rows() , nsBasis.cols() , nsBasis );
         EnhancedBitMatrix result = m.multiply( nsBasis );
         logger.trace(  "Nullified: {}" , result );

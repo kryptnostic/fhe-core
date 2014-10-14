@@ -139,7 +139,7 @@ public class EnhancedBitMatrix {
         for( int i = 0; i < wsRows.size(); ++i ) {
             BitVector v = wsRows.get( i );
             if( (v.cardinality() == 0 ) && (inverse.getRow( i ).cardinality()!=0) ) {
-                throw new SingularMatrixException( "Matrix has no generalized right inverse." );
+//                throw new SingularMatrixException( "Matrix has no generalized right inverse." );
             }
             int value = -1;
             for( int j = 0; j < v.size() ; ++j ) {
@@ -253,8 +253,63 @@ public class EnhancedBitMatrix {
         return nsBasis;
     }
     
-    public EnhancedBitMatrix getLeftNullifyingMatrix() {
-        EnhancedBitMatrix nmat = transpose().getNullspaceBasis().transpose();
+    public EnhancedBitMatrix nullspace() {
+        EnhancedBitMatrix workingSet = this.transpose();
+        rowReducedEchelonForm( workingSet );
+        int numCols = workingSet.cols();
+        BitVector[] basis = new BitVector[ numCols ];
+        
+        //Use row-echelon form to extract nullspace vector
+        List<BitVector> wsRows = workingSet.getRows();
+        Integer[] firstNonZeroIndex = new Integer[ wsRows.size() ];
+        for( int i = 0; i < wsRows.size(); ++i ) {
+            BitVector v = wsRows.get( i );
+            int value = -1;
+            for( int j = 0; j < v.size() ; ++j ) {
+                if( v.get( j ) ) {
+                    if( value == -1 ) {
+                        value = j;
+                        //Now lets add the constants for the first column to the appropriate rows of a newly expanded vector
+                        firstNonZeroIndex[ i ] = j;
+                    } else {
+                        if( basis[ j ] == null ) {
+                            basis[ j ] = new BitVector( numCols );
+                            basis[ j ].set( j );
+                        }
+                        BitVector b = basis[ j ];
+                        b.set( value );
+                    }
+                }
+            }
+        }
+        
+        List<BitVector> filtered = Lists.newArrayList();
+        for( BitVector b : basis ) {
+            if( b!=null ) {
+                filtered.add( b );
+            }
+        }
+
+        return new EnhancedBitMatrix( filtered );
+//        EnhancedBitMatrix random = randomInvertibleMatrix( nullspan.rows() );
+//        EnhancedBitMatrix rightInverse = random.multiply( nullspan );
+//        EnhancedBitMatrix test2 = this.multiply( rightInverse.transpose() );
+//        EnhancedBitMatrix test = this.multiply( nullspan );
+//        
+//        if( !test.isZero() ) {
+//            logger.error( "blimey!" );
+//        }
+//
+//        BitVector[] newRows = new BitVector[ cols() ];
+//
+//        for( int i = 0 ; i < newRows.length ; ++i ) {
+//            newRows[ i ] = nullspan.rows.get( r.nextInt( nullspan.getRows().size() ) );
+//        }
+//        return new EnhancedBitMatrix( Arrays.asList( newRows ) );
+    }
+    
+    public EnhancedBitMatrix getLeftNullifyingMatrix() throws SingularMatrixException {
+        EnhancedBitMatrix nmat = nullspace();
         Set<Integer> rowsToKeep = Sets.newHashSet();
         int rowCountToKeep = cols();
         while( rowsToKeep.size() != rowCountToKeep ) {
@@ -263,9 +318,8 @@ public class EnhancedBitMatrix {
         
         BitVector[] newRows = new BitVector[ rowCountToKeep ];
 
-        int index = 0;
-        for( int rowToKeep : rowsToKeep ) {
-            newRows[index++] = nmat.rows.get( rowToKeep );
+        for( int i = 0 ; i < newRows.length ; ++i ) {
+            newRows[ i ] = nmat.rows.get( r.nextInt( nmat.getRows().size() ) );
         }
         
         return new EnhancedBitMatrix( Arrays.asList( newRows ) );
@@ -511,7 +565,6 @@ public class EnhancedBitMatrix {
          * 
          * We seek the first row with currentColumn non-zero
          */
-        int z = 0;
         for( int col = 0; col < numCols ; ++col ) {
             int suitableRow = getSuitableRow( rows, col, row );
             if( suitableRow >= 0 ) {

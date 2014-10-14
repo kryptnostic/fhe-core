@@ -67,11 +67,12 @@ public class PrivateKey {
             try {
                 e1gen = EnhancedBitMatrix.randomMatrix( cipherTextBlockLength , plainTextBlockLength );
                 dgen = e1gen.getLeftNullifyingMatrix();
-                e2gen = dgen.rightGeneralizedInverse();
+                Preconditions.checkState( dgen.multiply( e1gen ).isZero() , "Generated D matrix must nullify E1." );
+                
+                e2gen = dgen.rightInverse();
                 lgen = e2gen.getLeftNullifyingMatrix();
                 lgen = lgen.multiply( e1gen ).inverse().multiply( lgen );  //Normalize
                 
-                Preconditions.checkState( dgen.multiply( e1gen ).isZero() , "Generated D matrix must nullify E1." );
                 Preconditions.checkState( lgen.multiply( e2gen ).isZero() , "Generated L matrix must nullify E2." );
                 Preconditions.checkState( dgen.multiply( e2gen ).isIdentity(), "Generated D matrix must be left generalized inverse of E2." );
                 Preconditions.checkState( lgen.multiply( e1gen ).isIdentity(), "Generated D matrix must be left generalized inverse of E2." );
