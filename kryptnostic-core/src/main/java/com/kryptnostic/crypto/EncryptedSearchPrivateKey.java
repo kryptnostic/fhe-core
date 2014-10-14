@@ -19,7 +19,7 @@ public class EncryptedSearchPrivateKey {
     private final EnhancedBitMatrix leftIndexCollapser,rightIndexCollapser;
     
     public EncryptedSearchPrivateKey() throws SingularMatrixException {
-        this( 256, 512, 256, 512 );
+        this( 16, 256, 16, 512 );
     }
     
     public EncryptedSearchPrivateKey( int collapsedQueryBits, int expandedQeuryBits, int collpasedIndexBits, int expandedIndexBits ) throws SingularMatrixException {
@@ -31,7 +31,8 @@ public class EncryptedSearchPrivateKey {
     }
     
     public EnhancedBitMatrix prepareSearchToken( String token ) throws SingularMatrixException {
-        return leftQueryCollapser.rightGeneralizedInverse().multiply( EnhancedBitMatrix.squareMatrixfromBitVector( BitVectors.fromBytes( leftQueryCollapser.rows() , hf.hashString( token , Charsets.UTF_8 ).asBytes() ) ).multiply( rightQueryCollapser.leftGeneralizedInverse() ) );
+        EnhancedBitMatrix squaredToken = EnhancedBitMatrix.squareMatrixfromBitVector( BitVectors.fromBytes( leftQueryCollapser.rows()*leftQueryCollapser.rows() , hf.hashString( token , Charsets.UTF_8 ).asBytes() ) );
+        return leftQueryCollapser.rightInverse().multiply( squaredToken.multiply( rightQueryCollapser.leftInverse() ) );
     }
 
     public EnhancedBitMatrix getLeftQueryCollapser() {

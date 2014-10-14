@@ -180,7 +180,7 @@ public class EnhancedBitMatrix {
             }
         }
         
-        if( filtered.size() != rows() ) {
+        if( filtered.size() != (numCols - rows() ) ) {
             throw new SingularMatrixException( "Matrix has no generalized right inverse." );
         }
         
@@ -190,7 +190,7 @@ public class EnhancedBitMatrix {
             constantBasis.add( map( firstNonZeroIndex , column , numCols ) );
         }
         
-        EnhancedBitMatrix randomizer = EnhancedBitMatrix.randomMatrix( filtered.size() , filtered.size() );
+        EnhancedBitMatrix randomizer = EnhancedBitMatrix.randomMatrix( rows() , filtered.size() );
         EnhancedBitMatrix nullspan = randomizer.multiply( EnhancedBitMatrix.directFromRows( filtered ) ).transpose();
         
         EnhancedBitMatrix cB = new EnhancedBitMatrix( constantBasis ).transpose();
@@ -265,7 +265,7 @@ public class EnhancedBitMatrix {
             }
         }
         
-        if( filtered.size() != cols() ) {
+        if( filtered.size() != (numCols - cols() ) ) {
             throw new SingularMatrixException( "Matrix has no generalized right inverse." );
         }
         
@@ -275,7 +275,7 @@ public class EnhancedBitMatrix {
             constantBasis.add( map( firstNonZeroIndex , column , numCols ) );
         }
         
-        EnhancedBitMatrix randomizer = EnhancedBitMatrix.randomMatrix( filtered.size() , filtered.size() );
+        EnhancedBitMatrix randomizer = EnhancedBitMatrix.randomMatrix( cols() , filtered.size() );
         EnhancedBitMatrix nullspan = randomizer.multiply( EnhancedBitMatrix.directFromRows( filtered ) ).transpose();
         
         EnhancedBitMatrix cB = new EnhancedBitMatrix( constantBasis ).transpose();
@@ -704,11 +704,10 @@ public class EnhancedBitMatrix {
         EnhancedBitMatrix result = EnhancedBitMatrix.randomMatrix( rows , cols );
         for( int i = 0 ; i < 25 ; ++i ) {
             try {
-                if( EnhancedBitMatrix.determinant( EnhancedBitMatrix.randomMatrix( cols , rows ).multiply(  result  ) ) ) {
-                    return result;
-                }
-            } catch (NonSquareMatrixException e) {
-                assert false;
+                result.leftInverse();
+                return result;
+            } catch (SingularMatrixException e) {
+                logger.trace("Singular matrix generated... trying another matrix.");
             }
         }
         throw new SingularMatrixException( "Unable to generate random left invertible matrix." );
@@ -721,14 +720,13 @@ public class EnhancedBitMatrix {
         EnhancedBitMatrix result = EnhancedBitMatrix.randomMatrix( rows , cols );
         for( int i = 0 ; i < 25 ; ++i ) {
             try {
-                if( EnhancedBitMatrix.determinant( result.multiply( EnhancedBitMatrix.randomMatrix( cols , rows ) ) ) ) {
-                    return result;
-                }
-            } catch (NonSquareMatrixException e) {
-                assert false;
+                result.rightInverse();
+                return result;
+            } catch (SingularMatrixException e) {
+                logger.trace("Singular matrix generated... trying another matrix.");
             }
         }
-        throw new SingularMatrixException( "Unable to generate random left invertible matrix." );
+        throw new SingularMatrixException( "Unable to generate random right invertible matrix." );
     }
     
     public static EnhancedBitMatrix squareMatrixfromBitVector( BitVector v ) {
