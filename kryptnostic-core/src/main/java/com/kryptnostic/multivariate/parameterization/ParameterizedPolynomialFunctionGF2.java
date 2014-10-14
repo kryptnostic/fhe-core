@@ -37,23 +37,22 @@ public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunct
      * @param pipelines
      */
     @JsonCreator
-    public ParameterizedPolynomialFunctionGF2(
-            @JsonProperty( INPUT_LENGTH_PROPERTY ) int inputLength, 
-            @JsonProperty( OUTPUT_LENGTH_PROPERTY ) int outputLength,
-            @JsonProperty( MONOMIALS_PROPERTY ) Monomial[] monomials,
-            @JsonProperty( CONTRIBUTIONS_PROPERTY ) BitVector[] contributions,
-            @JsonProperty( PIPELINES_PROPERTY ) Iterable<CompoundPolynomialFunction> pipelines) {
-        super( inputLength, outputLength, monomials, contributions);
-        Preconditions.checkArgument( !Iterables.isEmpty( pipelines ) ,"There must be a least one function in the provided chain.");
-        for( CompoundPolynomialFunction pipeline : pipelines ) {
-            Preconditions.checkArgument( pipeline.getInputLength() == inputLength , "The input length of each pipeline must be the same as the input length to the overall function.");
+    public ParameterizedPolynomialFunctionGF2(int inputLength, int outputLength, Monomial[] monomials,
+            BitVector[] contributions, @JsonProperty(PIPELINES_PROPERTY) Iterable<CompoundPolynomialFunction> pipelines) {
+        super(inputLength, outputLength, monomials, contributions);
+        Preconditions.checkArgument(!Iterables.isEmpty(pipelines),
+                "There must be a least one function in the provided chain.");
+        for (CompoundPolynomialFunction pipeline : pipelines) {
+            Preconditions.checkArgument(pipeline.getInputLength() == inputLength,
+                    "The input length of each pipeline must be the same as the input length to the overall function.");
         }
-        this.pipelines = ImmutableList.copyOf( pipelines );
+        this.pipelines = ImmutableList.copyOf(pipelines);
     }
-    
-    /** 
+
+    /**
      * @see com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2#apply(cern.colt.bitvector.BitVector)
-     * @param input a bitvector apply the input.
+     * @param input
+     *            a bitvector apply the input.
      */
     @Override
     public BitVector apply(BitVector input) {
