@@ -160,6 +160,7 @@ public class EnhancedBitMatrix {
             }
         }
         
+        
         List<BitVector> filtered = Lists.newArrayList();
         for( BitVector b : basis ) {
             if( b!=null ) {
@@ -179,22 +180,96 @@ public class EnhancedBitMatrix {
             solutionVectors.add( solutionVector );
         }
         EnhancedBitMatrix solution = new EnhancedBitMatrix( solutionVectors ).transpose();
-        if( !solution.multiply( workingSet ).isIdentity() ) {
-            logger.error("This should never get called.");
-        }
-        EnhancedBitMatrix nullspan = new EnhancedBitMatrix( filtered );
-        EnhancedBitMatrix random = randomInvertibleMatrix( nullspan.rows() );
-        EnhancedBitMatrix rightInverse = random.multiply( nullspan );
-        if( nullspan.rows() != rows() ) {
-            logger.error( "Will fail unit test!" );
-        }
-        EnhancedBitMatrix test = this.multiply( nullspan.transpose() );
-        EnhancedBitMatrix test2 = this.multiply( rightInverse.transpose() );
-        EnhancedBitMatrix test3 = this.multiply( rightInverse.add( columnConstants ).transpose() );
-        if( !test3.isIdentity() ) {
-            logger.error( "What the fuck" );
-        }
+//        if( !solution.multiply( workingSet ).isIdentity() ) {
+//            logger.error("This should never get called.");
+//        }
+//        EnhancedBitMatrix nullspan = new EnhancedBitMatrix( filtered );
+//        EnhancedBitMatrix random = randomInvertibleMatrix( nullspan.rows() );
+//        EnhancedBitMatrix rightInverse = random.multiply( nullspan );
+//        if( nullspan.rows() != rows() ) {
+//            logger.error( "Will fail unit test!" );
+//        }
+//        EnhancedBitMatrix test = this.multiply( nullspan.transpose() );
+//        EnhancedBitMatrix test2 = this.multiply( rightInverse.transpose() );
+//        EnhancedBitMatrix test3 = this.multiply( rightInverse.add( columnConstants ).transpose() );
+//        if( !test3.isIdentity() ) {
+//            logger.error( "What the fuck" );
+//        }
         return solution.multiply( this ).inverse().multiply( solution );
+    }
+    
+    public EnhancedBitMatrix leftInverse() throws SingularMatrixException { 
+        EnhancedBitMatrix workingSet = new EnhancedBitMatrix( this );
+        EnhancedBitMatrix inverse = identity( rows.size() );
+        
+        rowReducedEchelonForm( workingSet , inverse );
+        
+        int numCols = cols();
+        BitVector[] basis = new BitVector[ numCols ];
+        
+        //Use row-echelon form to extract nullspace vector
+        List<BitVector> wsRows = workingSet.getRows();
+        Integer[] firstNonZeroIndex = new Integer[ wsRows.size() ];
+        for( int i = 0; i < wsRows.size(); ++i ) {
+            BitVector v = wsRows.get( i );
+            if( (v.cardinality() == 0 ) && (inverse.getRow( i ).cardinality()!=0) ) {
+//                throw new SingularMatrixException( "Matrix has no generalized right inverse." );
+            }
+            int value = -1;
+            for( int j = 0; j < v.size() ; ++j ) {
+                if( v.get( j ) ) {
+                    if( value == -1 ) {
+                        value = j;
+                        //Now lets add the constants for the first column to the appropriate rows of a newly expanded vector
+                        firstNonZeroIndex[ i ] = j;
+                    } else {
+                        if( basis[ j ] == null ) {
+                            basis[ j ] = new BitVector( numCols );
+                            basis[ j ].set( j );
+                        }
+                        BitVector b = basis[ j ];
+                        b.set( value );
+                    }
+                }
+            }
+        }
+        
+        
+        List<BitVector> filtered = Lists.newArrayList();
+        for( BitVector b : basis ) {
+            if( b!=null ) {
+                filtered.add( b );
+            }
+        }
+        
+        if( filtered.size() != rows() ) {
+            throw new SingularMatrixException( "Matrix has no generalized right inverse." );
+        }
+        
+        EnhancedBitMatrix columnConstants = expand( inverse, firstNonZeroIndex, cols() );
+        List<BitVector> solutionVectors = Lists.newArrayList();
+        for( int i = 0 ; i < firstNonZeroIndex.length ; ++i ) {
+            BitVector solutionVector = new BitVector( cols() );
+            solutionVector.set( firstNonZeroIndex[ i ] );
+            solutionVectors.add( solutionVector );
+        }
+        EnhancedBitMatrix solution = new EnhancedBitMatrix( solutionVectors ).transpose();
+//        if( !solution.multiply( workingSet ).isIdentity() ) {
+//            logger.error("This should never get called.");
+//        }
+//        EnhancedBitMatrix nullspan = new EnhancedBitMatrix( filtered );
+//        EnhancedBitMatrix random = randomInvertibleMatrix( nullspan.rows() );
+//        EnhancedBitMatrix rightInverse = random.multiply( nullspan );
+//        if( nullspan.rows() != rows() ) {
+//            logger.error( "Will fail unit test!" );
+//        }
+//        EnhancedBitMatrix test = this.multiply( nullspan.transpose() );
+//        EnhancedBitMatrix test2 = this.multiply( rightInverse.transpose() );
+//        EnhancedBitMatrix test3 = this.multiply( rightInverse.add( columnConstants ).transpose() );
+//        if( !test3.isIdentity() ) {
+//            logger.error( "What the fuck" );
+//        }
+        return solution.multiply( this.multiply( solution ).inverse() );
     }
     
     private static EnhancedBitMatrix expand( EnhancedBitMatrix original, Integer[] mapping , int size ) throws SingularMatrixException {
