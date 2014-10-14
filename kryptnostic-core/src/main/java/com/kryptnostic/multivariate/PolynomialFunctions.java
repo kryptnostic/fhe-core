@@ -1,7 +1,5 @@
 package com.kryptnostic.multivariate;
 
-import java.nio.ByteBuffer;
-import java.nio.LongBuffer;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -595,71 +593,5 @@ public final class PolynomialFunctions {
             result.put(monomials[i].clone(), contributions[i].copy());
         }
         return result;
-    }
-
-    public static SimplePolynomialFunction unmarshalSimplePolynomialFunction(String input) {
-        if (input == null) {
-            return null;
-        }
-        byte[] decoded = Base64.decodeBase64(input.getBytes());
-        ByteBuffer buf = ByteBuffer.wrap(decoded);
-        int inputLength = buf.getInt();
-        int outputLength = buf.getInt();
-        int monomialLength = buf.getInt();
-        int contributionLength = buf.getInt();
-
-        LongBuffer longBuffer = buf.asLongBuffer();
-
-        Monomial[] monomials = new Monomial[monomialLength];
-        for (int i = 0; i < monomials.length; i++) {
-            long[] monomialLongs = new long[inputLength >>> 6];
-            longBuffer.get(monomialLongs);
-            monomials[i] = new Monomial(monomialLongs, inputLength);
-        }
-
-        BitVector[] contributions = new BitVector[contributionLength];
-        for (int i = 0; i < contributions.length; i++) {
-            long[] contributionLongs = new long[outputLength >>> 6];
-            longBuffer.get(contributionLongs);
-            contributions[i] = new BitVector(contributionLongs, outputLength);
-        }
-
-        return new OptimizedPolynomialFunctionGF2(inputLength, outputLength, monomials, contributions);
-    }
-
-    public static String marshalSimplePolynomialFunction(SimplePolynomialFunction input) {
-        if (input == null) {
-            return null;
-        }
-        Monomial[] monomials = input.getMonomials();
-        BitVector[] contributions = input.getContributions();
-
-        int inputLength = input.getInputLength();
-        int outputLength = input.getOutputLength();
-
-        long[] monomialData = new long[monomials.length * ( inputLength >> 6 )];
-        LongBuffer monomialBuffer = LongBuffer.wrap(monomialData);
-        for (int i = 0; i < monomials.length; i++) {
-            monomialBuffer.put(monomials[i].elements());
-        }
-
-        long[] contributionData = new long[contributions.length * ( outputLength >> 6 )];
-        LongBuffer contributionBuffer = LongBuffer.wrap(contributionData);
-        for (int i = 0; i < contributions.length; i++) {
-            contributionBuffer.put(contributions[i].elements());
-        }
-
-        byte[] target = new byte[( monomialData.length << 3 ) + ( contributionData.length << 3 ) + INTEGER_BYTES_X4];
-        ByteBuffer buf = ByteBuffer.wrap(target);
-        buf.putInt(inputLength);
-        buf.putInt(outputLength);
-        buf.putInt(monomials.length);
-        buf.putInt(contributions.length);
-
-        LongBuffer longBuffer = buf.asLongBuffer();
-        longBuffer.put(monomialData);
-        longBuffer.put(contributionData);
-
-        return new String(codec.encode(target));
     }
 }
