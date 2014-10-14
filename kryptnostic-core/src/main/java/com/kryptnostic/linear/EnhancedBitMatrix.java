@@ -124,14 +124,99 @@ public class EnhancedBitMatrix {
         
     }
     
-    public EnhancedBitMatrix rightInverse() { 
+    public EnhancedBitMatrix rightInverse() throws SingularMatrixException { 
         EnhancedBitMatrix workingSet = new EnhancedBitMatrix( this );
         EnhancedBitMatrix inverse = identity( rows.size() );
+        
         rowReducedEchelonForm( workingSet , inverse );
         
-        //TODO: Map rref workingSet onto basis vectors for each column inverse matrix. 
-        return null;
+        int numCols = cols();
+        BitVector[] basis = new BitVector[ numCols ];
+        
+        //Use row-echelon form to extract nullspace vector
+        List<BitVector> wsRows = workingSet.getRows();
+        Integer[] firstNonZeroIndex = new Integer[ wsRows.size() ];
+        for( int i = 0; i < wsRows.size(); ++i ) {
+            BitVector v = wsRows.get( i );
+            if( (v.cardinality() == 0 ) && (inverse.getRow( i ).cardinality()!=0) ) {
+                throw new SingularMatrixException( "Matrix has no generalized right inverse." );
+            }
+            int value = -1;
+            for( int j = 0; j < v.size() ; ++j ) {
+                if( v.get( j ) ) {
+                    if( value == -1 ) {
+                        value = j;
+                        //Now lets add the constants for the first column to the appropriate rows of a newly expanded vector
+                        firstNonZeroIndex[ i ] = j;
+                    } else {
+                        if( basis[ j ] == null ) {
+                            basis[ j ] = new BitVector( numCols );
+                            basis[ j ].set( j );
+                        }
+                        BitVector b = basis[ j ];
+                        b.set( value );
+                    }
+                }
+            }
+        }
+        
+        List<BitVector> filtered = Lists.newArrayList();
+        for( BitVector b : basis ) {
+            if( b!=null ) {
+                filtered.add( b );
+            }
+        }
+        
+        if( filtered.size() != rows() ) {
+            throw new SingularMatrixException( "Matrix has no generalized right inverse." );
+        }
+        
+        EnhancedBitMatrix columnConstants = expand( inverse, firstNonZeroIndex, cols() );
+        List<BitVector> solutionVectors = Lists.newArrayList();
+        for( int i = 0 ; i < firstNonZeroIndex.length ; ++i ) {
+            BitVector solutionVector = new BitVector( cols() );
+            solutionVector.set( firstNonZeroIndex[ i ] );
+            solutionVectors.add( solutionVector );
+        }
+        EnhancedBitMatrix solution = new EnhancedBitMatrix( solutionVectors ).transpose();
+        if( !solution.multiply( workingSet ).isIdentity() ) {
+            logger.error("This should never get called.");
+        }
+        EnhancedBitMatrix nullspan = new EnhancedBitMatrix( filtered );
+        EnhancedBitMatrix random = randomInvertibleMatrix( nullspan.rows() );
+        EnhancedBitMatrix rightInverse = random.multiply( nullspan );
+        if( nullspan.rows() != rows() ) {
+            logger.error( "Will fail unit test!" );
+        }
+        EnhancedBitMatrix test = this.multiply( nullspan.transpose() );
+        EnhancedBitMatrix test2 = this.multiply( rightInverse.transpose() );
+        EnhancedBitMatrix test3 = this.multiply( rightInverse.add( columnConstants ).transpose() );
+        if( !test3.isIdentity() ) {
+            logger.error( "What the fuck" );
+        }
+        return solution.multiply( this ).inverse().multiply( solution );
     }
+    
+    private static EnhancedBitMatrix expand( EnhancedBitMatrix original, Integer[] mapping , int size ) throws SingularMatrixException {
+        EnhancedBitMatrix originalT = original.transpose();
+        
+        for( BitVector v : originalT.getRows() ) {
+            v.setSize( size );
+            for( int i = 0 ; i < mapping.length; ++i ) {
+                if( v.get( i ) ) {
+                    v.clear( i );
+                    if( mapping[ i ] != null ) {
+                        v.set( mapping[ i ] );
+                    } else {
+                        throw new SingularMatrixException( "Matrix has no generalized right inverse." );
+                    }
+                }
+            }
+        }
+        
+        return originalT;
+    }
+    
     public EnhancedBitMatrix rowReducedEchelonForm() {
         EnhancedBitMatrix current = new EnhancedBitMatrix( rows );
         rowReducedEchelonForm( current );
@@ -416,47 +501,78 @@ public class EnhancedBitMatrix {
         rowReducedEchelonForm( m, m.rows.size() , augments);
     }
     
-    public static void rowReducedEchelonForm( EnhancedBitMatrix m , int lastRow , EnhancedBitMatrix ... augments) {
+    public static void rowReducedEchelonForm( EnhancedBitMatrix m , int numRows , EnhancedBitMatrix ... augments) {
         List<BitVector> rows = m.rows;
-        
+        int row = 0;
+        int numCols = m.cols();
+        int limit = Math.min( numRows, numCols );
         /*
          * Gaussian elimination w/ optional augmentation.
+         * 
+         * We seek the first row with currentColumn non-zero
          */
-
-        for( int row = 0 ; row < lastRow && (row < rows.iterator().next().size() ); ++row ) {
-            BitVector currentRow = rows.get( row );
-            //If the the row #row has the row-th entry set proceed with elimination;
-            if( !currentRow.get( row ) ) {
-                for( int remainingRow = row + 1 ; remainingRow < lastRow ; ++remainingRow ) {
-                    BitVector alternateRow = rows.get( remainingRow ); 
-                    if( alternateRow.get( row ) ) {
-                        m.swap( row, remainingRow );
-                        for( int i = 0 ; i < augments.length ; ++i ) {
-                            augments[i].swap( row , remainingRow );
+        int z = 0;
+        for( int col = 0; col < numCols ; ++col ) {
+            int suitableRow = getSuitableRow( rows, col, row );
+            if( suitableRow >= 0 ) {
+                //Perform the row swap.
+                m.swap( row, suitableRow );
+                augmentedSwap( row , suitableRow , augments );
+                //Zero out all other rows
+                BitVector currentRow = rows.get( row );
+                for( int candidateIndex = 0 ; candidateIndex < limit ; ++candidateIndex ) {
+                    if( candidateIndex != row ) {
+                        BitVector candidateRow = rows.get( candidateIndex );
+                        if( candidateRow.get( col ) ) {
+                            candidateRow.xor( currentRow );
+                            augmentedXor( candidateIndex , row , augments );
                         }
-                        currentRow = alternateRow;
-                        break;
                     }
                 }
-            }            
-            /*
-             * Zero the the row-th column in all other rows. If no suitable row was found throw an exception.
-             */
-
-            for( int remainingRow = 0 ; remainingRow < lastRow ; ++remainingRow ) {
-                if( remainingRow == row ) {
-                    continue;
-                }
-                BitVector rRow = rows.get( remainingRow );
-                if( rRow.get( row ) ) {
-                    rRow.xor( currentRow );
-                    for( int i = 0 ; i < augments.length ; ++i ) {
-                        augments[i].rows.get( remainingRow ).xor( augments[i].rows.get( row ) );
-                    }
-                }
-            }   
+                ++row;
+            } 
         }
-
+    }
+    
+    static void augmentedXor( int destRow, int srcRow , EnhancedBitMatrix ... augments ) {
+        for( int i = 0 ; i < augments.length ; ++i ) {
+            augments[i].rows.get( destRow ).xor( augments[i].rows.get( srcRow ) );
+        }
+    }
+    
+    static void augmentedSwap( int destRow, int srcRow , EnhancedBitMatrix ... augments ) {
+        for( int i = 0 ; i < augments.length ; ++i ) {
+            augments[i].swap( destRow, srcRow );
+        }
+    }
+    
+    static int getSuitableRow( List<BitVector> rows , final int col , int startRow ) {
+        for( int i = startRow ; i < rows.size(); ++i ) {
+            if( rows.get( i ).get( col ) ) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    public static EnhancedBitMatrix rref( EnhancedBitMatrix m , EnhancedBitMatrix ... augments ) {
+        int row = 0, col;
+        int numCols = m.cols();
+        int numRows = m.rows();
+        
+        for( col = 0 ; col < numCols; ++col ) {
+            for( int i = row ; i < numRows ; ++i) {
+                //For each row 
+                if( m.get( i , col ) ) {
+                    m.swap( row , i );
+                    for( int j = 0 ; i < augments.length ; ++j ) {
+                        augments[j].swap( row , i );
+                    }
+                }
+            }
+        }
+        
+        return null;
     }
     
     public static EnhancedBitMatrix randomLeftInvertibleMatrix( int rows , int cols , int attempts ) throws SingularMatrixException {
@@ -514,7 +630,11 @@ public class EnhancedBitMatrix {
     public static EnhancedBitMatrix randomMatrix( int numRows , int numCols ) {
         List<BitVector> rows = Lists.newArrayListWithExpectedSize( numRows );
         for( int i = 0 ; i < numRows ; ++i ) {
-            rows.add( BitVectors.randomVector( numCols ) );
+            BitVector v = BitVectors.randomVector( numCols );
+            while( v.cardinality() == 0 ) {
+                v = BitVectors.randomVector( numCols );
+            }
+            rows.add( v );
         }
         return new EnhancedBitMatrix( rows );
     }

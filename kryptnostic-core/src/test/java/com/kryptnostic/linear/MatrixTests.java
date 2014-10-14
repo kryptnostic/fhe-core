@@ -225,4 +225,31 @@ public class MatrixTests {
         BitVector actual = BitVectors.fromSquareMatrix( m );
         Assert.assertEquals( expected , actual );
     }
+    
+    @Test
+    public void testRightInverse() {
+        EnhancedBitMatrix m = null;
+        EnhancedBitMatrix mInv = null;
+        for( int i = 0 ; i < 100; ++i ) {
+            int notDone = 1000;
+
+            while( notDone > 0 ) {
+                m = EnhancedBitMatrix.randomMatrix( 4 , 8 );
+                
+                try {
+                    mInv = m.rightInverse();
+                    Assert.assertNotNull( mInv );
+                    EnhancedBitMatrix result = m.multiply( mInv );
+                    Assert.assertTrue( result.isIdentity() );
+                    notDone = 0;
+                } catch (SingularMatrixException e) {
+                    m = null;
+                    mInv = null;
+                    logger.info( "Encountered singluar matrix... trying again." );
+                    --notDone;
+                }
+            }
+        }
+    }
+    
 }
