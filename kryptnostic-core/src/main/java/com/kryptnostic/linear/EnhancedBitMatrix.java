@@ -358,21 +358,6 @@ public class EnhancedBitMatrix {
         }
 
         return new EnhancedBitMatrix( filtered );
-//        EnhancedBitMatrix random = randomInvertibleMatrix( nullspan.rows() );
-//        EnhancedBitMatrix rightInverse = random.multiply( nullspan );
-//        EnhancedBitMatrix test2 = this.multiply( rightInverse.transpose() );
-//        EnhancedBitMatrix test = this.multiply( nullspan );
-//        
-//        if( !test.isZero() ) {
-//            logger.error( "blimey!" );
-//        }
-//
-//        BitVector[] newRows = new BitVector[ cols() ];
-//
-//        for( int i = 0 ; i < newRows.length ; ++i ) {
-//            newRows[ i ] = nullspan.rows.get( r.nextInt( nullspan.getRows().size() ) );
-//        }
-//        return new EnhancedBitMatrix( Arrays.asList( newRows ) );
     }
     
     public EnhancedBitMatrix getLeftNullifyingMatrix() throws SingularMatrixException {

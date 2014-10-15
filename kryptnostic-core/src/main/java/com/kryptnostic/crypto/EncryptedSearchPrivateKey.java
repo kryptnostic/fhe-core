@@ -10,7 +10,7 @@ import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.BasePolynomialFunction;
-import com.kryptnostic.multivariate.FunctionUtils;
+import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
@@ -26,15 +26,22 @@ public class EncryptedSearchPrivateKey {
      */
     private final EnhancedBitMatrix leftIndexCollapser,rightIndexCollapser;
     
+    /*
+     * 
+     */
+    private final SimplePolynomialFunction indexingFunction;
+    
     private final EnhancedBitMatrix queryMixer;
     private final int hashBits;
-    private final int nonceBits = 64;
+    private final int nonceBits;
     
     public EncryptedSearchPrivateKey() throws SingularMatrixException {
-        this( 128, 8, 16, 8, 16 );
+        //Defaults are 128 bit murmur hash
+        this( 128, 64, 64, 8, 16, 8, 16 );
     }
     
-    public EncryptedSearchPrivateKey( int hashBits, int collapsedQueryBits, int expandedQeuryBits, int collpasedIndexBits, int expandedIndexBits ) throws SingularMatrixException {
+    //TODO: Make a builder too many ints...
+    public EncryptedSearchPrivateKey( int hashBits, int nonceBits, int indexLength, int collapsedQueryBits, int expandedQueryBits, int collpasedIndexBits, int expandedIndexBits ) throws SingularMatrixException {
         leftQueryCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( collpasedIndexBits , expandedIndexBits , 25 );
         rightQueryCollapser = EnhancedBitMatrix.randomLeftInvertibleMatrix( expandedIndexBits , collpasedIndexBits , 25 );
         
@@ -42,9 +49,11 @@ public class EncryptedSearchPrivateKey {
         rightIndexCollapser = EnhancedBitMatrix.randomLeftInvertibleMatrix( expandedIndexBits, collpasedIndexBits , 25 );
         
         queryMixer = EnhancedBitMatrix.randomInvertibleMatrix( hashBits + nonceBits );
+        indexingFunction = PolynomialFunctions.denseRandomMultivariateQuadratic( hashBits , hashBits );
         this.hashBits = hashBits;
+        this.nonceBits = nonceBits;
     }
-    
+        
     /**
      * Generates a search token by computing 
      * @param token
@@ -79,6 +88,16 @@ public class EncryptedSearchPrivateKey {
         return queryMixer;
     }
     
+    public EnhancedBitMatrix newDocumentKey() {
+        return EnhancedBitMatrix.randomMatrix( indexingFunction.getInputLength() , hashBits );
+    }
+
+    public SimplePolynomialFunction getDownmixingIndexer(EnhancedBitMatrix documentKey) {
+        EnhancedBitMatrix lhs = leftIndexCollapser.multiply( documentKey );
+        SimplePolynomialFunction f = PolynomialFunctions.identity( hashBits );
+        return twoSidedMultiply( f , lhs , rightIndexCollapser );
+    }
+    
     public SimplePolynomialFunction getQueryHasher( SimplePolynomialFunction globalHash, SimplePolynomialFunction decryptor ) throws SingularMatrixException {
         return twoSidedMultiplyWithMixing( globalHash , decryptor, leftQueryCollapser.rightInverse() , rightQueryCollapser.leftInverse() , queryMixer );
     }
@@ -93,14 +112,22 @@ public class EncryptedSearchPrivateKey {
         BasePolynomialFunction b = (BasePolynomialFunction)a.partialComposeRight( downMixer.multiply( queryUnmixer.multiply( PolynomialFunctions.identity( 192 ) ) ) );
         ParameterizedPolynomialFunctionGF2 g =(ParameterizedPolynomialFunctionGF2) b.partialComposeLeft( decryptor );
         
-        BitVector[] contributions = g.getContributions();
+        return twoSidedMultiply( g , lhs, rhs );
+    }
+    
+    public static SimplePolynomialFunction twoSidedMultiply(SimplePolynomialFunction f, EnhancedBitMatrix lhs, EnhancedBitMatrix rhs ) {
+        BitVector[] contributions = f.getContributions();
         BitVector[] newContributions = new BitVector[ contributions.length ];
         
         for( int i = 0 ; i < contributions.length ; ++i ) {
             newContributions[ i ] = BitVectors.fromSquareMatrix( lhs.multiply( EnhancedBitMatrix.squareMatrixfromBitVector( contributions[ i ] ) ).multiply( rhs ) );
         }
         
-        return new ParameterizedPolynomialFunctionGF2( g.getInputLength(), newContributions[0].size() , g.getMonomials(), newContributions , g.getPipelines() );
-//        .compose( queryMixer.inverse().multiply( PolynomialFunctions.identity( f.getInputLength() ) ) );
+        if( f.getClass().equals(  ParameterizedPolynomialFunctionGF2.class ) ) {
+            ParameterizedPolynomialFunctionGF2 g = (ParameterizedPolynomialFunctionGF2) f;
+            return new ParameterizedPolynomialFunctionGF2( g.getInputLength(), newContributions[0].size() , g.getMonomials(), newContributions , g.getPipelines() );
+        } else {
+            return new OptimizedPolynomialFunctionGF2( f.getInputLength() , newContributions[0].size() , f.getMonomials(), newContributions );
+        }
     }
 }
