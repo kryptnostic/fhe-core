@@ -709,8 +709,73 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
          
         return this.compose(prepared);
     }
-
+    
+    public SimplePolynomialFunction partialComposeRight(SimplePolynomialFunction inner) {
+        SimplePolynomialFunction prepared = null;
+        SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
+        prepared = FunctionUtils.concatenateInputsAndOutputs(identity,inner);
+        return this.compose( prepared );
+    }
+    
+    public SimplePolynomialFunction specialCompose( SimplePolynomialFunction inner, EnhancedBitMatrix m ) {
+        Preconditions.checkArgument(inner.getOutputLength() <= getInputLength(),
+                "Inner function output length cannot be larger than outer function input length.");
+        SimplePolynomialFunction prepared;
+        if (inner.isParameterized()) {
+            prepared = specialComposePackInner(inner , m);
+        } else {
+            SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
+            prepared = FunctionUtils.concatenateInputsAndOutputs(inner, m.multiply( identity ) );
+        }
+         
+        return this.compose(prepared);        
+    }
+    
     private SimplePolynomialFunction partialComposePackInner(SimplePolynomialFunction inner) {
+        int innerPipelineOutputLength = ( (ParameterizedPolynomialFunctionGF2) inner ).getPipelineOutputLength();
+        int identityLength = inputLength - inner.getOutputLength();
+        int innerInputLength = inner.getInputLength() + innerPipelineOutputLength;
+        int paramInputLength = inner.getInputLength() + identityLength;
+        int newInputLength = innerInputLength + identityLength;
+
+        Monomial[] unshiftedInnerMonomials = inner.getMonomials();
+        BitVector[] unshiftedInnerContributions = inner.getContributions();
+
+        Monomial[] shiftedInnerMonomials = new Monomial[unshiftedInnerContributions.length + inputLength
+                - inner.getOutputLength()];
+        BitVector[] shiftedInnerContributions = new BitVector[unshiftedInnerContributions.length + inputLength
+                - inner.getOutputLength()];
+
+        for (int i = 0; i < unshiftedInnerMonomials.length; ++i) {
+            shiftedInnerMonomials[i] = unshiftedInnerMonomials[i].extendAndMapRanges(newInputLength, new int[] { 0,
+                    inner.getInputLength() }, new int[][] { { 0, inner.getInputLength() - 1 },
+                    { paramInputLength, newInputLength - 1 } });
+            BitVector contributionToExtend = unshiftedInnerContributions[i].copy();
+            contributionToExtend.setSize(inputLength);
+            shiftedInnerContributions[i] = contributionToExtend;
+        }
+
+        for (int i = 0; i < identityLength; ++i) {
+            shiftedInnerMonomials[unshiftedInnerMonomials.length + i] = Monomial.linearMonomial(newInputLength, i
+                    + inner.getInputLength());
+            BitVector identityContribution = new BitVector(inputLength);
+            identityContribution.set(inner.getOutputLength() + i);
+            shiftedInnerContributions[unshiftedInnerMonomials.length + i] = identityContribution;
+        }
+
+        List<CompoundPolynomialFunction> cpfs = ( (ParameterizedPolynomialFunctionGF2) inner ).getPipelines();
+        List<CompoundPolynomialFunction> newCpfs = Lists.newArrayListWithCapacity(cpfs.size());
+
+        for (CompoundPolynomialFunction cpf : cpfs) {
+            newCpfs.add(cpf.copy().prefix(
+                    PolynomialFunctions.lowerTruncatingIdentity(paramInputLength, inner.getInputLength())));
+        }
+
+        return new ParameterizedPolynomialFunctionGF2(paramInputLength, inputLength, shiftedInnerMonomials,
+                shiftedInnerContributions, newCpfs);
+    }
+    
+    private SimplePolynomialFunction specialComposePackInner(SimplePolynomialFunction inner,EnhancedBitMatrix m) {
         int innerPipelineOutputLength = ( (ParameterizedPolynomialFunctionGF2) inner ).getPipelineOutputLength();
         int identityLength = inputLength - inner.getOutputLength();
         int innerInputLength = inner.getInputLength() + innerPipelineOutputLength;
