@@ -289,6 +289,7 @@ public class EnhancedBitMatrix {
         return current;
     }
     
+    //TODO: Figure out why this routine stopped working 
     public EnhancedBitMatrix getNullspaceBasis() {
         //TODO: Optimize this
         int rows = cols();
