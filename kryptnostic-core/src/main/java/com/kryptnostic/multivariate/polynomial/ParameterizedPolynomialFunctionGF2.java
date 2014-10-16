@@ -37,8 +37,11 @@ public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunct
      * @param pipelines
      */
     @JsonCreator
-    public ParameterizedPolynomialFunctionGF2(int inputLength, int outputLength, Monomial[] monomials,
-            BitVector[] contributions, @JsonProperty(PIPELINES_PROPERTY) Iterable<CompoundPolynomialFunction> pipelines) {
+    public ParameterizedPolynomialFunctionGF2(@JsonProperty(INPUT_LENGTH_PROPERTY) int inputLength,
+            @JsonProperty(OUTPUT_LENGTH_PROPERTY) int outputLength,
+            @JsonProperty(MONOMIALS_PROPERTY) Monomial[] monomials,
+            @JsonProperty(CONTRIBUTIONS_PROPERTY) BitVector[] contributions,
+            @JsonProperty(PIPELINES_PROPERTY) Iterable<CompoundPolynomialFunction> pipelines) {
         super(inputLength, outputLength, monomials, contributions);
         Preconditions.checkArgument(!Iterables.isEmpty(pipelines),
                 "There must be a least one function in the provided chain.");
@@ -69,15 +72,18 @@ public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunct
     public SimplePolynomialFunction compose(SimplePolynomialFunction inner) {
         for (CompoundPolynomialFunction pipeline : pipelines) {
             pipeline.composeHeadDirectly(inner);
-        } 
+        }
         SimplePolynomialFunction newBase;
         if (!inner.isParameterized()) {
-            SimplePolynomialFunction extended = ParameterizedPolynomialFunctions.extend(inner.getInputLength() << 1, inner);
-            newBase = super.compose(new OptimizedPolynomialFunctionGF2(inner.getInputLength(), inner.getOutputLength(), extended.getMonomials(), extended.getContributions()));
+            SimplePolynomialFunction extended = ParameterizedPolynomialFunctions.extend(inner.getInputLength() << 1,
+                    inner);
+            newBase = super.compose(new OptimizedPolynomialFunctionGF2(inner.getInputLength(), inner.getOutputLength(),
+                    extended.getMonomials(), extended.getContributions()));
         } else {
-            newBase =  super.compose(inner);
+            newBase = super.compose(inner);
         }
-        return new ParameterizedPolynomialFunctionGF2(inner.getInputLength(), outputLength, newBase.getMonomials(), newBase.getContributions(), pipelines);
+        return new ParameterizedPolynomialFunctionGF2(inner.getInputLength(), outputLength, newBase.getMonomials(),
+                newBase.getContributions(), pipelines);
     }
 
     @Override

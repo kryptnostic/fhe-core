@@ -163,6 +163,11 @@ public class PolynomialFunctionRepresentationGF2 {
         return inputLength;
     }
     
+    @JsonProperty( OUTPUT_LENGTH_PROPERTY )
+    public int getOutputLength() {
+        return outputLength;
+    }
+    
     @JsonProperty( MONOMIALS_PROPERTY )
     public Monomial[] getMonomials() {
         return monomials;

@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import cern.colt.bitvector.BitVector;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
@@ -55,7 +56,8 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
             return false;
         }
     };
-
+    
+    @JsonCreator
     public BasePolynomialFunction(@JsonProperty(INPUT_LENGTH_PROPERTY) int inputLength,
             @JsonProperty(OUTPUT_LENGTH_PROPERTY) int outputLength,
             @JsonProperty(MONOMIALS_PROPERTY) Monomial[] monomials,
@@ -85,10 +87,6 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
 
     public static Builder builder(int inputLength, int outputLength) {
         return new Builder( inputLength , outputLength );
-    }
-
-    public int getOutputLength() {
-        return outputLength;
     }
 
     public SimplePolynomialFunction xor(SimplePolynomialFunction rhs) {
