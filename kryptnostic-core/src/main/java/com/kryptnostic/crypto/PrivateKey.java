@@ -16,6 +16,7 @@ import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.NonSquareMatrixException;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.FunctionUtils;
+import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
@@ -39,8 +40,8 @@ public class PrivateKey {
     private final SimplePolynomialFunction F;
     private final SimplePolynomialFunction G;
     private final SimplePolynomialFunction decryptor;
+    private final SimplePolynomialFunction mirroredDecryptor;
     private final SimplePolynomialFunction[] complexityChain;
-    private final Function<SimplePolynomialFunction, SimplePolynomialFunction> composer;
     private final int longsPerBlock;
     
     public PrivateKey( int cipherTextBlockLength, int plainTextBlockLength) {
@@ -73,12 +74,8 @@ public class PrivateKey {
                 e2gen = dgen.rightInverse();
                 Preconditions.checkState( dgen.multiply( e2gen ).isIdentity(), "Generated D matrix must be left generalized inverse of E2." );
                 
-                lgen = e2gen.getLeftNullifyingMatrix();
-                Preconditions.checkState( lgen.multiply( e2gen ).isZero() , "Generated L matrix must nullify E2." );
+                lgen = buildL( e1gen , e2gen );
 
-                lgen = lgen.multiply( e1gen ).inverse().multiply( lgen );  //Normalize
-                Preconditions.checkState( lgen.multiply( e1gen ).isIdentity(), "Generated D matrix must be left generalized inverse of E2." );
-                
                 initialized = true;
                 
                 logger.info("E1GEN: {} x {}" , e1gen.rows(), e1gen.cols() );
@@ -117,10 +114,9 @@ public class PrivateKey {
         G = PolynomialFunctions.randomManyToOneLinearCombination(plainTextBlockLength);
         
         
-        composer = PolynomialFunctions.getComposer(G);
-
         try {
             decryptor = buildDecryptor();
+            mirroredDecryptor = buildMirroredDecryptor();
         } catch (SingularMatrixException e) {
             logger.error("Unable to generate decryptor function due to a singular matrix exception during generation process.");
             throw new InvalidParameterException("Unable to generate decryptor function for private key.");
@@ -161,6 +157,8 @@ public class PrivateKey {
     public EnhancedBitMatrix getD() {
         return D;
     }
+    
+    
 
     public EnhancedBitMatrix getL() {
         return L;
@@ -206,6 +204,10 @@ public class PrivateKey {
         return decryptor;
     }
     
+    public SimplePolynomialFunction getMirroredDecryptor() {
+        return mirroredDecryptor;
+    }
+    
     public SimplePolynomialFunction buildDecryptor() throws SingularMatrixException {
         /*
          * G( x ) = Inv( A + B ) (L + D) x 
@@ -217,6 +219,36 @@ public class PrivateKey {
         Pair<SimplePolynomialFunction,SimplePolynomialFunction[]> pipeline = PolynomialFunctions.buildNonlinearPipeline( GofX , complexityChain );
         SimplePolynomialFunction DofX = L.multiply( X ).xor( A.multiply( GofX ) ).xor( ParameterizedPolynomialFunctions.fromUnshiftedVariables( GofX.getInputLength() , pipeline.getLeft() , pipeline.getRight() ) );
         return DofX;
+    }
+    
+    public SimplePolynomialFunction buildMirroredDecryptor() throws SingularMatrixException {
+        /*
+         * G( x ) = Inv( A + B ) (L + D) x 
+         * D( x ) = L x + A G( x ) + c'_1 h'_1 + c'_2 h'_2 
+         */
+        SimplePolynomialFunction X = PolynomialFunctions.identity( E1.rows() );
+        SimplePolynomialFunction Y = PolynomialFunctions.identity( E1.rows() );
+        
+        SimplePolynomialFunction GofX = A.add( B ).inverse().multiply( L.add( D ) ).multiply( X );
+        
+//        SimplePolynomialFunction GofY = new OptimizedPolynomialFunctionGF2( GofX.getInputLength() , GofX.getOutputLength() , Arrays.copyOf( GofX.getMonomials() , GofX.getMonomials().length ), Arrays.copyOf( GofX.getContributions() , GofX.getContributions().length ) );
+        
+        Pair<SimplePolynomialFunction,SimplePolynomialFunction[]> pipeline = PolynomialFunctions.buildNonlinearPipeline( GofX , complexityChain );
+        
+        SimplePolynomialFunction[] pipelines = pipeline.getRight();
+        SimplePolynomialFunction[] mirroredPipelines = new SimplePolynomialFunction[ pipelines.length ]; 
+        
+        for( int i = 0 ; i < pipelines.length ; ++i ) {
+            mirroredPipelines[ i ] = mirror( pipelines[ i ] );
+        }
+        
+        SimplePolynomialFunction DofX = mirror( L.multiply( X ).xor( A.multiply( GofX ) ) ).xor( ParameterizedPolynomialFunctions.fromUnshiftedVariables( GofX.getInputLength()<<1 , mirror( pipeline.getLeft() ) , mirroredPipelines ) );
+        
+        return DofX;
+    }
+    
+    private static SimplePolynomialFunction mirror( SimplePolynomialFunction f ) {
+        return FunctionUtils.concatenateInputsAndOutputs( f , f );
     }
     
     public byte[] decryptFromEnvelope(Ciphertext ciphertext) {
@@ -243,6 +275,14 @@ public class PrivateKey {
         }
         
         return new BitVector( cipherLongs , longsPerBlock << 6 );
+    }
+    
+    static EnhancedBitMatrix buildL( EnhancedBitMatrix E1 , EnhancedBitMatrix E2 ) throws SingularMatrixException {
+        EnhancedBitMatrix L = E2.getLeftNullifyingMatrix();
+        Preconditions.checkState( L.multiply( E2 ).isZero() , "Generated L matrix must nullify E2." );
+        L = L.multiply( E1).inverse().multiply( L );  //Normalize
+        Preconditions.checkState( L.multiply( E1 ).isIdentity(), "Generated D matrix must be left generalized inverse of E2." );
+        return L;
     }
 //    public abstract Object decryptObject( Object object ,  Class<?> clazz );
 }

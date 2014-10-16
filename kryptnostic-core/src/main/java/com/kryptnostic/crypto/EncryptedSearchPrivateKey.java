@@ -3,13 +3,11 @@ package com.kryptnostic.crypto;
 import cern.colt.bitvector.BitVector;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
-import com.kryptnostic.multivariate.BasePolynomialFunction;
 import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -17,63 +15,60 @@ import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunc
 
 public class EncryptedSearchPrivateKey {
     private static final HashFunction hf = Hashing.murmur3_128();
+    private static final int hashBits = hf.bits();
+    
     /*
      * Query collapsers are used for collapsing the expanded search tokens submitted to the server (E^+)(T)(X^+) 
      */
-    private final EnhancedBitMatrix leftQueryCollapser,rightQueryCollapser;
+    private final EnhancedBitMatrix leftQueryExpander,rightQueryExpander;
     /*
      * Index collapsers are used for computing the actual index location of a shared document.
      */
     private final EnhancedBitMatrix leftIndexCollapser,rightIndexCollapser;
-    
-    /*
-     * 
-     */
+
+    private final EnhancedBitMatrix hashCollapser;
     private final SimplePolynomialFunction indexingFunction;
+    private final PublicKey publicKey;
     
-    private final EnhancedBitMatrix queryMixer;
-    private final int hashBits;
-    private final int nonceBits;
-    
-    public EncryptedSearchPrivateKey() throws SingularMatrixException {
-        //Defaults are 128 bit murmur hash
-        this( 128, 64, 64, 8, 16, 8, 16 );
-    }
-    
-    //TODO: Make a builder too many ints...
-    public EncryptedSearchPrivateKey( int hashBits, int nonceBits, int indexLength, int collapsedQueryBits, int expandedQueryBits, int collpasedIndexBits, int expandedIndexBits ) throws SingularMatrixException {
-        leftQueryCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( collpasedIndexBits , expandedIndexBits , 25 );
-        rightQueryCollapser = EnhancedBitMatrix.randomLeftInvertibleMatrix( expandedIndexBits , collpasedIndexBits , 25 );
-        
-        leftIndexCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( collpasedIndexBits , expandedIndexBits , 25 );
-        rightIndexCollapser = EnhancedBitMatrix.randomLeftInvertibleMatrix( expandedIndexBits, collpasedIndexBits , 25 );
-        
-        queryMixer = EnhancedBitMatrix.randomInvertibleMatrix( hashBits + nonceBits );
+    public EncryptedSearchPrivateKey( PrivateKey privateKey, PublicKey publicKey ) throws SingularMatrixException {
+        int doubleHashBits = hashBits << 1;
         indexingFunction = PolynomialFunctions.denseRandomMultivariateQuadratic( hashBits , hashBits );
-        this.hashBits = hashBits;
-        this.nonceBits = nonceBits;
+        leftQueryExpander = EnhancedBitMatrix.randomLeftInvertibleMatrix( 16 , 8 , 25 );
+        rightQueryExpander = EnhancedBitMatrix.randomRightInvertibleMatrix( 8 , 16 , 25 );
+        
+        leftIndexCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( hashBits , doubleHashBits , 25 );
+        rightIndexCollapser = EnhancedBitMatrix.randomLeftInvertibleMatrix( doubleHashBits , hashBits , 25 );
+        
+        if( publicKey.getEncrypter().getInputLength() == doubleHashBits ) {
+            hashCollapser = EnhancedBitMatrix.identity( doubleHashBits );
+        } else {
+            hashCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( hashBits >>> 1 , hashBits , 25 );
+        }
+        this.publicKey = publicKey;
     }
         
     /**
      * Generates a search token by computing 
-     * @param token
+     * @param term
      * @param publicKey
      * @return
      * @throws SingularMatrixException
      */
-    public BitVector prepareSearchToken( String token ) throws SingularMatrixException {
-        BitVector searchHash = BitVectors.fromBytes( hashBits , hf.hashString( token , Charsets.UTF_8 ).asBytes() );
-        BitVector nonce = BitVectors.randomVector( nonceBits );
-        BitVector searchVector = BitVectors.concatenate( searchHash , nonce );
-        return queryMixer.multiply( searchVector );
+    public BitVector prepareSearchToken( String term ) throws SingularMatrixException {
+        BitVector searchHash = hash( term ); 
+        return publicKey.getEncrypter().apply( BitVectors.concatenate( searchHash , BitVectors.randomVector( searchHash.size() ) ) );
+    }
+    
+    public BitVector hash( String term ) {
+        return hashCollapser.multiply( BitVectors.fromBytes( hashBits , hf.hashString( term , Charsets.UTF_8 ).asBytes() ) ); 
     }
 
-    public EnhancedBitMatrix getLeftQueryCollapser() {
-        return leftQueryCollapser;
+    public EnhancedBitMatrix getLeftQueryExpander() {
+        return leftQueryExpander;
     }
 
-    public EnhancedBitMatrix getRightQueryCollapser() {
-        return rightQueryCollapser;
+    public EnhancedBitMatrix getRightQueryExpander() {
+        return rightQueryExpander;
     }
 
     public EnhancedBitMatrix getLeftIndexCollapser() {
@@ -84,35 +79,18 @@ public class EncryptedSearchPrivateKey {
         return rightIndexCollapser;
     }
     
-    public EnhancedBitMatrix getQueryMixer() { 
-        return queryMixer;
-    }
-    
     public EnhancedBitMatrix newDocumentKey() {
-        return EnhancedBitMatrix.randomMatrix( indexingFunction.getInputLength() , hashBits );
+        return EnhancedBitMatrix.randomInvertibleMatrix( hashBits );
     }
 
     public SimplePolynomialFunction getDownmixingIndexer(EnhancedBitMatrix documentKey) {
         EnhancedBitMatrix lhs = leftIndexCollapser.multiply( documentKey );
         SimplePolynomialFunction f = PolynomialFunctions.identity( hashBits );
-        return twoSidedMultiply( f , lhs , rightIndexCollapser );
+        return indexingFunction.compose( twoSidedMultiply( f , lhs , rightIndexCollapser ) );
     }
     
-    public SimplePolynomialFunction getQueryHasher( SimplePolynomialFunction globalHash, SimplePolynomialFunction decryptor ) throws SingularMatrixException {
-        return twoSidedMultiplyWithMixing( globalHash , decryptor, leftQueryCollapser.rightInverse() , rightQueryCollapser.leftInverse() , queryMixer );
-    }
-    
-    public static SimplePolynomialFunction twoSidedMultiplyWithMixing( SimplePolynomialFunction f , SimplePolynomialFunction decryptor, EnhancedBitMatrix lhs , EnhancedBitMatrix rhs , EnhancedBitMatrix queryMixer ) throws SingularMatrixException {
-        Preconditions.checkArgument( lhs.cols() == rhs.rows() , "Left hand side columns and right hand side rows must align." );
-        
-        EnhancedBitMatrix queryUnmixer = queryMixer.inverse();
-        EnhancedBitMatrix downMixer = new EnhancedBitMatrix( EnhancedBitMatrix.identity( queryUnmixer.rows() ).getRows().subList( 0 , 128 ) );
-        
-        BasePolynomialFunction a = (BasePolynomialFunction)f;  
-        BasePolynomialFunction b = (BasePolynomialFunction)a.partialComposeRight( downMixer.multiply( queryUnmixer.multiply( PolynomialFunctions.identity( 192 ) ) ) );
-        ParameterizedPolynomialFunctionGF2 g =(ParameterizedPolynomialFunctionGF2) b.partialComposeLeft( decryptor );
-        
-        return twoSidedMultiply( g , lhs, rhs );
+    public SimplePolynomialFunction getQueryHasher( SimplePolynomialFunction globalHash, PrivateKey privateKey ) throws SingularMatrixException {
+        return twoSidedMultiply( globalHash.compose( privateKey.getMirroredDecryptor() ) , leftQueryExpander , rightQueryExpander );
     }
     
     public static SimplePolynomialFunction twoSidedMultiply(SimplePolynomialFunction f, EnhancedBitMatrix lhs, EnhancedBitMatrix rhs ) {
@@ -129,5 +107,9 @@ public class EncryptedSearchPrivateKey {
         } else {
             return new OptimizedPolynomialFunctionGF2( f.getInputLength() , newContributions[0].size() , f.getMonomials(), newContributions );
         }
+    }
+    
+    public static int getHashBits() { 
+        return hashBits;
     }
 }

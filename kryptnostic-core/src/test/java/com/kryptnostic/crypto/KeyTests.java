@@ -2,6 +2,7 @@ package com.kryptnostic.crypto;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,26 +10,32 @@ import org.slf4j.LoggerFactory;
 import cern.colt.bitvector.BitVector;
 
 import com.kryptnostic.bitwise.BitVectors;
+import com.kryptnostic.linear.EnhancedBitMatrix;
+import com.kryptnostic.linear.EnhancedBitMatrix.NonSquareMatrixException;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.PolynomialFunctions;
-import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 public class KeyTests {
     private static final Logger logger = LoggerFactory.getLogger( KeyTests.class );
-    private static final PrivateKey privKey = new PrivateKey( 128 , 64 );
-	private static final SimplePolynomialFunction decryptor = privKey.getDecryptor();
-    private static final PublicKey pubKey = new PublicKey( privKey );
-    private static final SimplePolynomialFunction encryptor = pubKey.getEncrypter();
+    private static PrivateKey privKey;
+    private static PublicKey pubKey;
+	private static SimplePolynomialFunction decryptor;
+    private static SimplePolynomialFunction encryptor;
     
     private static final Integer LENGTH = 64;
 
+    @BeforeClass
+    public static void generateKeys() {
+        privKey = new PrivateKey( 128 , 64 );
+        pubKey = new PublicKey( privKey );
+        decryptor = privKey.getDecryptor();
+        encryptor = pubKey.getEncrypter();
+    }
     
     @Test
     public void testConstruction() throws SingularMatrixException {
-        PrivateKey privKey = new PrivateKey( 128 , 64 );
-        PublicKey pubKey = new PublicKey( privKey );
-        logger.info("Finished generating key pair. Starting assumption tests...");
+        logger.info("Starting assumption tests...");
 
         SimplePolynomialFunction e = pubKey.getEncrypter();
         SimplePolynomialFunction LplusDX = privKey.getL().add( privKey.getD() ).multiply( e );
@@ -118,6 +125,26 @@ public class KeyTests {
         Assert.assertEquals(plainText, recovered);
     }
     
+    @Test
+    public void testOrthogonalEmbedding() throws NonSquareMatrixException, SingularMatrixException {
+        EnhancedBitMatrix E1 = EnhancedBitMatrix.randomMatrix( 128 , 64 );
+        EnhancedBitMatrix E2 = E1.getLeftNullifyingMatrix().rightInverse();
+        boolean notGenerated = true;
+        while( notGenerated ) {
+            try{ 
+                E1.leftInverse();
+                E2.leftInverse();
+            } catch ( SingularMatrixException e ) {
+                E1 = EnhancedBitMatrix.randomMatrix( 128 , 64 );
+                E2 = E1.getLeftNullifyingMatrix().rightInverse();              
+                continue;
+            }
+            notGenerated = false;
+        }
+//        Assert.assertTrue( EnhancedBitMatrix.determinant( E1.transpose().multiply( E2 ) ) );
+        
+        EnhancedBitMatrix L = PrivateKey.buildL( E1 , E2 );
+    }
     // TODO uncomment when bug in concatenate ParameterizedPolynomialFunctionGF2 is fixed
 //    @Test
 //    public void testComputeBinaryHomomorphicFunction() {
