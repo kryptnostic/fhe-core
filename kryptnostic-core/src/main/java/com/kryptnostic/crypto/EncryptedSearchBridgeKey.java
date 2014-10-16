@@ -1,13 +1,14 @@
 package com.kryptnostic.crypto;
 
 import com.kryptnostic.linear.EnhancedBitMatrix;
+import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 
 
 public class EncryptedSearchBridgeKey {
     private final EnhancedBitMatrix leftBridge, rightBridge;
-    public EncryptedSearchBridgeKey( EncryptedSearchPrivateKey privateKey , EncryptedSearchSharingKey sharingKey ) {
-        this.leftBridge = sharingKey.getLeftExpander().multiply( privateKey.getLeftQueryExpander() );
-        this.rightBridge = privateKey.getRightQueryCollapser().multiply( sharingKey.getRightExpander() );
+    public EncryptedSearchBridgeKey( EncryptedSearchPrivateKey privateKey , EncryptedSearchSharingKey sharingKey ) throws SingularMatrixException {
+        this.leftBridge = sharingKey.getLeftExpander().multiply( privateKey.getLeftQueryExpander().leftInverse() );
+        this.rightBridge = privateKey.getRightQueryExpander().rightInverse().multiply( sharingKey.getRightExpander() );
     }
 
     public EnhancedBitMatrix getLeftBridge() {
