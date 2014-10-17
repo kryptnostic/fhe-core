@@ -70,20 +70,4 @@ subprojects {
              containers 'org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6'
         }
     }
-    ext.testAreRunning = false;
-
-    test {
-        beforeSuite( { 
-            ext.testAreRunning = true 
-            println "Tests are running!"
-            while( ext.testAreRunning ) {
-                println "This is a placeholder"
-                Thread.sleep( 1000 );
-            }
-            } )
-        afterSuite( { 
-            ext.testAreRunning = false 
-            println "Tests are finished!"
-            } )
-    }
 }
