@@ -1,5 +1,6 @@
 package com.kryptnostic.multivariate.learning;
 
+
 public class Main {
 	
 	public static void main(String[] args) {
@@ -11,4 +12,5 @@ public class Main {
 		learningTests.learnFunctionVaryOrder( true );
 		learningTests.learnFunctionVaryOrder( false );
 	}
+	
 }
