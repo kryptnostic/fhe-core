@@ -18,7 +18,6 @@ public class PolynomialFunctionTestsDriver extends AbstractInstrumentedTest  {
             tests.quadraticComposeTest();
             tests.generalComposeTest();
             tests.partialComposeTest();
-//            tests.testGeneralComposeParameterized();
         }
     }
     
