@@ -29,7 +29,12 @@ import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
+import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.util.CompoundPolynomialFunctions;
+import com.kryptnostic.multivariate.util.FunctionUtils;
+import com.kryptnostic.multivariate.util.ParameterizedPolynomialFunctions;
+import com.kryptnostic.multivariate.util.PolynomialFunctions;
+import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 @Configuration
 public class PolynomialFunctionTests {
@@ -235,10 +240,10 @@ public class PolynomialFunctionTests {
         SimplePolynomialFunction lhs = randomFunction();
         SimplePolynomialFunction rhs = randomFunction();
 
-        Pair<int[], int[]> inputMaps = FunctionUtils.getSplitMap(lhs.getInputLength(), rhs.getInputLength());
-        Pair<int[], int[]> outputMaps = FunctionUtils.getSplitMap(lhs.getOutputLength(), rhs.getOutputLength());
+        Pair<int[], int[]> inputMaps = SimplePolynomialFunctions.getSplitMap(lhs.getInputLength(), rhs.getInputLength());
+        Pair<int[], int[]> outputMaps = SimplePolynomialFunctions.getSplitMap(lhs.getOutputLength(), rhs.getOutputLength());
         
-        SimplePolynomialFunction interleaved = FunctionUtils.interleaveFunctions(lhs, rhs, inputMaps.getLeft(), inputMaps.getRight(),
+        SimplePolynomialFunction interleaved = SimplePolynomialFunctions.interleaveFunctions(lhs, rhs, inputMaps.getLeft(), inputMaps.getRight(),
                 outputMaps.getLeft(), outputMaps.getRight());
 
         BitVector lhInput = BitVectors.randomVector(INPUT_LENGTH);
@@ -519,7 +524,7 @@ public class PolynomialFunctionTests {
         SimplePolynomialFunction lhs = PolynomialFunctions.lightRandomFunction(256, 256);
         SimplePolynomialFunction rhs = PolynomialFunctions.lightRandomFunction(128, 64);
 
-        SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs(lhs, rhs);
+        SimplePolynomialFunction concatenated = SimplePolynomialFunctions.concatenateInputsAndOutputs(lhs, rhs);
         long[] src = new long[] { r.nextLong(), r.nextLong(), r.nextLong(), r.nextLong(), r.nextLong(), r.nextLong() };
         BitVector input = new BitVector(src, 384);
         BitVector lhsInput = new BitVector(new long[] { src[0], src[1], src[2], src[3]}, 256);

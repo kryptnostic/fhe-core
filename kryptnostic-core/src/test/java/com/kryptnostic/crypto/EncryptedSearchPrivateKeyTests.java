@@ -12,8 +12,8 @@ import com.google.common.hash.Hashing;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
-import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.util.PolynomialFunctions;
 
 public class EncryptedSearchPrivateKeyTests {
     private static final HashFunction hf = Hashing.murmur3_128();

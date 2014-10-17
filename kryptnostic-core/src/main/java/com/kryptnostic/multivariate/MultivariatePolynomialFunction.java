@@ -3,6 +3,7 @@ package com.kryptnostic.multivariate;
 import java.util.List;
 
 import com.kryptnostic.multivariate.gf2.Monomial;
+import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
 
 import cern.colt.bitvector.BitVector;
 //TODO: Make this actually work generically for future GF(2^8) or other implementations.

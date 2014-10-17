@@ -12,10 +12,9 @@ import org.slf4j.LoggerFactory;
 import cern.colt.bitvector.BitVector;
 
 import com.kryptnostic.bitwise.BitVectors;
-import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.learning.MultivariateLearning;
+import com.kryptnostic.multivariate.util.PolynomialFunctions;
 
 
 public class MultivariateLearningTests {

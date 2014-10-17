@@ -1,9 +1,10 @@
-package com.kryptnostic.multivariate;
+package com.kryptnostic.multivariate.util;
 
 import java.util.Arrays;
 
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.CompoundPolynomialFunctionGF2;
 
 public class CompoundPolynomialFunctions {
     private CompoundPolynomialFunctions(){}

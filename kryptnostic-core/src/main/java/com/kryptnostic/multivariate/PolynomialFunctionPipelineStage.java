@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.util.PolynomialFunctions;
 
 /**
  * Represents a single stage in the generation process for a pipeline of polynomial functions.

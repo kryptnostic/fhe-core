@@ -12,10 +12,10 @@ import cern.colt.bitvector.BitVector;
 import com.google.common.base.Stopwatch;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
-import com.kryptnostic.multivariate.BasePolynomialFunction;
-import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.PolynomialFunctionsTests;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.BasePolynomialFunction;
+import com.kryptnostic.multivariate.util.PolynomialFunctions;
 
 public class RecursiveLinearizingComposerTest {
     private static final Logger logger = LoggerFactory.getLogger( PolynomialFunctionsTests.class );

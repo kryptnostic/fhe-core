@@ -8,9 +8,9 @@ import cern.colt.bitvector.BitVector;
 
 import com.codahale.metrics.annotation.Timed;
 import com.kryptnostic.bitwise.BitVectors;
-import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.util.PolynomialFunctions;
 
 @Configuration
 public class PartialEvaluationTests {

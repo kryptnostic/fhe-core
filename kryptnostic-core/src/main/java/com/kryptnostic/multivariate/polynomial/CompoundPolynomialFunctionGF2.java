@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate;
+package com.kryptnostic.multivariate.polynomial;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -16,6 +16,7 @@ import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.util.FunctionUtils;
 
 /**
  * Basic implementation of CompoundPolynomialFunction over GF2, consisting of a linked list of functions. The input to
@@ -34,8 +35,7 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
     }
 
     @JsonCreator
-    public CompoundPolynomialFunctionGF2(
-            @JsonProperty(FUNCTIONS_PROPERTY) List<? extends PolynomialFunction> functions) {
+    public CompoundPolynomialFunctionGF2(@JsonProperty(FUNCTIONS_PROPERTY) List<? extends PolynomialFunction> functions) {
         this.functions = Lists.newLinkedList(functions);
     }
 
@@ -122,7 +122,7 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
         }
     }
 
-    @JsonProperty( FUNCTIONS_PROPERTY )
+    @JsonProperty(FUNCTIONS_PROPERTY)
     @Override
     public List<PolynomialFunction> getFunctions() {
         return Collections.unmodifiableList(functions);
@@ -134,6 +134,10 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
         return functions.size();
     }
 
+    /**
+     * Performs actual functional composition of the inner function into the first function in the list, rather than
+     * simply appending.
+     */
     @Override
     public void composeHeadDirectly(SimplePolynomialFunction inner) {
         Preconditions.checkArgument(functions.getFirst() instanceof PolynomialFunction,

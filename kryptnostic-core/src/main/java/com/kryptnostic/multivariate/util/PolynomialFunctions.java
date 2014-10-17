@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate;
+package com.kryptnostic.multivariate.util;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -15,13 +15,18 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
+import com.kryptnostic.multivariate.PolynomialFunctionPipelineStage;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.BasePolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.CompoundPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
 
 /**
- * Utility and factory methods for PolynomialFunctions.
+ * Utility and factory methods for PolynomialFunctions. Methods here should in be generalizable to the
+ * PolynomialFunction interface.
  * 
  * @author Matthew Tamayo-Rios
  */
@@ -309,13 +314,13 @@ public final class PolynomialFunctions {
         return new BasePolynomialFunction(inputLength, outputLength, monomials, contributions);
     }
 
-    public static SimplePolynomialFunction identityRange( int start, int end, int inputLength , int outputLength) {
-        int len = end-start;
+    public static SimplePolynomialFunction identityRange(int start, int end, int inputLength, int outputLength) {
+        int len = end - start;
         Monomial[] monomials = new Monomial[len];
         BitVector[] contributions = new BitVector[len];
 
         for (int i = 0; i < len; ++i) {
-//            int adjustedIndex = i + start;
+            // int adjustedIndex = i + start;
             monomials[i] = Monomial.linearMonomial(inputLength, i);
             BitVector contribution = new BitVector(outputLength);
             contribution.set(i);
@@ -337,7 +342,7 @@ public final class PolynomialFunctions {
     public static SimplePolynomialFunction randomFunction(int inputLen, int outputLen) {
         return randomFunction(inputLen, outputLen, 16, 3);
     }
-    
+
     /**
      * Generates random polynomial functions containing a maximum of 10 terms of max order 2.
      * 

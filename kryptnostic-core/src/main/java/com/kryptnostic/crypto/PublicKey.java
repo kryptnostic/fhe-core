@@ -11,8 +11,8 @@ import cern.colt.bitvector.BitVector;
 import com.google.common.base.Preconditions;
 import com.kryptnostic.crypto.padding.PaddingStrategy;
 import com.kryptnostic.crypto.padding.ZeroPaddingStrategy;
-import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
 
 /**
  * Public key class used for encryption. 

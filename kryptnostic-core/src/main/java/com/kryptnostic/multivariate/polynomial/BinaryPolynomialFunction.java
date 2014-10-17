@@ -1,7 +1,6 @@
-package com.kryptnostic.multivariate;
+package com.kryptnostic.multivariate.polynomial;
 
 import com.google.common.base.Preconditions;
-import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
@@ -11,17 +10,14 @@ import cern.colt.bitvector.BitVector;
  * with lazy compose and recursive evaluation.
  * @author Matthew Tamayo-Rios
  */
-public class PolynomialFunctionJoiner implements PolynomialFunction {
+public class BinaryPolynomialFunction implements PolynomialFunction {
     private final PolynomialFunction lhs;
     private final PolynomialFunction rhs;
     private final PolynomialFunction op;    
-    public PolynomialFunctionJoiner( PolynomialFunction lhs , PolynomialFunction op , PolynomialFunction rhs ) {
+    public BinaryPolynomialFunction( PolynomialFunction lhs , PolynomialFunction op , PolynomialFunction rhs ) {
         Preconditions.checkArgument( 
                 ( lhs.getOutputLength() + rhs.getOutputLength() )  == op.getInputLength() , 
                 "Output of functions being combined must be compatibe with operation.");
-        Preconditions.checkArgument( 
-                lhs.getInputLength() == rhs.getInputLength() , 
-                "Joined functions must have the same input length.");
         this.op = op;
         this.lhs = lhs;
         this.rhs = rhs;
@@ -29,23 +25,36 @@ public class PolynomialFunctionJoiner implements PolynomialFunction {
 
     @Override
     public BitVector apply( BitVector lhs, BitVector rhs ) {
-        return apply( BitVectors.concatenate( lhs , rhs ) );
+        return op.apply( this.lhs.apply( lhs ) , this.rhs.apply( rhs ) ); 
     }
     
     @Override
     public BitVector apply(BitVector input) {
-        return op.apply( lhs.apply( input ) , rhs.apply( input ) );
+        BitVector lhsInput = new BitVector( lhs.getInputLength() );
+        BitVector rhsInput = new BitVector( rhs.getInputLength() );
+        
+        long[] lhsElements = lhsInput.elements();
+        long[] rhsElements = rhsInput.elements();
+        long[] inputElements = input.elements();
+        
+        for( int i = 0 ; i < lhsElements.length ; ++i ) {
+            lhsElements[ i ] = inputElements[ i ];
+        }
+        
+        for( int i = 0 ; i < rhsElements.length ; ++i ) {
+            rhsElements[ i ] = inputElements[ i + lhsElements.length ];
+        }
+        
+        return apply( lhsInput , rhsInput ); 
     }
 
     @Override
     public int getInputLength() {
-        return lhs.getInputLength();
+        return lhs.getInputLength() + rhs.getInputLength();
     }
 
     @Override
     public int getOutputLength() {
         return op.getOutputLength();
     }
-    
-    
 }

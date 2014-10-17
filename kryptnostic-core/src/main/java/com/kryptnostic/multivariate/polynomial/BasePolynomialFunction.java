@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate;
+package com.kryptnostic.multivariate.polynomial;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,8 +29,9 @@ import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
-import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
+import com.kryptnostic.multivariate.util.ParameterizedPolynomialFunctions;
+import com.kryptnostic.multivariate.util.PolynomialFunctions;
+import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 /**
  * This class is used for operating on and evaluating vector polynomial functions over GF(2). Functions are represented
@@ -217,7 +218,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
 
     @Override
     public SimplePolynomialFunction concatenatingCompose(SimplePolynomialFunction lhs, SimplePolynomialFunction rhs) {
-        return this.compose( FunctionUtils.concatenateInputsAndOutputs( lhs , rhs ) );
+        return this.compose( SimplePolynomialFunctions.concatenateInputsAndOutputs( lhs , rhs ) );
     }
 
     @Override
@@ -704,7 +705,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
 
         } else {
             SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
-            prepared = FunctionUtils.concatenateInputsAndOutputs(inner, identity);
+            prepared = SimplePolynomialFunctions.concatenateInputsAndOutputs(inner, identity);
         }
          
         return this.compose(prepared);
@@ -713,7 +714,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
     public SimplePolynomialFunction partialComposeRight(SimplePolynomialFunction inner) {
         SimplePolynomialFunction prepared = null;
         SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
-        prepared = FunctionUtils.concatenateInputsAndOutputs(identity,inner);
+        prepared = SimplePolynomialFunctions.concatenateInputsAndOutputs(identity,inner);
         return this.compose( prepared );
     }
     

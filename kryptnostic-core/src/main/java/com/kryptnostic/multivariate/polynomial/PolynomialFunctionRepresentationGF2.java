@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate;
+package com.kryptnostic.multivariate.polynomial;
 
 import java.security.InvalidParameterException;
 import java.util.Arrays;
@@ -12,6 +12,7 @@ import cern.colt.bitvector.BitVector;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Maps;
+import com.kryptnostic.multivariate.MultivariateUtils;
 import com.kryptnostic.multivariate.gf2.Monomial;
 
 

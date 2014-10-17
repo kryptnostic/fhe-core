@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate.parameterization;
+package com.kryptnostic.multivariate.polynomial;
 
 import java.util.Collections;
 import java.util.List;
@@ -11,11 +11,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.kryptnostic.multivariate.FunctionUtils;
-import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.util.FunctionUtils;
+import com.kryptnostic.multivariate.util.ParameterizedPolynomialFunctions;
 
 /**
  * Allows parameterization of inputs in terms of more complicated functions. For all other purposes behave like a
@@ -50,7 +50,7 @@ public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunct
     }
 
     /**
-     * @see com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2#apply(cern.colt.bitvector.BitVector)
+     * @see com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2#apply(cern.colt.bitvector.BitVector)
      * @param input
      *            a bitvector apply the input.
      */

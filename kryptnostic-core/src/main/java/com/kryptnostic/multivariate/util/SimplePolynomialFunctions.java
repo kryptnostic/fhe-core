@@ -1,98 +1,21 @@
-package com.kryptnostic.multivariate;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+package com.kryptnostic.multivariate.util;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cern.colt.bitvector.BitVector;
 
-import com.esotericsoftware.minlog.Log;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Maps;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
+import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
 
-public class FunctionUtils {
-    private FunctionUtils() {
-    }
 
-    public static <T> T[] mergeArrays(T[] lhs, T[] rhs) {
-        T[] newArray = Arrays.copyOf(lhs, lhs.length + rhs.length);
-        for (int i = lhs.length; i < rhs.length; ++i) {
-            newArray[i] = rhs[i - lhs.length];
-        }
-
-        return newArray;
-    }
-
-    public static BitVector concatenate(BitVector... elements) {
-        Preconditions.checkArgument(
-                Preconditions.checkNotNull(elements, "Null elements are not concatenatable.").length > 1,
-                "Need at least two elements to concatenate");
-        int newLength = 0;
-        for (BitVector v : elements) {
-            Preconditions.checkArgument(v.size() % 64 == 0, "Concatenate only works for block lengths of size 64.");
-            newLength += v.elements().length;
-        }
-
-        BitVector result = new BitVector(newLength << 6);
-        long[] resultBits = result.elements();
-        int i = 0;
-        for (BitVector v : elements) {
-            long[] bits = v.elements();
-            for (int j = 0; j < bits.length; ++j) {
-                resultBits[i++] = bits[j];
-            }
-
-        }
-
-        return result;
-    }
-
-    /**
-     * Provides a mutable map view over an array of {@code Monomial}s and corresponding {@code BitVector} contributions.
-     * 
-     * @param monomials
-     *            The monomials to use as the map key
-     * @param contributions
-     *            The contributions paired with each monomial.
-     * @return a {@code HashMap<Monomial,BitVector} with each monomial paired to its contribution.
-     */
-    public static Map<Monomial, BitVector> mapViewFromMonomialsAndContributions(Monomial[] monomials,
-            BitVector[] contributions) {
-        Map<Monomial, BitVector> result = Maps.newHashMapWithExpectedSize(monomials.length);
-        for (int i = 0; i < monomials.length; ++i) {
-            result.put(monomials[i], contributions[i]);
-        }
-        return result;
-    }
-
-    public static SimplePolynomialFunction fromString(int monomialSize, String polynomialString) {
-        List<String> lines = Splitter.on("\n").omitEmptyStrings().trimResults().splitToList(polynomialString);
-        int row = 0;
-        Map<Monomial, BitVector> monomialContributionsMap = Maps.newHashMap();
-        for (String line : lines) {
-            Iterable<String> monomials = Splitter.on("+").trimResults().omitEmptyStrings().split(line);
-
-            for (String monomialString : monomials) {
-                Monomial m = Monomial.fromString(monomialSize, monomialString);
-                BitVector contribution = monomialContributionsMap.get(m);
-                if (contribution == null) {
-                    contribution = new BitVector(lines.size());
-                    monomialContributionsMap.put(m, contribution);
-                }
-                contribution.set(row);
-            }
-            ++row;
-        }
-
-        return PolynomialFunctions.fromMonomialContributionMap(monomialSize, lines.size(), monomialContributionsMap);
-    }
+public class SimplePolynomialFunctions {
+    private static final Logger logger = LoggerFactory.getLogger(SimplePolynomialFunctions.class);
+    private SimplePolynomialFunctions() {}
 
     /**
      * Uses the output map to indicate the indices of the output bits of the lhs function in the new function.
@@ -105,7 +28,7 @@ public class FunctionUtils {
             try {
                 return ParameterizedPolynomialFunctions.concatenateInputsAndOutputs(lhs, rhs);
             } catch (Exception e) {
-                Log.error("Exception in parameterized function concatenation.");
+                logger.error("Exception in parameterized function concatenation.");
             }
         }
         Pair<int[], int[]> inputMaps = getSplitMap(lhs.getInputLength(), rhs.getInputLength());
@@ -121,7 +44,7 @@ public class FunctionUtils {
      * 
      * @return Pair of lhMap and rhMap
      */
-    protected static Pair<int[], int[]> getSplitMap(int lhLength, int rhLength) {
+    public static Pair<int[], int[]> getSplitMap(int lhLength, int rhLength) {
         int totalLength = lhLength + rhLength;
         int[] lhMap = new int[lhLength];
         int[] rhMap = new int[rhLength];
@@ -156,6 +79,7 @@ public class FunctionUtils {
         return new OptimizedPolynomialFunctionGF2(combinedInputLength, combinedOutputLength, newMonomials,
                 newContributions);
     }
+    
 
     /**
      * Map the terms of inner onto larger arrays of monomials and contributions.
@@ -181,5 +105,4 @@ public class FunctionUtils {
             newContributions[baseIndex + i] = newContribution;
         }
     }
-
 }

@@ -10,14 +10,14 @@ import com.google.common.collect.Lists;
 import com.kryptnostic.crypto.PrivateKey;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
-import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
-import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
-import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
+import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.polynomial.ParameterizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.util.ParameterizedPolynomialFunctions;
+import com.kryptnostic.multivariate.util.PolynomialFunctions;
 
 public class HomomorphicFunctions {
     private static final Logger logger = LoggerFactory.getLogger( HomomorphicFunctions.class );

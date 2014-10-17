@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate;
+package com.kryptnostic.multivariate.polynomial;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;

@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate.parameterization;
+package com.kryptnostic.multivariate.util;
 
 import java.util.Iterator;
 import java.util.List;
@@ -9,14 +9,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.kryptnostic.multivariate.CompoundPolynomialFunctionGF2;
-import com.kryptnostic.multivariate.CompoundPolynomialFunctions;
-import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
-import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.CompoundPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.polynomial.ParameterizedPolynomialFunctionGF2;
 
 public final class ParameterizedPolynomialFunctions {
     private ParameterizedPolynomialFunctions() {

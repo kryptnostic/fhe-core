@@ -2,18 +2,17 @@ package com.kryptnostic.multivariate;
 
 import java.util.Random;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kryptnostic.bitwise.BitVectors;
-import com.kryptnostic.multivariate.BinaryPolynomialFunction;
-import com.kryptnostic.multivariate.PolynomialFunctions;
-import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-
 import cern.colt.bitvector.BitVector;
 
-import org.junit.Assert;
+import com.kryptnostic.bitwise.BitVectors;
+import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.BinaryPolynomialFunction;
+import com.kryptnostic.multivariate.util.PolynomialFunctions;
 
 public class BinaryPolynomialFunctionTests {
     private static final Logger logger = LoggerFactory.getLogger( BinaryPolynomialFunctionTests.class );

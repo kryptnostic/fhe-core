@@ -8,12 +8,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cern.colt.bitvector.BitVector;
+
 import com.kryptnostic.bitwise.BitVectors;
-import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-
-import cern.colt.bitvector.BitVector;
+import com.kryptnostic.multivariate.util.PolynomialFunctions;
 
 public class BasicOperatorTests {
     private static Logger logger = LoggerFactory.getLogger( BasicOperatorTests.class );

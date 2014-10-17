@@ -7,6 +7,7 @@ import cern.colt.bitvector.BitVector;
 
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.util.PolynomialFunctions;
 
 public class PolynomialFunctionsTests {
 

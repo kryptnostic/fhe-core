@@ -8,6 +8,9 @@ import cern.colt.bitvector.BitVector;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.CompoundPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.util.CompoundPolynomialFunctions;
+import com.kryptnostic.multivariate.util.PolynomialFunctions;
 
 public class CompoundPolynomialFunctionTests {
     @Test

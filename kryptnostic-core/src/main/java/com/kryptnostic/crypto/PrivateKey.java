@@ -15,11 +15,10 @@ import com.google.common.base.Preconditions;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.NonSquareMatrixException;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
-import com.kryptnostic.multivariate.FunctionUtils;
-import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
-import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
+import com.kryptnostic.multivariate.util.ParameterizedPolynomialFunctions;
+import com.kryptnostic.multivariate.util.PolynomialFunctions;
+import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 /**
  * Private key class for decrypting data.
@@ -151,7 +150,7 @@ public class PrivateKey {
     }
     
     public SimplePolynomialFunction computeBinaryHomomorphicFunction( SimplePolynomialFunction f ) {
-        return encryptBinary( f.compose( FunctionUtils.concatenateInputsAndOutputs( decryptor, decryptor ) ) );
+        return encryptBinary( f.compose( SimplePolynomialFunctions.concatenateInputsAndOutputs( decryptor, decryptor ) ) );
     }
     
     public EnhancedBitMatrix getD() {
@@ -248,7 +247,7 @@ public class PrivateKey {
     }
     
     private static SimplePolynomialFunction mirror( SimplePolynomialFunction f ) {
-        return FunctionUtils.concatenateInputsAndOutputs( f , f );
+        return SimplePolynomialFunctions.concatenateInputsAndOutputs( f , f );
     }
     
     public byte[] decryptFromEnvelope(Ciphertext ciphertext) {

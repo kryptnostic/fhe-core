@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate;
+package com.kryptnostic.multivariate.util;
 
 import java.util.Arrays;
 import java.util.Collections;
