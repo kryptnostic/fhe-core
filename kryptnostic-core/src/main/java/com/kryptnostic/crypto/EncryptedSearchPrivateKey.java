@@ -10,10 +10,10 @@ import com.google.common.hash.Hashing;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
-import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
-import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.polynomial.ParameterizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 public class EncryptedSearchPrivateKey {
     private static final HashFunction hf = Hashing.murmur3_128();
@@ -34,17 +34,17 @@ public class EncryptedSearchPrivateKey {
     
     public EncryptedSearchPrivateKey( PrivateKey privateKey, PublicKey publicKey ) throws SingularMatrixException {
         int doubleHashBits = hashBits << 1;
-        indexingFunction = PolynomialFunctions.denseRandomMultivariateQuadratic( hashBits , hashBits );
-        leftQueryExpander = EnhancedBitMatrix.randomLeftInvertibleMatrix( 16 , 8 , 25 );
-        rightQueryExpander = EnhancedBitMatrix.randomRightInvertibleMatrix( 8 , 16 , 25 );
+        indexingFunction = SimplePolynomialFunctions.denseRandomMultivariateQuadratic( hashBits , hashBits );
+        leftQueryExpander = EnhancedBitMatrix.randomLeftInvertibleMatrix( 16 , 8 , 1000 );
+        rightQueryExpander = EnhancedBitMatrix.randomRightInvertibleMatrix( 8 , 16 , 1000 );
         
-        leftIndexCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( hashBits , doubleHashBits , 25 );
-        rightIndexCollapser = EnhancedBitMatrix.randomLeftInvertibleMatrix( doubleHashBits , hashBits , 25 );
+        leftIndexCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( hashBits , doubleHashBits , 1000 );
+        rightIndexCollapser = EnhancedBitMatrix.randomLeftInvertibleMatrix( doubleHashBits , hashBits , 1000 );
         
         if( publicKey.getEncrypter().getInputLength() == doubleHashBits ) {
             hashCollapser = EnhancedBitMatrix.identity( doubleHashBits );
         } else {
-            hashCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( hashBits >>> 1 , hashBits , 25 );
+            hashCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( hashBits >>> 1 , hashBits , 1000 );
         }
         this.squaringMatrix = EnhancedBitMatrix.randomInvertibleMatrix( 8 );
         this.publicKey = publicKey;
@@ -88,7 +88,7 @@ public class EncryptedSearchPrivateKey {
 
     public SimplePolynomialFunction getDownmixingIndexer(EnhancedBitMatrix documentKey) {
         EnhancedBitMatrix lhs = leftIndexCollapser.multiply( documentKey );
-        SimplePolynomialFunction f = PolynomialFunctions.identity( hashBits );
+        SimplePolynomialFunction f = SimplePolynomialFunctions.identity( hashBits );
         return indexingFunction.compose( twoSidedMultiply( f , lhs , rightIndexCollapser ) );
     }
     

@@ -21,11 +21,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.kryptnostic.bitwise.BitVectors;
-import com.kryptnostic.multivariate.FunctionUtils;
-import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.polynomial.ParameterizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.util.FunctionUtils;
+import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 public class EnhancedBitMatrix {
     private static final Random r = new SecureRandom();
@@ -437,7 +437,7 @@ public class EnhancedBitMatrix {
             return new ParameterizedPolynomialFunctionGF2( f.getInputLength() , rows() , newMonomials , newContributions , ppf.getPipelines() );
         }
         
-        return PolynomialFunctions.fromMonomialContributionMap(
+        return SimplePolynomialFunctions.fromMonomialContributionMap(
                 f.getInputLength() , 
                 rows() , 
                 FunctionUtils.mapViewFromMonomialsAndContributions(newMonomials, newContributions) );

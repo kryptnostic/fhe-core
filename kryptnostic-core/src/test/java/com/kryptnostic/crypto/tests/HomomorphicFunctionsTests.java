@@ -9,8 +9,8 @@ import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.crypto.PrivateKey;
 import com.kryptnostic.crypto.PublicKey;
 import com.kryptnostic.crypto.fhe.HomomorphicFunctions;
-import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.util.SimplePolynomialOperators;
 
 
 public class HomomorphicFunctionsTests {
@@ -24,7 +24,7 @@ public class HomomorphicFunctionsTests {
 	@Test
 	public void homomorphicXorTest() {
 		SimplePolynomialFunction homomorphicXor = HomomorphicFunctions.HomomorphicXor(LENGTH, privKey);
-		SimplePolynomialFunction xor = PolynomialFunctions.XOR(LENGTH);
+		SimplePolynomialFunction xor = SimplePolynomialOperators.XOR(LENGTH);
 		
 		testHomomorphicFunction(xor, homomorphicXor);
 	}
@@ -32,7 +32,7 @@ public class HomomorphicFunctionsTests {
 	@Test
 	public void homomorphicAndTest() {
 		SimplePolynomialFunction homomorphicAnd = HomomorphicFunctions.HomomorphicAnd(LENGTH, privKey);
-		SimplePolynomialFunction and = PolynomialFunctions.AND( LENGTH );
+		SimplePolynomialFunction and = SimplePolynomialOperators.AND( LENGTH );
 		
 		testHomomorphicFunction(and, homomorphicAnd);
 	}
@@ -40,7 +40,7 @@ public class HomomorphicFunctionsTests {
 	@Test
 	public void homomorphicLshTest() {
 		SimplePolynomialFunction homomorphicLsh = HomomorphicFunctions.HomomorphicLsh(LENGTH, privKey);
-		SimplePolynomialFunction lsh = PolynomialFunctions.LSH( LENGTH, 1);
+		SimplePolynomialFunction lsh = SimplePolynomialOperators.LSH( LENGTH, 1);
 		
 		testHomomorphicFunction(lsh, homomorphicLsh);
 	}
@@ -48,7 +48,7 @@ public class HomomorphicFunctionsTests {
 //	@Test
 	public void homomorphicBinaryXorTest() {
 		SimplePolynomialFunction homomorphicBinaryXor = HomomorphicFunctions.BinaryHomomorphicXor(LENGTH, privKey);
-		SimplePolynomialFunction binaryXor = PolynomialFunctions.BINARY_XOR(LENGTH);
+		SimplePolynomialFunction binaryXor = SimplePolynomialOperators.BINARY_XOR(LENGTH);
 		
 		testBinaryHomomorphicFunction(binaryXor, homomorphicBinaryXor);
 	}

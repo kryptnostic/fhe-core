@@ -8,13 +8,16 @@ import cern.colt.bitvector.BitVector;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.CompoundPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.util.CompoundPolynomialFunctions;
+import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 public class CompoundPolynomialFunctionTests {
     @Test
     public void testCreateAndEvaluate() {
-        SimplePolynomialFunction f = PolynomialFunctions.randomFunction( 128 , 512 );
-        SimplePolynomialFunction g = PolynomialFunctions.randomFunction( 512 , 256 );
-        SimplePolynomialFunction h = PolynomialFunctions.randomFunction( 256 , 64 );
+        SimplePolynomialFunction f = SimplePolynomialFunctions.randomFunction( 128 , 512 );
+        SimplePolynomialFunction g = SimplePolynomialFunctions.randomFunction( 512 , 256 );
+        SimplePolynomialFunction h = SimplePolynomialFunctions.randomFunction( 256 , 64 );
         CompoundPolynomialFunction cpf = CompoundPolynomialFunctions.fromFunctions( f , g , h );
         
         Assert.assertEquals( 128 , cpf.getInputLength() );
@@ -27,9 +30,9 @@ public class CompoundPolynomialFunctionTests {
     
     @Test
     public void testComposeAndEvaluate() {
-        SimplePolynomialFunction f = PolynomialFunctions.randomFunction( 128 , 512 );
-        SimplePolynomialFunction g = PolynomialFunctions.randomFunction( 512 , 256 );
-        SimplePolynomialFunction h = PolynomialFunctions.randomFunction( 256 , 64 );
+        SimplePolynomialFunction f = SimplePolynomialFunctions.randomFunction( 128 , 512 );
+        SimplePolynomialFunction g = SimplePolynomialFunctions.randomFunction( 512 , 256 );
+        SimplePolynomialFunction h = SimplePolynomialFunctions.randomFunction( 256 , 64 );
         
         CompoundPolynomialFunction cpf = new CompoundPolynomialFunctionGF2()
                                                 .compose( h )

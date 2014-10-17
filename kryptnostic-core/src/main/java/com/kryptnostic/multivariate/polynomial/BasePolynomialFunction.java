@@ -1,4 +1,4 @@
-package com.kryptnostic.multivariate;
+package com.kryptnostic.multivariate.polynomial;
 
 import java.util.Arrays;
 import java.util.List;
@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import cern.colt.bitvector.BitVector;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
@@ -29,8 +30,8 @@ import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctionGF2;
-import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
+import com.kryptnostic.multivariate.util.ParameterizedPolynomialFunctions;
+import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 /**
  * This class is used for operating on and evaluating vector polynomial functions over GF(2). Functions are represented
@@ -55,7 +56,8 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
             return false;
         }
     };
-
+    
+    @JsonCreator
     public BasePolynomialFunction(@JsonProperty(INPUT_LENGTH_PROPERTY) int inputLength,
             @JsonProperty(OUTPUT_LENGTH_PROPERTY) int outputLength,
             @JsonProperty(MONOMIALS_PROPERTY) Monomial[] monomials,
@@ -87,10 +89,6 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         return new Builder( inputLength , outputLength );
     }
 
-    public int getOutputLength() {
-        return outputLength;
-    }
-
     public SimplePolynomialFunction xor(SimplePolynomialFunction rhs) {
         Preconditions.checkArgument( inputLength == rhs.getInputLength() ,
                 "Function being added must have the same input length." );
@@ -101,7 +99,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
             return ParameterizedPolynomialFunctions.xor( this , rhs );
         }
 
-        Map<Monomial, BitVector> monomialContributionsMap = PolynomialFunctions.mapCopyFromMonomialsAndContributions(
+        Map<Monomial, BitVector> monomialContributionsMap = SimplePolynomialFunctions.mapCopyFromMonomialsAndContributions(
                 monomials , contributions );
         Monomial[] rhsMonomials = rhs.getMonomials();
         BitVector[] rhsContributions = rhs.getContributions();
@@ -117,7 +115,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
             }
             contribution.xor( rhsContributions[i] );
         }
-        return PolynomialFunctions.fromMonomialContributionMap( inputLength , outputLength , monomialContributionsMap );
+        return SimplePolynomialFunctions.fromMonomialContributionMap( inputLength , outputLength , monomialContributionsMap );
     }
 
     public SimplePolynomialFunction and(SimplePolynomialFunction rhs) {
@@ -201,13 +199,13 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
                 contribution.xor( contributions[i] );
             }
         }
-        return PolynomialFunctions.fromMonomialContributionMap( inputLength - input.size() , outputLength ,
+        return SimplePolynomialFunctions.fromMonomialContributionMap( inputLength - input.size() , outputLength ,
                 contributionsMap );
     }
 
     @Override
     public SimplePolynomialFunction compose(SimplePolynomialFunction lhs, SimplePolynomialFunction rhs) {
-        return this.compose( PolynomialFunctions.concatenate( lhs , rhs ) );
+        return this.compose( SimplePolynomialFunctions.concatenate( lhs , rhs ) );
     }
 
     @Override
@@ -217,7 +215,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
 
     @Override
     public SimplePolynomialFunction concatenatingCompose(SimplePolynomialFunction lhs, SimplePolynomialFunction rhs) {
-        return this.compose( FunctionUtils.concatenateInputsAndOutputs( lhs , rhs ) );
+        return this.compose( SimplePolynomialFunctions.concatenateInputsAndOutputs( lhs , rhs ) );
     }
 
     @Override
@@ -703,8 +701,8 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
             prepared = partialComposePackInner(inner);
 
         } else {
-            SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
-            prepared = FunctionUtils.concatenateInputsAndOutputs(inner, identity);
+            SimplePolynomialFunction identity = SimplePolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
+            prepared = SimplePolynomialFunctions.concatenateInputsAndOutputs(inner, identity);
         }
          
         return this.compose(prepared);
@@ -712,8 +710,8 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
     
     public SimplePolynomialFunction partialComposeRight(SimplePolynomialFunction inner) {
         SimplePolynomialFunction prepared = null;
-        SimplePolynomialFunction identity = PolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
-        prepared = FunctionUtils.concatenateInputsAndOutputs(identity,inner);
+        SimplePolynomialFunction identity = SimplePolynomialFunctions.identity(getInputLength() - inner.getOutputLength());
+        prepared = SimplePolynomialFunctions.concatenateInputsAndOutputs(identity,inner);
         return this.compose( prepared );
     }
     
@@ -754,7 +752,7 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
 
         for (CompoundPolynomialFunction cpf : cpfs) {
             newCpfs.add(cpf.copy().prefix(
-                    PolynomialFunctions.lowerTruncatingIdentity(paramInputLength, inner.getInputLength())));
+                    SimplePolynomialFunctions.lowerTruncatingIdentity(paramInputLength, inner.getInputLength())));
         }
 
         return new ParameterizedPolynomialFunctionGF2(paramInputLength, inputLength, shiftedInnerMonomials,

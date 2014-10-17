@@ -1,12 +1,10 @@
-package com.kryptnostic.multivariate;
+package com.kryptnostic.multivariate.util;
 
-import java.nio.ByteBuffer;
-import java.nio.LongBuffer;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,172 +14,132 @@ import cern.colt.bitvector.BitVector;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
-import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
+import com.kryptnostic.multivariate.PolynomialFunctionPipelineStage;
 import com.kryptnostic.multivariate.gf2.Monomial;
-import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.BasePolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
 
-/**
- * Utility and factory methods for PolynomialFunctions.
- * 
- * @author Matthew Tamayo-Rios
- */
-public final class PolynomialFunctions {
-    private static final Logger logger = LoggerFactory.getLogger(PolynomialFunctions.class);
-    private static final int INTEGER_BYTES = Integer.SIZE / Byte.SIZE;
-    private static final int INTEGER_BYTES_X4 = INTEGER_BYTES * 4;
-    private static final Base64 codec = new Base64();
 
-    private PolynomialFunctions() {
-    }
+public class SimplePolynomialFunctions {
 
-    public static SimplePolynomialFunction XOR(int xorLength) {
-        int inputLength = xorLength >>> 1;
-        Monomial[] monomials = new Monomial[xorLength];
-        BitVector[] contributions = new BitVector[xorLength];
-
-        for (int i = 0; i < inputLength; ++i) {
-            int offsetIndex = i + inputLength;
-            monomials[i] = Monomial.linearMonomial(xorLength, i);
-            monomials[offsetIndex] = Monomial.linearMonomial(xorLength, offsetIndex);
-            BitVector contribution = new BitVector(xorLength);
-            contribution.set(i);
-            contributions[i] = contribution;
-            /*
-             * In theory everything else makes a copy so we could cheat here and save memory.
-             */
-            contributions[offsetIndex] = contribution.copy();
+    /**
+     * Uses the output map to indicate the indices of the output bits of the lhs function in the new function.
+     * 
+     * @return SimplePolynomialFunction
+     */
+    public static SimplePolynomialFunction concatenateInputsAndOutputs(SimplePolynomialFunction lhs,
+            SimplePolynomialFunction rhs) {
+        if (lhs.isParameterized() || rhs.isParameterized()) {
+            try {
+                return ParameterizedPolynomialFunctions.concatenateInputsAndOutputs(lhs, rhs);
+            } catch (Exception e) {
+                logger.error("Exception in parameterized function concatenation.");
+            }
         }
+        Pair<int[], int[]> inputMaps = getSplitMap(lhs.getInputLength(), rhs.getInputLength());
+        Pair<int[], int[]> outputMaps = getSplitMap(lhs.getOutputLength(), rhs.getOutputLength());
 
-        return new OptimizedPolynomialFunctionGF2(xorLength, xorLength, monomials, contributions);
+        return interleaveFunctions(lhs, rhs, inputMaps.getLeft(), inputMaps.getRight(), outputMaps.getLeft(),
+                outputMaps.getRight());
     }
 
-    public static SimplePolynomialFunction BINARY_XOR(int xorLength) {
-        int inputLength = xorLength << 1;
-        Monomial[] monomials = new Monomial[inputLength];
-        BitVector[] contributions = new BitVector[inputLength];
-
-        for (int i = 0; i < xorLength; ++i) {
-            int offsetIndex = i + xorLength;
-            monomials[i] = Monomial.linearMonomial(inputLength, i);
-            monomials[offsetIndex] = Monomial.linearMonomial(inputLength, offsetIndex);
-            BitVector contribution = new BitVector(xorLength);
-            contribution.set(i);
-            contributions[i] = contribution;
-            // TODO: In theory everything else makes a copy so we could cheat
-            // here and save memory.
-            contributions[offsetIndex] = contribution.copy();
+    /**
+     * Generates a tuple of mappings the first array maps the lhLength indices, and the second array maps to the
+     * rhLength indices.
+     * 
+     * @return Pair of lhMap and rhMap
+     */
+    public static Pair<int[], int[]> getSplitMap(int lhLength, int rhLength) {
+        int totalLength = lhLength + rhLength;
+        int[] lhMap = new int[lhLength];
+        int[] rhMap = new int[rhLength];
+        for (int i = 0; i < totalLength; i++) {
+            if (i < lhLength) {
+                lhMap[i] = i;
+            } else {
+                rhMap[i - lhLength] = i;
+            }
         }
-
-        return new OptimizedPolynomialFunctionGF2(inputLength, xorLength, monomials, contributions);
+        return Pair.of(lhMap, rhMap);
     }
 
-    public static SimplePolynomialFunction AND(int andLength) {
-        int inputLength = andLength >>> 1;
-        Monomial[] monomials = new Monomial[inputLength];
-        BitVector[] contributions = new BitVector[inputLength];
+    /**
+     * Interleave two functions using the arrays as maps for the new monomial and contribution orderings.
+     * 
+     * @return SimplePolynomialFunction
+     */
+    public static SimplePolynomialFunction interleaveFunctions(SimplePolynomialFunction lhs,
+            SimplePolynomialFunction rhs, int[] lhsInputMap, int[] rhsInputMap, int[] lhsOutputMap, int[] rhsOutputMap) {
+        int combinedInputLength = lhs.getInputLength() + rhs.getInputLength();
+        int combinedOutputLength = lhs.getOutputLength() + rhs.getOutputLength();
+        int numTerms = lhs.getMonomials().length + rhs.getMonomials().length;
+        Monomial[] newMonomials = new Monomial[numTerms];
+        BitVector[] newContributions = new BitVector[numTerms];
 
-        for (int i = 0; i < inputLength; ++i) {
-            int offsetIndex = i + inputLength;
-            monomials[i] = Monomial.linearMonomial(andLength, i).inplaceProd(
-                    Monomial.linearMonomial(andLength, offsetIndex));
-            BitVector contribution = new BitVector(andLength);
-            contribution.set(i);
-            contributions[i] = contribution;
+        mapAndAddTerms(newMonomials, newContributions, combinedInputLength, combinedOutputLength, 0, lhs, lhsInputMap,
+                lhsOutputMap);
+        mapAndAddTerms(newMonomials, newContributions, combinedInputLength, combinedOutputLength,
+                lhs.getMonomials().length, rhs, rhsInputMap, rhsOutputMap);
+
+        return new OptimizedPolynomialFunctionGF2(combinedInputLength, combinedOutputLength, newMonomials,
+                newContributions);
+    }
+
+    /**
+     * Map the terms of inner onto larger arrays of monomials and contributions.
+     */
+    private static void mapAndAddTerms(Monomial[] newMonomials, BitVector[] newContributions, int combinedInputLength,
+            int combinedOutputLength, int baseIndex, SimplePolynomialFunction inner, int[] inputMap, int[] outputMap) {
+        Preconditions.checkArgument(inner.getInputLength() <= combinedInputLength,
+                "Inner input length cannot be larger than new input length.");
+        Preconditions.checkArgument(inner.getOutputLength() <= combinedOutputLength,
+                "Inner output length cannot be larger than new output length.");
+        Preconditions.checkArgument(inner.getMonomials().length <= newMonomials.length,
+                "Array of old monomials cannot be larger than new monomial array.");
+
+        Monomial[] monomials = inner.getMonomials();
+        for (int i = 0; i < monomials.length; i++) {
+            BitVector backingVector = BitVectors.extendAndOrder(monomials[i], inputMap, combinedInputLength);
+            Monomial newMonomial = new Monomial(combinedInputLength);
+            newMonomial.xor(backingVector);
+            BitVector newContribution = BitVectors.extendAndOrder(inner.getContributions()[i], outputMap,
+                    combinedOutputLength);
+
+            newMonomials[baseIndex + i] = newMonomial;
+            newContributions[baseIndex + i] = newContribution;
         }
-
-        return new OptimizedPolynomialFunctionGF2(andLength, andLength, monomials, contributions);
     }
 
-    public static SimplePolynomialFunction BINARY_AND(int andLength) {
-        int inputLength = andLength << 1;
-        Monomial[] monomials = new Monomial[andLength];
-        BitVector[] contributions = new BitVector[andLength];
+    /**
+     * Generates a {@link SimplePolynomialFunction} from the string representation.
+     * 
+     * @return SimplePolynomialFunction
+     */
+    public static SimplePolynomialFunction fromString(int monomialSize, String polynomialString) {
+        List<String> lines = Splitter.on("\n").omitEmptyStrings().trimResults().splitToList(polynomialString);
+        int row = 0;
+        Map<Monomial, BitVector> monomialContributionsMap = Maps.newHashMap();
+        for (String line : lines) {
+            Iterable<String> monomials = Splitter.on("+").trimResults().omitEmptyStrings().split(line);
 
-        for (int i = 0; i < andLength; ++i) {
-            int offsetIndex = i + andLength;
-            monomials[i] = Monomial.linearMonomial(inputLength, i).inplaceProd(
-                    Monomial.linearMonomial(inputLength, offsetIndex));
-            BitVector contribution = new BitVector(andLength);
-            contribution.set(i);
-            contributions[i] = contribution;
+            for (String monomialString : monomials) {
+                Monomial m = Monomial.fromString(monomialSize, monomialString);
+                BitVector contribution = monomialContributionsMap.get(m);
+                if (contribution == null) {
+                    contribution = new BitVector(lines.size());
+                    monomialContributionsMap.put(m, contribution);
+                }
+                contribution.set(row);
+            }
+            ++row;
         }
-
-        return new OptimizedPolynomialFunctionGF2(inputLength, andLength, monomials, contributions);
-    }
-
-    public static SimplePolynomialFunction LSH(int inputLength, int shiftLength) {
-        Monomial[] monomials = new Monomial[inputLength - shiftLength];
-        BitVector[] contributions = new BitVector[inputLength - shiftLength];
-        int upperLimit = inputLength - shiftLength;
-        for (int i = 0; i < upperLimit; ++i) {
-            monomials[i] = Monomial.linearMonomial(inputLength, i);
-            BitVector contribution = new BitVector(inputLength);
-            contribution.set(i + shiftLength);
-            contributions[i] = contribution;
-        }
-        return new OptimizedPolynomialFunctionGF2(inputLength, inputLength, monomials, contributions);
-    }
-
-    public static SimplePolynomialFunction NEG(int inputLength) {
-        Monomial[] monomials = new Monomial[inputLength + 1];
-        BitVector[] contributions = new BitVector[inputLength + 1];
-        for (int i = 0; i < ( monomials.length - 1 ); ++i) {
-            monomials[i] = Monomial.linearMonomial(inputLength, i);
-            BitVector contribution = new BitVector(inputLength);
-            contribution.set(i);
-            contributions[i] = contribution;
-        }
-
-        monomials[inputLength] = new Monomial(inputLength);
-        contributions[inputLength] = new BitVector(inputLength);
-        contributions[inputLength].not();
-        return new OptimizedPolynomialFunctionGF2(inputLength, inputLength, monomials, contributions);
-    }
-
-    public static SimplePolynomialFunction RSH(int inputLength, int shiftLength) {
-        Monomial[] monomials = new Monomial[inputLength - shiftLength];
-        BitVector[] contributions = new BitVector[inputLength - shiftLength];
-        int index;
-        for (int i = shiftLength; i < inputLength; ++i) {
-            index = i - shiftLength;
-            monomials[index] = Monomial.linearMonomial(inputLength, i);
-            BitVector contribution = new BitVector(inputLength);
-            contribution.set(index);
-            contributions[index] = contribution;
-        }
-        return new OptimizedPolynomialFunctionGF2(inputLength, inputLength, monomials, contributions);
-    }
-
-    public static SimplePolynomialFunction HALF_ADDER(int length) {
-        return PolynomialFunctions.concatenate(PolynomialFunctions.BINARY_XOR(length),
-                PolynomialFunctions.LSH(length, 1).compose(PolynomialFunctions.BINARY_AND(length)));
-    }
-
-    public static PolynomialFunction ADDER(int length) {
-        return ADDER(length, BINARY_XOR(length), LSH(length, 1).compose(BINARY_AND(length)));
-    }
-
-    // TODO: Finish adder generation.
-    public static PolynomialFunction ADDER(int length, SimplePolynomialFunction xor, SimplePolynomialFunction carry) {
-        CompoundPolynomialFunction cpf = new CompoundPolynomialFunctionGF2();
-
-        /*
-         * Actually building out the algebraic representation of an adder is prohibitively expensive. Initialization:
-         * carry = ( x & y ) << 1; 256 -> 128 current = x + y; 256 -> 128
-         */
-
-        SimplePolynomialFunction halfAdder = PolynomialFunctions.concatenate(xor, carry);
-
-        for (int i = 0; i < length - 1; ++i) {
-            cpf.prefix(halfAdder);
-        }
-        cpf.suffix(xor);
-        return cpf;
+        return fromMonomialContributionMap(monomialSize, lines.size(), monomialContributionsMap);
     }
 
     /**
@@ -318,13 +276,13 @@ public final class PolynomialFunctions {
         return new BasePolynomialFunction(inputLength, outputLength, monomials, contributions);
     }
 
-    public static SimplePolynomialFunction identityRange( int start, int end, int inputLength , int outputLength) {
-        int len = end-start;
+    public static SimplePolynomialFunction identityRange(int start, int end, int inputLength, int outputLength) {
+        int len = end - start;
         Monomial[] monomials = new Monomial[len];
         BitVector[] contributions = new BitVector[len];
 
         for (int i = 0; i < len; ++i) {
-//            int adjustedIndex = i + start;
+            // int adjustedIndex = i + start;
             monomials[i] = Monomial.linearMonomial(inputLength, i);
             BitVector contribution = new BitVector(outputLength);
             contribution.set(i);
@@ -345,6 +303,15 @@ public final class PolynomialFunctions {
      */
     public static SimplePolynomialFunction randomFunction(int inputLen, int outputLen) {
         return randomFunction(inputLen, outputLen, 16, 3);
+    }
+
+    /**
+     * Generates random polynomial functions containing a maximum of 10 terms of max order 2.
+     * 
+     * @return SimplePolynomialFunction
+     */
+    public static SimplePolynomialFunction lightRandomFunction(int inputLen, int outputLen) {
+        return randomFunction(inputLen, outputLen, 10, 2);
     }
 
     /**
@@ -489,7 +456,7 @@ public final class PolynomialFunctions {
             BitVector lhsContribution = Objects.firstNonNull(lhsMap.get(monomial), lhsZero);
             BitVector rhsContribution = Objects.firstNonNull(rhsMap.get(monomial), rhsZero);
 
-            monomialContributionMap.put(monomial, BitVectors.concatenate(lhsContribution, rhsContribution));
+            monomialContributionMap.put(monomial, FunctionUtils.concatenate(lhsContribution, rhsContribution));
         }
 
         return fromMonomialContributionMap(first.getInputLength(), combinedOutputLength, monomialContributionMap);
@@ -506,8 +473,7 @@ public final class PolynomialFunctions {
      * @return
      */
     public static SimplePolynomialFunction unsafeRandomManyToOneLinearCombination(int inputLength, int outputLength) {
-        return EnhancedBitMatrix.randomMatrix(outputLength, inputLength).multiply(
-                PolynomialFunctions.identity(inputLength));
+        return EnhancedBitMatrix.randomMatrix(outputLength, inputLength).multiply(identity(inputLength));
     }
 
     public static SimplePolynomialFunction linearCombination(EnhancedBitMatrix c1, EnhancedBitMatrix c2) {
@@ -581,9 +547,8 @@ public final class PolynomialFunctions {
         return new Function<SimplePolynomialFunction, SimplePolynomialFunction>() {
             @Override
             public SimplePolynomialFunction apply(SimplePolynomialFunction input) {
-                Pair<SimplePolynomialFunction, SimplePolynomialFunction> pair = PolynomialFunctions
-                        .randomlyPartitionMVQ(input);
-                return PolynomialFunctions.concatenate(pair.getLeft().compose(inner), pair.getRight().compose(inner));
+                Pair<SimplePolynomialFunction, SimplePolynomialFunction> pair = randomlyPartitionMVQ(input);
+                return concatenate(pair.getLeft().compose(inner), pair.getRight().compose(inner));
             }
         };
     }
@@ -597,69 +562,8 @@ public final class PolynomialFunctions {
         return result;
     }
 
-    public static SimplePolynomialFunction unmarshalSimplePolynomialFunction(String input) {
-        if (input == null) {
-            return null;
-        }
-        byte[] decoded = Base64.decodeBase64(input.getBytes());
-        ByteBuffer buf = ByteBuffer.wrap(decoded);
-        int inputLength = buf.getInt();
-        int outputLength = buf.getInt();
-        int monomialLength = buf.getInt();
-        int contributionLength = buf.getInt();
+    private static final Logger logger = LoggerFactory.getLogger(SimplePolynomialFunctions.class);
 
-        LongBuffer longBuffer = buf.asLongBuffer();
-
-        Monomial[] monomials = new Monomial[monomialLength];
-        for (int i = 0; i < monomials.length; i++) {
-            long[] monomialLongs = new long[inputLength >>> 6];
-            longBuffer.get(monomialLongs);
-            monomials[i] = new Monomial(monomialLongs, inputLength);
-        }
-
-        BitVector[] contributions = new BitVector[contributionLength];
-        for (int i = 0; i < contributions.length; i++) {
-            long[] contributionLongs = new long[outputLength >>> 6];
-            longBuffer.get(contributionLongs);
-            contributions[i] = new BitVector(contributionLongs, outputLength);
-        }
-
-        return new OptimizedPolynomialFunctionGF2(inputLength, outputLength, monomials, contributions);
-    }
-
-    public static String marshalSimplePolynomialFunction(SimplePolynomialFunction input) {
-        if (input == null) {
-            return null;
-        }
-        Monomial[] monomials = input.getMonomials();
-        BitVector[] contributions = input.getContributions();
-
-        int inputLength = input.getInputLength();
-        int outputLength = input.getOutputLength();
-
-        long[] monomialData = new long[monomials.length * ( inputLength >> 6 )];
-        LongBuffer monomialBuffer = LongBuffer.wrap(monomialData);
-        for (int i = 0; i < monomials.length; i++) {
-            monomialBuffer.put(monomials[i].elements());
-        }
-
-        long[] contributionData = new long[contributions.length * ( outputLength >> 6 )];
-        LongBuffer contributionBuffer = LongBuffer.wrap(contributionData);
-        for (int i = 0; i < contributions.length; i++) {
-            contributionBuffer.put(contributions[i].elements());
-        }
-
-        byte[] target = new byte[( monomialData.length << 3 ) + ( contributionData.length << 3 ) + INTEGER_BYTES_X4];
-        ByteBuffer buf = ByteBuffer.wrap(target);
-        buf.putInt(inputLength);
-        buf.putInt(outputLength);
-        buf.putInt(monomials.length);
-        buf.putInt(contributions.length);
-
-        LongBuffer longBuffer = buf.asLongBuffer();
-        longBuffer.put(monomialData);
-        longBuffer.put(contributionData);
-
-        return new String(codec.encode(target));
+    private SimplePolynomialFunctions() {
     }
 }

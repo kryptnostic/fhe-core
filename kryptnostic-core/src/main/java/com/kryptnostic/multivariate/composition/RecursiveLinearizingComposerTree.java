@@ -9,9 +9,9 @@ import cern.colt.bitvector.BitVector;
 
 import com.google.common.collect.Lists;
 import com.kryptnostic.linear.EnhancedBitMatrix;
-import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
 
 public class RecursiveLinearizingComposerTree {
     //TODO: Fix for non-MVQ( linear ) compose (i.e general) 

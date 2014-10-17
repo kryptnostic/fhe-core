@@ -2,7 +2,6 @@ package com.kryptnostic.multivariate.composition;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 import cern.colt.bitvector.BitVector;
@@ -11,9 +10,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.kryptnostic.linear.EnhancedBitMatrix;
-import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
 
 public class RecursiveLinearizingComposer extends RecursiveLinearizingComposerTree {
     private BitVector constantContribution;

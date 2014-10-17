@@ -10,8 +10,8 @@ import cern.colt.bitvector.BitVector;
 import com.google.common.collect.Lists;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
-import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 public class MatrixTests {
     private static final Logger logger = LoggerFactory.getLogger( MatrixTests.class );
@@ -183,7 +183,7 @@ public class MatrixTests {
     @Test
     public void testPolynomialFunctionMultiply() {
         //Generate test function 
-        SimplePolynomialFunction f = PolynomialFunctions.randomFunction(256, 256);
+        SimplePolynomialFunction f = SimplePolynomialFunctions.randomFunction(256, 256);
         //Generate test matrices
         EnhancedBitMatrix m1 = EnhancedBitMatrix.randomMatrix( 256 , 256 );
         EnhancedBitMatrix m2 = EnhancedBitMatrix.randomMatrix( 512 , 256 );

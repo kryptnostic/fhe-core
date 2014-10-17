@@ -12,18 +12,18 @@ import cern.colt.bitvector.BitVector;
 import com.google.common.base.Stopwatch;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
-import com.kryptnostic.multivariate.BasePolynomialFunction;
-import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.PolynomialFunctionsTests;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.BasePolynomialFunction;
+import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 public class RecursiveLinearizingComposerTest {
     private static final Logger logger = LoggerFactory.getLogger( PolynomialFunctionsTests.class );
     
     @Test 
     public void testRecurisveLinearizingComposer() {
-        BasePolynomialFunction f = (BasePolynomialFunction)PolynomialFunctions.denseRandomMultivariateQuadratic( 128 , 128);
-        BasePolynomialFunction inner = (BasePolynomialFunction) EnhancedBitMatrix.randomMatrix( 128 , 256 ) .multiply(  PolynomialFunctions.identity( 256 ) );
+        BasePolynomialFunction f = (BasePolynomialFunction)SimplePolynomialFunctions.denseRandomMultivariateQuadratic( 128 , 128);
+        BasePolynomialFunction inner = (BasePolynomialFunction) EnhancedBitMatrix.randomMatrix( 128 , 256 ) .multiply(  SimplePolynomialFunctions.identity( 256 ) );
         
         
         RecursiveLinearizingComposer composer = new RecursiveLinearizingComposer( f );

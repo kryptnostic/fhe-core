@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.kryptnostic.multivariate.Monomials;
 import com.kryptnostic.multivariate.gf2.Monomial;
+import com.kryptnostic.multivariate.util.Monomials;
 
 public class MonomialsTests {
 	private static final Logger logger = LoggerFactory.getLogger(MonomialsTests.class);
