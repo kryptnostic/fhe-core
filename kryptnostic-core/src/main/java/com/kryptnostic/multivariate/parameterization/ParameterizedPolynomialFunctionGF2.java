@@ -18,16 +18,17 @@ import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 /**
- * Allows parameterization of inputs in terms of more complicated functions. For all other purposes
- * behave like a PolynomialFunctionGF2 
+ * Allows parameterization of inputs in terms of more complicated functions. For all other purposes behave like a
+ * PolynomialFunctionGF2
  * 
  * @author mtamayo
  */
-public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunctionGF2 implements SimplePolynomialFunction {
+public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunctionGF2 implements
+        SimplePolynomialFunction {
     private static final String PIPELINES_PROPERTY = "property";
-    
+
     private final List<CompoundPolynomialFunction> pipelines;
-    
+
     /**
      * @param inputLength
      * @param outputLength
@@ -56,37 +57,44 @@ public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunct
      */
     @Override
     public BitVector apply(BitVector input) {
-        BitVector [] parameters = new BitVector[ pipelines.size() + 1 ];
+        BitVector[] parameters = new BitVector[pipelines.size() + 1];
         parameters[0] = input;
-        for( int i = 0 ; i < pipelines.size() ; ++i ) {
-            CompoundPolynomialFunction pipeline = pipelines.get( i ); 
-            parameters[ i + 1 ] = pipeline.apply( input );
+        for (int i = 0; i < pipelines.size(); ++i) {
+            CompoundPolynomialFunction pipeline = pipelines.get(i);
+            parameters[i + 1] = pipeline.apply(input);
         }
-        return super.apply( FunctionUtils.concatenate( parameters ) );
+        return super.apply(FunctionUtils.concatenate(parameters));
     }
-    
+
     @Override
     public SimplePolynomialFunction compose(SimplePolynomialFunction inner) {
-        for( CompoundPolynomialFunction pipeline : pipelines ) {
-            pipeline.composeHeadDirectly( inner );
+        for (CompoundPolynomialFunction pipeline : pipelines) {
+            pipeline.composeHeadDirectly(inner);
+        } 
+        SimplePolynomialFunction newBase;
+        if (!inner.isParameterized()) {
+            SimplePolynomialFunction extended = ParameterizedPolynomialFunctions.extend(inner.getInputLength() << 1, inner);
+            newBase = super.compose(new OptimizedPolynomialFunctionGF2(inner.getInputLength(), inner.getOutputLength(), extended.getMonomials(), extended.getContributions()));
+        } else {
+            newBase =  super.compose(inner);
         }
-        return super.compose( inner );
+        return new ParameterizedPolynomialFunctionGF2(inner.getInputLength(), outputLength, newBase.getMonomials(), newBase.getContributions(), pipelines);
     }
-    
+
     @Override
     public boolean isParameterized() {
         return true;
     }
-    
-    @JsonProperty( PIPELINES_PROPERTY )
+
+    @JsonProperty(PIPELINES_PROPERTY)
     public List<CompoundPolynomialFunction> getPipelines() {
-        return Collections.unmodifiableList( pipelines );
+        return Collections.unmodifiableList(pipelines);
     }
-    
+
     @JsonIgnore
     public int getPipelineOutputLength() {
         int inputLength = 0;
-        for( CompoundPolynomialFunction pipeline : pipelines ) {
+        for (CompoundPolynomialFunction pipeline : pipelines) {
             inputLength += pipeline.getOutputLength();
         }
         return inputLength;
