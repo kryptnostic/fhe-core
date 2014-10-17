@@ -1,19 +1,17 @@
 package com.kryptnostic.linear;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cern.colt.bitvector.BitVector;
+
 import com.google.common.collect.Lists;
-import com.kryptnostic.linear.BitUtils;
-import com.kryptnostic.linear.EnhancedBitMatrix;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
-import com.kryptnostic.multivariate.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-
-import cern.colt.bitvector.BitVector;
-import org.junit.Assert;
 
 public class MatrixTests {
     private static final Logger logger = LoggerFactory.getLogger( MatrixTests.class );
@@ -144,10 +142,12 @@ public class MatrixTests {
     }
     
     @Test 
-    public void nullifyingTest() {
+    public void nullifyingTest() throws SingularMatrixException {
         EnhancedBitMatrix m = EnhancedBitMatrix.randomMatrix( 210 , 65  );
+        while( m.nullspace().rows() < 65 ) {
+            m = EnhancedBitMatrix.randomMatrix( 210 , 65  );
+        }
         EnhancedBitMatrix nsBasis = m.getLeftNullifyingMatrix();
-        
         Assert.assertEquals( nsBasis.rows() , m.cols() );
         Assert.assertEquals( nsBasis.cols() , m.rows() );
         logger.trace( "Nullifying matrix ({},{}): {}" , nsBasis.rows() , nsBasis.cols() , nsBasis );
@@ -157,15 +157,14 @@ public class MatrixTests {
         logger.trace(  "Nullified: {}" , result );
     }
     
-    @Test
-    public void leftInvertibilityTest() {
-        
-    }
-    
     @Test 
     public void nullspaceTest() {
         EnhancedBitMatrix m = EnhancedBitMatrix.randomMatrix( 65 , 210 );
         EnhancedBitMatrix nsBasis = m.getNullspaceBasis();
+        while( nsBasis.rows() == 0) {
+            m = EnhancedBitMatrix.randomMatrix( 65 , 210 );
+            nsBasis = m.getNullspaceBasis();
+        }
         logger.trace( "Nullspace basis ({},{}): {}" , nsBasis.rows() , nsBasis.cols() , nsBasis );
         EnhancedBitMatrix result = m.multiply( nsBasis );
         logger.trace(  "Nullified: {}" , result );
@@ -190,9 +189,9 @@ public class MatrixTests {
         EnhancedBitMatrix m2 = EnhancedBitMatrix.randomMatrix( 512 , 256 );
         EnhancedBitMatrix m3 = EnhancedBitMatrix.randomMatrix( 128 , 256 );
         //Generate test vectors
-        BitVector v1 = BitUtils.randomVector( 256 );
-        BitVector v2 = BitUtils.randomVector( 256 );
-        BitVector v3 = BitUtils.randomVector( 256 );
+        BitVector v1 = BitVectors.randomVector( 256 );
+        BitVector v2 = BitVectors.randomVector( 256 );
+        BitVector v3 = BitVectors.randomVector( 256 );
         //Multiply vectorial polynomial function by matrix
         SimplePolynomialFunction r1 = m1.multiply( f );
         SimplePolynomialFunction r2 = m2.multiply( f );
@@ -218,6 +217,66 @@ public class MatrixTests {
         logger.trace( "Actual output for v1: {}" , av3 );
         Assert.assertEquals( ev3 , av3 );
         
+    }
+ 
+    @Test
+    public void testSquareMatrixFromBitVector() {
+        BitVector expected = BitVectors.randomVector( 256 );
+        EnhancedBitMatrix m = EnhancedBitMatrix.squareMatrixfromBitVector( expected );
+        BitVector actual = BitVectors.fromSquareMatrix( m );
+        Assert.assertEquals( expected , actual );
+    }
+    
+    @Test
+    public void testLeftInverse() {
+        EnhancedBitMatrix m = null;
+        EnhancedBitMatrix mInv = null;
+        for( int i = 0 ; i < 100; ++i ) {
+            int notDone = 1000;
+
+            while( notDone > 0 ) {
+                m = EnhancedBitMatrix.randomMatrix( 256 , 128 );
+                
+                try {
+                    mInv = m.leftInverse();
+                    Assert.assertNotNull( mInv );
+                    EnhancedBitMatrix result = mInv.multiply( m );
+                    Assert.assertTrue( result.isIdentity() );
+                    notDone = 0;
+                } catch (SingularMatrixException e) {
+                    m = null;
+                    mInv = null;
+                    logger.trace( "Encountered singluar matrix... trying again." );
+                    --notDone;
+                }
+            }
+        }
+    }
+    
+    @Test
+    public void testRightInverse() {
+        EnhancedBitMatrix m = null;
+        EnhancedBitMatrix mInv = null;
+        for( int i = 0 ; i < 100; ++i ) {
+            int notDone = 1000;
+
+            while( notDone > 0 ) {
+                m = EnhancedBitMatrix.randomMatrix( 128 , 256 );
+                
+                try {
+                    mInv = m.rightInverse();
+                    Assert.assertNotNull( mInv );
+                    EnhancedBitMatrix result = m.multiply( mInv );
+                    Assert.assertTrue( result.isIdentity() );
+                    notDone = 0;
+                } catch (SingularMatrixException e) {
+                    m = null;
+                    mInv = null;
+                    logger.trace( "Encountered singluar matrix... trying again." );
+                    --notDone;
+                }
+            }
+        }
     }
     
 }

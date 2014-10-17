@@ -9,10 +9,10 @@ import org.slf4j.LoggerFactory;
 
 import cern.colt.bitvector.BitVector;
 
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.crypto.PrivateKey;
 import com.kryptnostic.crypto.PublicKey;
 import com.kryptnostic.crypto.fhe.HomomorphicFunctions;
-import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
@@ -47,8 +47,8 @@ public class HomomorphicFunctionsTests {
         logger.trace( "Homomorphic XOR generation took {} ms" , stop - start );
         logger.trace( "Homomorphic XOR has {} monomials" , homomorphicXor.getMonomials().length );
         
-        BitVector v = BitUtils.randomVector( CIPHERTEXT_LENGTH );
-        BitVector plaintext = BitUtils.subVector( v , 0 , PLAINTEXT_LENGTH >>> 6 );
+        BitVector v = BitVectors.randomVector( CIPHERTEXT_LENGTH );
+        BitVector plaintext = BitVectors.subVector( v , 0 , PLAINTEXT_LENGTH >>> 6 );
         
         BitVector cv = pubKey.getEncrypter().apply( v );
         start = System.currentTimeMillis();
@@ -70,8 +70,8 @@ public class HomomorphicFunctionsTests {
         logger.trace( "Homomorphic XOR generation took {} ms" , stop - start );
         logger.trace( "Homomorphic XOR has {} monomials" , homomorphicXor.getMonomials().length );
         
-        BitVector v = BitUtils.randomVector( CIPHERTEXT_LENGTH );
-        BitVector plaintext = BitUtils.subVector( v , 0 , PLAINTEXT_LENGTH >>> 6 );
+        BitVector v = BitVectors.randomVector( CIPHERTEXT_LENGTH );
+        BitVector plaintext = BitVectors.subVector( v , 0 , PLAINTEXT_LENGTH >>> 6 );
         
         BitVector cv = pubKey.getEncrypter().apply( v );
         start = System.currentTimeMillis();
@@ -100,10 +100,10 @@ public class HomomorphicFunctionsTests {
         logger.trace( "Homomorphic AND has {} monomials" , homomorphicAnd.getMonomials().length );
         logger.trace( "Homomorphic AND input length: {}" , homomorphicAnd.getInputLength() );
         
-        BitVector v1 = BitUtils.randomVector( CIPHERTEXT_LENGTH );
-        BitVector v2 = BitUtils.randomVector( CIPHERTEXT_LENGTH );
-        BitVector plaintext1 = BitUtils.subVector( v1 , 0 , PLAINTEXT_LENGTH >>> 6 );
-        BitVector plaintext2 = BitUtils.subVector( v2 , 0 , PLAINTEXT_LENGTH >>> 6 );
+        BitVector v1 = BitVectors.randomVector( CIPHERTEXT_LENGTH );
+        BitVector v2 = BitVectors.randomVector( CIPHERTEXT_LENGTH );
+        BitVector plaintext1 = BitVectors.subVector( v1 , 0 , PLAINTEXT_LENGTH >>> 6 );
+        BitVector plaintext2 = BitVectors.subVector( v2 , 0 , PLAINTEXT_LENGTH >>> 6 );
         
         BitVector cv1 = pubKey.getEncrypter().apply( v1 );
         BitVector cv2 = pubKey.getEncrypter().apply( v2 );

@@ -8,7 +8,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -115,7 +115,7 @@ public class BasicOperatorTests {
     @Test
     public void testNEG() {
         SimplePolynomialFunction neg = PolynomialFunctions.NEG( 128 );
-        BitVector v = BitUtils.randomVector( 128 );
+        BitVector v = BitVectors.randomVector( 128 );
         BitVector result = neg.apply( v );
         BitVector expected = v.copy();
         expected.not();
@@ -125,7 +125,7 @@ public class BasicOperatorTests {
     @Test
     public void testLSH() {
         SimplePolynomialFunction lsh = PolynomialFunctions.LSH( 128 , 23 );
-        BitVector v = BitUtils.randomVector( 128 );
+        BitVector v = BitVectors.randomVector( 128 );
         BitVector result = lsh.apply( v );
         logger.trace("Original vector: {}" , v );
         logger.trace("Vector left shifted {} times: {}" , 23 , result );
@@ -138,7 +138,7 @@ public class BasicOperatorTests {
     @Test
     public void testRSH() {
         SimplePolynomialFunction rsh = PolynomialFunctions.RSH( 128 , 23 );
-        BitVector v = BitUtils.randomVector( 128 );
+        BitVector v = BitVectors.randomVector( 128 );
         BitVector result = rsh.apply( v );
         logger.trace("Original vector: {}" , v );
         logger.trace("Vector right shifted {} times: {}" , 23 , result );
@@ -156,8 +156,8 @@ public class BasicOperatorTests {
         logger.trace("Adder generation took {} ms" , stop - start );
         start = System.currentTimeMillis();
         for( int i = 0 ; i < 100 ; ++i ) {
-            BitVector u = BitUtils.randomVector( 64 );
-            BitVector v = BitUtils.randomVector( 64 );
+            BitVector u = BitVectors.randomVector( 64 );
+            BitVector v = BitVectors.randomVector( 64 );
 
             logger.trace("Adder input length: {}", adder.getInputLength() );
             BitVector result = adder.apply( u , v );

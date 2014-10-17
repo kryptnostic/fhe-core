@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import cern.colt.bitvector.BitVector;
 
-import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -55,7 +55,7 @@ public class MultivariateLearningTests {
         
         Assert.assertEquals( function.apply( inputs.get( 25 ) ) , learned.apply( inputs.get( 25 ) ) );
         
-        BitVector input = BitUtils.randomVector(testPolynomialInputLength);
+        BitVector input = BitVectors.randomVector(testPolynomialInputLength);
         
         Assert.assertEquals( function.apply( input ) , learned.apply( input ) );
     }
@@ -128,7 +128,7 @@ public class MultivariateLearningTests {
 		
 		SummaryStatistics stats = new SummaryStatistics();
 		for (long i = 0; i < numSamples; i++) {
-			BitVector input = BitUtils.randomVector( function.getInputLength() );
+			BitVector input = BitVectors.randomVector( function.getInputLength() );
 			BitVector expectedOutput = function.apply( input );
 			BitVector foundOutput = learnedFunction.apply( input );
 			
@@ -155,7 +155,7 @@ public class MultivariateLearningTests {
 		
 		SummaryStatistics stats = new SummaryStatistics();
 		for (int i = 0; i < numSamples; i++) {
-			BitVector input = BitUtils.randomVector( function.getInputLength() );
+			BitVector input = BitVectors.randomVector( function.getInputLength() );
 			BitVector output = function.apply( input );
 			BitVector foundInput = inverse.apply( output );
 			

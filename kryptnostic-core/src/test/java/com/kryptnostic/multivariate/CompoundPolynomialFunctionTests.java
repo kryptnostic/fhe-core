@@ -5,7 +5,7 @@ import org.junit.Test;
 
 import cern.colt.bitvector.BitVector;
 
-import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
@@ -20,7 +20,7 @@ public class CompoundPolynomialFunctionTests {
         Assert.assertEquals( 128 , cpf.getInputLength() );
         Assert.assertEquals( 64 , cpf.getOutputLength() );
         
-        BitVector v = BitUtils.randomVector( cpf.getInputLength() );
+        BitVector v = BitVectors.randomVector( cpf.getInputLength() );
         
         Assert.assertEquals( h.apply( g.apply( f.apply( v ) ) ) ,  cpf.apply( v ) );
     }
@@ -39,7 +39,7 @@ public class CompoundPolynomialFunctionTests {
         Assert.assertEquals( 128 , cpf.getInputLength() );
         Assert.assertEquals( 64 , cpf.getOutputLength() );
         
-        BitVector v = BitUtils.randomVector( cpf.getInputLength() );
+        BitVector v = BitVectors.randomVector( cpf.getInputLength() );
         
         Assert.assertEquals( h.apply( g.apply( f.apply( v ) ) ) ,  cpf.apply( v ) );
     }

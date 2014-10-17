@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -92,7 +93,7 @@ public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction
     public BitVector apply(BitVector lhs, BitVector rhs) {
         Preconditions.checkArgument(( lhs.size() + rhs.size() ) == getInputLength(),
                 "Vectors provided for evaluation must have the same total length as the function expects as input.");
-        return apply(FunctionUtils.concatenate(lhs, rhs));
+        return apply(BitVectors.concatenate(lhs, rhs));
     }
 
     @JsonIgnore

@@ -2,40 +2,46 @@ package com.kryptnostic.crypto;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cern.colt.bitvector.BitVector;
 
-import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.bitwise.BitVectors;
+import com.kryptnostic.linear.EnhancedBitMatrix;
+import com.kryptnostic.linear.EnhancedBitMatrix.NonSquareMatrixException;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
-import com.kryptnostic.multivariate.FunctionUtils;
 import com.kryptnostic.multivariate.PolynomialFunctions;
-import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 public class KeyTests {
     private static final Logger logger = LoggerFactory.getLogger( KeyTests.class );
-    private static final PrivateKey privKey = new PrivateKey( 128 , 64 );
-	private static final SimplePolynomialFunction decryptor = privKey.getDecryptor();
-    private static final PublicKey pubKey = new PublicKey( privKey );
-    private static final SimplePolynomialFunction encryptor = pubKey.getEncrypter();
+    private static PrivateKey privKey;
+    private static PublicKey pubKey;
+	private static SimplePolynomialFunction decryptor;
+    private static SimplePolynomialFunction encryptor;
     
     private static final Integer LENGTH = 64;
 
+    @BeforeClass
+    public static void generateKeys() {
+        privKey = new PrivateKey( 128 , 64 );
+        pubKey = new PublicKey( privKey );
+        decryptor = privKey.getDecryptor();
+        encryptor = pubKey.getEncrypter();
+    }
     
     @Test
     public void testConstruction() throws SingularMatrixException {
-        PrivateKey privKey = new PrivateKey( 128 , 64 );
-        PublicKey pubKey = new PublicKey( privKey );
-        logger.info("Finished generating key pair. Starting assumption tests...");
+        logger.info("Starting assumption tests...");
 
         SimplePolynomialFunction e = pubKey.getEncrypter();
         SimplePolynomialFunction LplusDX = privKey.getL().add( privKey.getD() ).multiply( e );
         SimplePolynomialFunction expected = privKey.getA().add( privKey.getB()  ).multiply( privKey.getG() ) ;
         SimplePolynomialFunction GofX =  (privKey.getA().add( privKey.getB() ) ).inverse().multiply( privKey.getL().add( privKey.getD() ).multiply( PolynomialFunctions.identity( e.getOutputLength() ) ) );
-        BitVector sample = BitUtils.randomVector( 128 );
+        BitVector sample = BitVectors.randomVector( 128 );
         BitVector enc = e.apply( sample );
         BitVector aV = privKey.getL().add( privKey.getD() ).multiply( e ).apply( sample );
         BitVector eV = expected.apply( sample ); 
@@ -78,7 +84,7 @@ public class KeyTests {
     	SimplePolynomialFunction homomorphicFunction = privKey.computeHomomorphicFunction( identity );
     	
     	for (int i = 0; i < 100; i++) {
-			BitVector plainText = BitUtils.randomVector(LENGTH);
+			BitVector plainText = BitVectors.randomVector(LENGTH);
 			
 			// pad the input to encryptor if necessary
 			BitVector extendedPlainText = plainText.copy();
@@ -98,27 +104,47 @@ public class KeyTests {
         SimplePolynomialFunction mvq = PolynomialFunctions.denseRandomMultivariateQuadratic(256, 64);
         SimplePolynomialFunction composed = mvq.partialComposeLeft(decryptor);
         
-        BitVector plaintext = BitUtils.randomVector(256);
-        BitVector rhPlaintext = BitUtils.subVector(plaintext, 1, 4);
+        BitVector plaintext = BitVectors.randomVector(256);
+        BitVector rhPlaintext = BitVectors.subVector(plaintext, 1, 4);
         long[] backingLhPlaintext = {plaintext.elements()[0]};
         BitVector lhPlaintext = new BitVector(backingLhPlaintext, 64);
         
-        BitVector lhCipher = encryptor.apply(lhPlaintext, BitUtils.randomVector(64));
+        BitVector lhCipher = encryptor.apply(lhPlaintext, BitVectors.randomVector(64));
         
         BitVector expected = mvq.apply(plaintext);
-        BitVector actual = composed.apply(FunctionUtils.concatenate(lhCipher, rhPlaintext));
+        BitVector actual = composed.apply(BitVectors.concatenate(lhCipher, rhPlaintext));
         
         Assert.assertEquals(expected, actual);
     }
     
     @Test
     public void testEncryptDecryptAgain() {
-        BitVector plainText = BitUtils.randomVector(64);
-        BitVector cipherText = encryptor.apply(plainText, BitUtils.randomVector(64));
+        BitVector plainText = BitVectors.randomVector(64);
+        BitVector cipherText = encryptor.apply(plainText, BitVectors.randomVector(64));
         BitVector recovered = decryptor.apply(cipherText);
         Assert.assertEquals(plainText, recovered);
     }
     
+    @Test
+    public void testOrthogonalEmbedding() throws NonSquareMatrixException, SingularMatrixException {
+        EnhancedBitMatrix E1 = EnhancedBitMatrix.randomMatrix( 128 , 64 );
+        EnhancedBitMatrix E2 = E1.getLeftNullifyingMatrix().rightInverse();
+        boolean notGenerated = true;
+        while( notGenerated ) {
+            try{ 
+                E1.leftInverse();
+                E2.leftInverse();
+            } catch ( SingularMatrixException e ) {
+                E1 = EnhancedBitMatrix.randomMatrix( 128 , 64 );
+                E2 = E1.getLeftNullifyingMatrix().rightInverse();              
+                continue;
+            }
+            notGenerated = false;
+        }
+//        Assert.assertTrue( EnhancedBitMatrix.determinant( E1.transpose().multiply( E2 ) ) );
+        
+        EnhancedBitMatrix L = PrivateKey.buildL( E1 , E2 );
+    }
     // TODO uncomment when bug in concatenate ParameterizedPolynomialFunctionGF2 is fixed
 //    @Test
 //    public void testComputeBinaryHomomorphicFunction() {

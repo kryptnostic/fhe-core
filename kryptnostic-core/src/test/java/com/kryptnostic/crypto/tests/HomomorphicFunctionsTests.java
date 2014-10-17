@@ -5,10 +5,10 @@ import org.junit.Test;
 
 import cern.colt.bitvector.BitVector;
 
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.crypto.PrivateKey;
 import com.kryptnostic.crypto.PublicKey;
 import com.kryptnostic.crypto.fhe.HomomorphicFunctions;
-import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
@@ -57,7 +57,7 @@ public class HomomorphicFunctionsTests {
 			SimplePolynomialFunction homomorphicFunction) {
 		
 		for (int i = 0; i < N_TESTS; i++) {
-			BitVector plainText = BitUtils.randomVector(LENGTH);
+			BitVector plainText = BitVectors.randomVector(LENGTH);
 			
 			// pad the input to encryptor if necessary
 			BitVector extendedPlainText = plainText.copy();
@@ -77,12 +77,12 @@ public class HomomorphicFunctionsTests {
 	private void testBinaryHomomorphicFunction(SimplePolynomialFunction function,
 			SimplePolynomialFunction homomorphicFunction) {
 		for (int i = 0; i < N_TESTS; i++) {
-			BitVector plainText1 = BitUtils.randomVector(LENGTH);
+			BitVector plainText1 = BitVectors.randomVector(LENGTH);
 			BitVector extendedPlainText1 = plainText1.copy();
 			extendedPlainText1.setSize( LENGTH << 1);
 			BitVector cipherText1 = encryptor.apply(extendedPlainText1);
 			
-			BitVector plainText2 = BitUtils.randomVector(LENGTH);
+			BitVector plainText2 = BitVectors.randomVector(LENGTH);
 			BitVector extendedPlainText2 = plainText2.copy();
 			extendedPlainText2.setSize( LENGTH << 1);
 			BitVector cipherText2 = encryptor.apply(extendedPlainText2);

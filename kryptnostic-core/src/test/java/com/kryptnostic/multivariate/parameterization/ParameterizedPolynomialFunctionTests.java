@@ -5,8 +5,7 @@ import org.junit.Test;
 
 import cern.colt.bitvector.BitVector;
 
-import com.kryptnostic.linear.BitUtils;
-import com.kryptnostic.multivariate.FunctionUtils;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
@@ -26,10 +25,10 @@ public class ParameterizedPolynomialFunctionTests {
         SimplePolynomialFunction concat = ParameterizedPolynomialFunctions.concatenateInputsAndOutputs(parameterized,
                 function2);
 
-        BitVector input1 = BitUtils.randomVector(128);
-        BitVector input2 = BitUtils.randomVector(128);
-        BitVector expectedResult = FunctionUtils.concatenate(parameterized.apply(input1), function2.apply(input2));
-        BitVector actualResult = concat.apply(FunctionUtils.concatenate(input1, input2));
+        BitVector input1 = BitVectors.randomVector(128);
+        BitVector input2 = BitVectors.randomVector(128);
+        BitVector expectedResult = BitVectors.concatenate(parameterized.apply(input1), function2.apply(input2));
+        BitVector actualResult = concat.apply(BitVectors.concatenate(input1, input2));
         Assert.assertEquals(expectedResult, actualResult);
     }
 }

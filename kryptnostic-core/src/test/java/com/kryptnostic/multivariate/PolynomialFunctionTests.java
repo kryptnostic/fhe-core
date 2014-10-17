@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
@@ -36,20 +36,20 @@ import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunc
 public class PolynomialFunctionTests {
     private static final Logger logger = LoggerFactory.getLogger(PolynomialFunctionTests.class);
     private static final Random r = new Random(0);
-    private static final int INPUT_LENGTH = 128;
-    private static final int OUTPUT_LENGTH = 128;
+    private static final int INPUT_LENGTH = 64;
+    private static final int OUTPUT_LENGTH = 64;
     private static final int PIPELINE_LENGTH = 2;
 
     @Timed
     public void builderTest() {
         OptimizedPolynomialFunctionGF2.Builder builder = OptimizedPolynomialFunctionGF2.builder(256, 256);
         for (int i = 0; i < 1024; ++i) {
-            BitVector contribution = BitUtils.randomVector(256);
+            BitVector contribution = BitVectors.randomVector(256);
             builder.setMonomialContribution(Monomial.randomMonomial(256, 4), contribution);
         }
 
         SimplePolynomialFunction f = builder.build();
-        BitVector result = f.apply(BitUtils.randomVector(256));
+        BitVector result = f.apply(BitVectors.randomVector(256));
         logger.trace("Result: {}", result);
         Assert.assertEquals(result.size(), 256);
     }
@@ -78,7 +78,7 @@ public class PolynomialFunctionTests {
     @Timed
     public void identityTest() {
         SimplePolynomialFunction f = optimizedIdentity();
-        BitVector input = BitUtils.randomVector(INPUT_LENGTH);
+        BitVector input = BitVectors.randomVector(INPUT_LENGTH);
         Assert.assertEquals(input, f.apply(input));
     }
 
@@ -88,7 +88,7 @@ public class PolynomialFunctionTests {
         Set<BitVector> cset = Sets.newHashSet();
         while (mset.size() < 256) {
             if (mset.add(Monomial.randomMonomial(256, 4))) {
-                cset.add(BitUtils.randomVector(256));
+                cset.add(BitVectors.randomVector(256));
             }
         }
         List<Monomial> monomials = Lists.newArrayList(mset);
@@ -126,7 +126,7 @@ public class PolynomialFunctionTests {
     public void productTest() {
         SimplePolynomialFunction lhs = randomFunction();
         SimplePolynomialFunction rhs = randomFunction();
-        BitVector val = BitUtils.randomVector(INPUT_LENGTH);
+        BitVector val = BitVectors.randomVector(INPUT_LENGTH);
         BitVector expected = lhs.apply(val);
         expected.and(rhs.apply(val));
         Assert.assertEquals(expected, lhs.and(rhs).apply(val));
@@ -142,7 +142,7 @@ public class PolynomialFunctionTests {
         logger.info("Compose took {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
         for (int i = 0; i < 25; ++i) {
-            BitVector randomInput = BitUtils.randomVector(INPUT_LENGTH << 1);
+            BitVector randomInput = BitVectors.randomVector(INPUT_LENGTH << 1);
             BitVector innerResult = inner.apply(randomInput);
             BitVector outerResult = outer.apply(innerResult);
             BitVector composedResult = composed.apply(randomInput);
@@ -164,7 +164,7 @@ public class PolynomialFunctionTests {
         logger.info("Compose took {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
         for (int i = 0; i < 25; ++i) {
-            BitVector randomInput = BitUtils.randomVector(INPUT_LENGTH);
+            BitVector randomInput = BitVectors.randomVector(INPUT_LENGTH);
             BitVector innerResult = inner.apply(randomInput);
             BitVector outerResult = outer.apply(innerResult);
             BitVector composedResult = composed.apply(randomInput);
@@ -185,7 +185,7 @@ public class PolynomialFunctionTests {
         
         SimplePolynomialFunction composed = outer.compose(inner);
         
-        BitVector input = BitUtils.randomVector(128);
+        BitVector input = BitVectors.randomVector(128);
         BitVector intermediate = inner.apply(input);
         BitVector expected = outer.apply(intermediate);
         BitVector actual = composed.apply(input);
@@ -201,8 +201,8 @@ public class PolynomialFunctionTests {
 
 
         for (int i = 0; i < 25; ++i) {
-            BitVector innerInput = BitUtils.randomVector(inner.getInputLength());
-            BitVector remainderInput = BitUtils.randomVector(composedLeft.getInputLength() - inner.getInputLength());
+            BitVector innerInput = BitVectors.randomVector(inner.getInputLength());
+            BitVector remainderInput = BitVectors.randomVector(composedLeft.getInputLength() - inner.getInputLength());
 
             BitVector leftInnerResult = inner.apply(innerInput);
             BitVector composedLeftExpected = outer.apply(leftInnerResult, remainderInput);
@@ -221,12 +221,12 @@ public class PolynomialFunctionTests {
 
         SimplePolynomialFunction concatenated = PolynomialFunctions.concatenate(lhs, rhs);
 
-        BitVector input = BitUtils.randomVector(inputLength);
+        BitVector input = BitVectors.randomVector(inputLength);
 
         BitVector concatenatedResult = concatenated.apply(input);
         BitVector lhsResult = lhs.apply(input);
         BitVector rhsResult = rhs.apply(input);
-        BitVector expected = FunctionUtils.concatenate(lhsResult, rhsResult);
+        BitVector expected = BitVectors.concatenate(lhsResult, rhsResult);
 
         Assert.assertEquals(expected, concatenatedResult);
     }
@@ -254,15 +254,15 @@ public class PolynomialFunctionTests {
         SimplePolynomialFunction interleaved = FunctionUtils.interleaveFunctions(lhs, rhs, lhsInputMap, rhsInputMap,
                 lhsOutputMap, rhsOutputMap);
 
-        BitVector lhInput = BitUtils.randomVector(inputLength);
-        BitVector rhInput = BitUtils.randomVector(inputLength);
-        BitVector interleavedInput = FunctionUtils.concatenate(lhInput, rhInput);
+        BitVector lhInput = BitVectors.randomVector(inputLength);
+        BitVector rhInput = BitVectors.randomVector(inputLength);
+        BitVector interleavedInput = BitVectors.concatenate(lhInput, rhInput);
 
         BitVector lhResult = lhs.apply(lhInput);
         BitVector rhResult = rhs.apply(rhInput);
         BitVector iResult = interleaved.apply(interleavedInput);
 
-        Assert.assertEquals(iResult, FunctionUtils.concatenate(lhResult, rhResult));
+        Assert.assertEquals(iResult, BitVectors.concatenate(lhResult, rhResult));
     }
 
     @Timed
@@ -284,7 +284,7 @@ public class PolynomialFunctionTests {
 
         Assert.assertEquals(f, h.xor(g));
 
-        BitVector input = BitUtils.randomVector(f.getInputLength());
+        BitVector input = BitVectors.randomVector(f.getInputLength());
         BitVector expected = f.apply(input);
         BitVector result = g.apply(input);
         result.xor(h.apply(input));
@@ -305,7 +305,7 @@ public class PolynomialFunctionTests {
         long millis = stop - start;
         logger.info("Non-linear pipeline stage generation took {} ms", millis);
 
-        BitVector input = BitUtils.randomVector(inputLength << 1);
+        BitVector input = BitVectors.randomVector(inputLength << 1);
         BitVector inputLower = stage.getLower().apply(inner.apply(input));
         BitVector inputUpper = stage.getUpper().apply(inner.apply(input));
         BitVector expected = f.apply(inner.apply(input));
@@ -314,7 +314,7 @@ public class PolynomialFunctionTests {
         actual.xor(stage.getC2().multiply(inputUpper));
         Assert.assertEquals(expected, actual);
 
-        BitVector concatenatedInput = FunctionUtils.concatenate(inputLower, inputUpper);
+        BitVector concatenatedInput = BitVectors.concatenate(inputLower, inputUpper);
 
         Assert.assertEquals(inputLower, PolynomialFunctions.lowerIdentity(inputLength << 1).apply(concatenatedInput));
         Assert.assertEquals(inputUpper, PolynomialFunctions.upperIdentity(inputLength << 1).apply(concatenatedInput));
@@ -330,8 +330,8 @@ public class PolynomialFunctionTests {
     @Timed
     public void testCombination() {
         int inputLength = 128;
-        BitVector inputLower = BitUtils.randomVector(inputLength);
-        BitVector inputUpper = BitUtils.randomVector(inputLength);
+        BitVector inputLower = BitVectors.randomVector(inputLength);
+        BitVector inputUpper = BitVectors.randomVector(inputLength);
 
         EnhancedBitMatrix c1 = EnhancedBitMatrix.randomInvertibleMatrix(inputLength);
         EnhancedBitMatrix c2 = EnhancedBitMatrix.randomInvertibleMatrix(inputLength);
@@ -341,7 +341,7 @@ public class PolynomialFunctionTests {
         BitVector expected = c1.multiply(inputLower);
         expected.xor(c2.multiply(inputUpper));
 
-        BitVector concatenatedInput = FunctionUtils.concatenate(inputLower, inputUpper);
+        BitVector concatenatedInput = BitVectors.concatenate(inputLower, inputUpper);
 
         Assert.assertEquals(inputLower, PolynomialFunctions.lowerIdentity(inputLength << 1).apply(concatenatedInput));
         Assert.assertEquals(inputUpper, PolynomialFunctions.upperIdentity(inputLength << 1).apply(concatenatedInput));
@@ -377,7 +377,7 @@ public class PolynomialFunctionTests {
         CompoundPolynomialFunction newPipeline = CompoundPolynomialFunctions.fromFunctions(pipelineDescription
                 .getRight());
 
-        BitVector input = BitUtils.randomVector(inputLength << 1);
+        BitVector input = BitVectors.randomVector(inputLength << 1);
         BitVector expected = originalPipeline.apply(inner.apply(input));
         BitVector actual = pipelineDescription.getLeft().apply(newPipeline.apply(input));
         Assert.assertEquals(expected, actual);
@@ -398,7 +398,7 @@ public class PolynomialFunctionTests {
 
         for (int i = 0; i < 100; ++i) {
             BitVector input = randomVector();
-            BitVector innerInput = FunctionUtils.concatenate(randomVector(), randomVector());
+            BitVector innerInput = BitVectors.concatenate(randomVector(), randomVector());
             Assert.assertEquals(outerSlow.apply(input), outerFast.apply(input));
             Assert.assertEquals(innerSlow.apply(innerInput), innerFast.apply(innerInput));
             Assert.assertEquals(slowComposed.apply(innerInput), fastComposed.apply(innerInput));
@@ -466,14 +466,14 @@ public class PolynomialFunctionTests {
     @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     @Timed
     public BitVector randomVector() {
-        return BitUtils.randomVector(INPUT_LENGTH);
+        return BitVectors.randomVector(INPUT_LENGTH);
     }
 
     @Timed
     public void addTest() {
         SimplePolynomialFunction lhs = randomFunction();
         SimplePolynomialFunction rhs = randomFunction();
-        BitVector val = BitUtils.randomVector(INPUT_LENGTH);
+        BitVector val = BitVectors.randomVector(INPUT_LENGTH);
         BitVector expected = lhs.apply(val);
         expected.xor(rhs.apply(val));
         Assert.assertEquals(expected, lhs.xor(rhs).apply(val));
@@ -520,8 +520,8 @@ public class PolynomialFunctionTests {
                 new Monomial(256).chainSet(0).chainSet(1).chainSet(2),
                 new Monomial(256).chainSet(0).chainSet(1).chainSet(2).chainSet(3),
                 new Monomial(256).chainSet(0).chainSet(1).chainSet(4), };
-        BitVector[] contributions = new BitVector[] { BitUtils.randomVector(256), BitUtils.randomVector(256),
-                BitUtils.randomVector(256), BitUtils.randomVector(256) };
+        BitVector[] contributions = new BitVector[] { BitVectors.randomVector(256), BitVectors.randomVector(256),
+                BitVectors.randomVector(256), BitVectors.randomVector(256) };
 
         Map<Monomial, Set<Monomial>> memoizedComputations = OptimizedPolynomialFunctionGF2.initializeMemoMap(256,
                 monomials, contributions);
@@ -576,7 +576,7 @@ public class PolynomialFunctionTests {
         CompoundPolynomialFunction newPipeline = CompoundPolynomialFunctions.fromFunctions(pipelineDescription
                 .getRight());
 
-        BitVector input = BitUtils.randomVector(inputLength << 1);
+        BitVector input = BitVectors.randomVector(inputLength << 1);
         BitVector expected = originalPipeline.apply(inner.apply(input));
         BitVector actual = pipelineDescription.getLeft().apply(newPipeline.apply(input));
         Assert.assertEquals(expected, actual);

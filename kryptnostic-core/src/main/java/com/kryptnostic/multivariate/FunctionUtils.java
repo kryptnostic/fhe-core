@@ -12,7 +12,7 @@ import com.esotericsoftware.minlog.Log;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
-import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 import com.kryptnostic.multivariate.parameterization.ParameterizedPolynomialFunctions;
@@ -52,17 +52,6 @@ public class FunctionUtils {
         }
 
         return result;
-    }
-
-    public static BitVector concatenate(BitVector lhs, BitVector rhs) {
-        Preconditions.checkArgument(( lhs.size() % 64 ) == 0 && ( rhs.size() % 64 ) == 0,
-                "Block length for concatenate must be a multiple of 64.");
-        BitVector concatenated = new BitVector(Arrays.copyOf(lhs.elements(), lhs.elements().length
-                + rhs.elements().length), lhs.size() + rhs.size());
-        for (int i = 0; i < rhs.elements().length; ++i) {
-            concatenated.elements()[i + lhs.elements().length] = rhs.elements()[i];
-        }
-        return concatenated;
     }
 
     /**
@@ -182,10 +171,10 @@ public class FunctionUtils {
         
         Monomial[] monomials = inner.getMonomials();
         for (int i = 0; i < monomials.length; i++) {
-            BitVector backingVector = BitUtils.extendAndOrder(monomials[i], inputMap, combinedInputLength);
+            BitVector backingVector = BitVectors.extendAndOrder(monomials[i], inputMap, combinedInputLength);
             Monomial newMonomial = new Monomial(combinedInputLength);
             newMonomial.xor(backingVector);
-            BitVector newContribution = BitUtils.extendAndOrder(inner.getContributions()[i], outputMap,
+            BitVector newContribution = BitVectors.extendAndOrder(inner.getContributions()[i], outputMap,
                     combinedOutputLength);
 
             newMonomials[baseIndex + i] = newMonomial;

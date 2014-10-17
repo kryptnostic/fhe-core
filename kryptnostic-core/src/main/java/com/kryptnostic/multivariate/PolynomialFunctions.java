@@ -18,7 +18,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
@@ -395,7 +395,7 @@ public final class PolynomialFunctions {
 
         int flatIndex = 0;
         monomials[flatIndex] = Monomial.constantMonomial(inputLength);
-        contributions[flatIndex] = BitUtils.randomVector(outputLength);
+        contributions[flatIndex] = BitVectors.randomVector(outputLength);
         for (int j = 0; j < inputLength; ++j) {
             for (int k = j; k < inputLength; ++k) {
                 /*
@@ -405,7 +405,7 @@ public final class PolynomialFunctions {
                  */
                 flatIndex = 1 + j * ( inputLength - 1 ) - ( ( j * ( j - 1 ) ) >>> 1 ) + k;
                 monomials[flatIndex] = new Monomial(inputLength).chainSet(j).chainSet(k);
-                contributions[flatIndex] = BitUtils.randomVector(outputLength);
+                contributions[flatIndex] = BitVectors.randomVector(outputLength);
             }
         }
         return new OptimizedPolynomialFunctionGF2(inputLength, outputLength, monomials, contributions);
@@ -489,7 +489,7 @@ public final class PolynomialFunctions {
             BitVector lhsContribution = Objects.firstNonNull(lhsMap.get(monomial), lhsZero);
             BitVector rhsContribution = Objects.firstNonNull(rhsMap.get(monomial), rhsZero);
 
-            monomialContributionMap.put(monomial, FunctionUtils.concatenate(lhsContribution, rhsContribution));
+            monomialContributionMap.put(monomial, BitVectors.concatenate(lhsContribution, rhsContribution));
         }
 
         return fromMonomialContributionMap(first.getInputLength(), combinedOutputLength, monomialContributionMap);
