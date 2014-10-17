@@ -13,7 +13,7 @@ import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.polynomial.ParameterizedPolynomialFunctionGF2;
-import com.kryptnostic.multivariate.util.PolynomialFunctions;
+import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 public class EncryptedSearchPrivateKey {
     private static final HashFunction hf = Hashing.murmur3_128();
@@ -34,7 +34,7 @@ public class EncryptedSearchPrivateKey {
     
     public EncryptedSearchPrivateKey( PrivateKey privateKey, PublicKey publicKey ) throws SingularMatrixException {
         int doubleHashBits = hashBits << 1;
-        indexingFunction = PolynomialFunctions.denseRandomMultivariateQuadratic( hashBits , hashBits );
+        indexingFunction = SimplePolynomialFunctions.denseRandomMultivariateQuadratic( hashBits , hashBits );
         leftQueryExpander = EnhancedBitMatrix.randomLeftInvertibleMatrix( 16 , 8 , 25 );
         rightQueryExpander = EnhancedBitMatrix.randomRightInvertibleMatrix( 8 , 16 , 25 );
         
@@ -88,7 +88,7 @@ public class EncryptedSearchPrivateKey {
 
     public SimplePolynomialFunction getDownmixingIndexer(EnhancedBitMatrix documentKey) {
         EnhancedBitMatrix lhs = leftIndexCollapser.multiply( documentKey );
-        SimplePolynomialFunction f = PolynomialFunctions.identity( hashBits );
+        SimplePolynomialFunction f = SimplePolynomialFunctions.identity( hashBits );
         return indexingFunction.compose( twoSidedMultiply( f , lhs , rightIndexCollapser ) );
     }
     

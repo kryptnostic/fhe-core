@@ -14,7 +14,7 @@ import cern.colt.bitvector.BitVector;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.util.PolynomialFunctions;
+import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 
 public class MultivariateLearningTests {
@@ -29,7 +29,7 @@ public class MultivariateLearningTests {
 		Integer testPolynomialInputLength = 4;
 		
 		logger.info("Generating function to invert.");
-		PolynomialFunction function =  PolynomialFunctions.identity( testPolynomialInputLength );
+		PolynomialFunction function =  SimplePolynomialFunctions.identity( testPolynomialInputLength );
 		
 		logger.info("Learning inverse function.");
 		Pair<SimplePolynomialFunction, List<BitVector>> learnedInfo = MultivariateLearning.learnInverse(function, testPolynomialOrder);
@@ -46,7 +46,7 @@ public class MultivariateLearningTests {
         Integer testPolynomialOutputLength = 16;
         
         logger.info("Generating function to learn.");
-        PolynomialFunction function =  PolynomialFunctions.randomFunction(testPolynomialInputLength, testPolynomialOutputLength, 4, testPolynomialOrder);
+        PolynomialFunction function =  SimplePolynomialFunctions.randomFunction(testPolynomialInputLength, testPolynomialOutputLength, 4, testPolynomialOrder);
         logger.info("Learning function.");
         Pair<SimplePolynomialFunction, List<BitVector>> learnedInfo = MultivariateLearning.learnFunction( function, testPolynomialOrder);
         SimplePolynomialFunction learned = learnedInfo.getLeft();
@@ -72,7 +72,7 @@ public class MultivariateLearningTests {
 			logger.info("Testing inverse:" + learnInverse);
 			logger.info("Testing learnInverse for function of input length: " + inputLength);
         	int outputLength = inputLength << 1;
-        	PolynomialFunction function =  PolynomialFunctions.randomFunction( inputLength, outputLength, inputLength, testPolynomialOrder);
+        	PolynomialFunction function =  SimplePolynomialFunctions.randomFunction( inputLength, outputLength, inputLength, testPolynomialOrder);
         	
         	Pair<SimplePolynomialFunction, List<BitVector>> learnedInfo;
         	SummaryStatistics stats;
@@ -98,7 +98,7 @@ public class MultivariateLearningTests {
 		for (int order = minOrder; order <= maxOrder; order++) {
 			logger.info("Testing inverse:" + learnInverse);
         	logger.info("Testing for function of order" + order);
-        	PolynomialFunction function =  PolynomialFunctions.randomFunction( inputLength, outputLength, inputLength, actualOrder);
+            PolynomialFunction function = SimplePolynomialFunctions.randomFunction( inputLength, outputLength, inputLength, actualOrder);
         	
         	Pair<SimplePolynomialFunction, List<BitVector>> learnedInfo;
         	SummaryStatistics stats;

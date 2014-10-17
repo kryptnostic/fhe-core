@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.util.PolynomialFunctions;
+import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 /**
  * Represents a single stage in the generation process for a pipeline of polynomial functions.
@@ -26,8 +26,8 @@ public class PolynomialFunctionPipelineStage {
     private PolynomialFunctionPipelineStage(SimplePolynomialFunction f, SimplePolynomialFunction inner) {
         c1 = EnhancedBitMatrix.randomInvertibleMatrix(f.getOutputLength());
         c2 = EnhancedBitMatrix.randomInvertibleMatrix(f.getOutputLength());
-        combination = PolynomialFunctions.linearCombination(c1, c2);
-        Pair<SimplePolynomialFunction, SimplePolynomialFunction> functionPair = PolynomialFunctions
+        combination = SimplePolynomialFunctions.linearCombination(c1, c2);
+        Pair<SimplePolynomialFunction, SimplePolynomialFunction> functionPair = SimplePolynomialFunctions
                 .randomlyPartitionMVQ(f);
         try {
             lower = c1.inverse().multiply(functionPair.getLeft());
@@ -35,7 +35,7 @@ public class PolynomialFunctionPipelineStage {
         } catch (SingularMatrixException e) {
             logger.error("Encountered singular matrix, where none should be possible due to generation procedure.");
         }
-        step = PolynomialFunctions.concatenate(lower, upper).compose(inner);
+        step = SimplePolynomialFunctions.concatenate(lower, upper).compose(inner);
     }
 
     public EnhancedBitMatrix getC1() {

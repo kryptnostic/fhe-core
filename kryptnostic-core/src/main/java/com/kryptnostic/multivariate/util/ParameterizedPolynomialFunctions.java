@@ -277,13 +277,13 @@ public final class ParameterizedPolynomialFunctions {
             }
             // prepend left truncating identity function to old CPFs to resize input to old length
             for (CompoundPolynomialFunction pipeline : pipelines) {
-                SimplePolynomialFunction leftTruncatingIdentity = PolynomialFunctions.lowerTruncatingIdentity(
+                SimplePolynomialFunction leftTruncatingIdentity = SimplePolynomialFunctions.lowerTruncatingIdentity(
                         rhs.getInputLength() + lhs.getInputLength(), lhs.getInputLength());
                 pipeline.prefix(leftTruncatingIdentity);
             }
             // append pipeline of right truncating identity function to list of pipelines to pass rh function its input
             CompoundPolynomialFunction rightTruncatingIdentity = new CompoundPolynomialFunctionGF2(
-                    Lists.newArrayList(PolynomialFunctions.upperTruncatingIdentity(
+                    Lists.newArrayList(SimplePolynomialFunctions.upperTruncatingIdentity(
                             rhs.getInputLength() + lhs.getInputLength(), rhs.getInputLength())));
             pipelines.add(rightTruncatingIdentity);
 
@@ -328,10 +328,10 @@ public final class ParameterizedPolynomialFunctions {
      * 
      */
     public static SimplePolynomialFunction randomParameterizedFunction(int inputLength, int outputLength) {
-        SimplePolynomialFunction base = PolynomialFunctions.lightRandomFunction(inputLength, outputLength);
+        SimplePolynomialFunction base = SimplePolynomialFunctions.lightRandomFunction(inputLength, outputLength);
         base = ParameterizedPolynomialFunctions.extend(inputLength << 1, base);
         List<CompoundPolynomialFunction> pipelines = Lists.newArrayList();
-        pipelines.add(new CompoundPolynomialFunctionGF2(Lists.newArrayList(PolynomialFunctions.identity(inputLength))));
+        pipelines.add(new CompoundPolynomialFunctionGF2(Lists.newArrayList(SimplePolynomialFunctions.identity(inputLength))));
         return new ParameterizedPolynomialFunctionGF2(inputLength, base.getOutputLength(), base.getMonomials(), base.getContributions(), pipelines);
     }
 }

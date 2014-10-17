@@ -7,16 +7,13 @@ import org.junit.Test;
 
 import cern.colt.bitvector.BitVector;
 
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.util.PolynomialFunctions;
+import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 public class EncryptedSearchPrivateKeyTests {
-    private static final HashFunction hf = Hashing.murmur3_128();
     private static EncryptedSearchPrivateKey privateKey;
     private static PrivateKey fhePrivateKey;
     private static PublicKey fhePublicKey;
@@ -27,7 +24,7 @@ public class EncryptedSearchPrivateKeyTests {
         fhePrivateKey = new PrivateKey(128,64);
         fhePublicKey = new PublicKey( fhePrivateKey );
         privateKey = new EncryptedSearchPrivateKey(fhePrivateKey,fhePublicKey);
-        globalHash = PolynomialFunctions.denseRandomMultivariateQuadratic( EncryptedSearchPrivateKey.getHashBits() , EncryptedSearchPrivateKey.getHashBits() >>> 1);
+        globalHash = SimplePolynomialFunctions.denseRandomMultivariateQuadratic( EncryptedSearchPrivateKey.getHashBits() , EncryptedSearchPrivateKey.getHashBits() >>> 1);
     }
     
     @Test

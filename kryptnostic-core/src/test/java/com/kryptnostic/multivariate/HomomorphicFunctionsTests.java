@@ -16,7 +16,7 @@ import com.kryptnostic.crypto.fhe.HomomorphicFunctions;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.util.PolynomialFunctions;
+import com.kryptnostic.multivariate.util.SimplePolynomialOperators;
 
 /**
  * Tests for special polynomial function provided as building blocks for more complex functions.
@@ -40,7 +40,7 @@ public class HomomorphicFunctionsTests {
     
     @Test 
     public void testHomomorphicXor() {
-        SimplePolynomialFunction xor = PolynomialFunctions.XOR( PLAINTEXT_LENGTH );
+        SimplePolynomialFunction xor = SimplePolynomialOperators.XOR( PLAINTEXT_LENGTH );
         long start = System.currentTimeMillis();
         SimplePolynomialFunction homomorphicXor = privateKey.computeHomomorphicFunction( xor );
         long stop = System.currentTimeMillis();
@@ -63,7 +63,7 @@ public class HomomorphicFunctionsTests {
     
     @Test 
     public void testUnaryHomomorphicAnd() {
-        SimplePolynomialFunction and = PolynomialFunctions.AND( PLAINTEXT_LENGTH );
+        SimplePolynomialFunction and = SimplePolynomialOperators.AND( PLAINTEXT_LENGTH );
         long start = System.currentTimeMillis();
         SimplePolynomialFunction homomorphicXor = privateKey.computeHomomorphicFunction( and );
         long stop = System.currentTimeMillis();
@@ -84,15 +84,9 @@ public class HomomorphicFunctionsTests {
         Assert.assertEquals( hResult, result );
     }
     
-    public void testEfficientHomomorphicAnd() throws SingularMatrixException {
-        if( !testNormalAnd ) {
-            PolynomialFunction f = HomomorphicFunctions.EfficientAnd( privateKey );
-        }
-    }
-    
 //    @Test
     public void testHomomorphicAnd() {
-        SimplePolynomialFunction and = PolynomialFunctions.BINARY_AND( PLAINTEXT_LENGTH );
+        SimplePolynomialFunction and = SimplePolynomialOperators.BINARY_AND( PLAINTEXT_LENGTH );
         long start = System.currentTimeMillis();
         SimplePolynomialFunction homomorphicAnd = HomomorphicFunctions.DirectHomomorphicAnd( privateKey );//privateKey.computeBinaryHomomorphicFunction( and );
         long stop = System.currentTimeMillis();
@@ -134,8 +128,8 @@ public class HomomorphicFunctionsTests {
         stop = System.currentTimeMillis();
         logger.info( "Homomorphic CARRY generation took {} ms" , stop - start );
         
-        PolynomialFunction adder = PolynomialFunctions.ADDER( 64 );
-        PolynomialFunction homomorphicAdder = PolynomialFunctions.ADDER( 64 , homomorphicXor, homomorphicCarry );
+        PolynomialFunction adder = BasicOperators.ADDER( 64 );
+        PolynomialFunction homomorphicAdder = BasicOperators.ADDER( 64 , homomorphicXor, homomorphicCarry );
         BitVector v = BitUtils.randomVector( 64 );
         BitVector vConcatR = new BitVector( new long[] { 
                 v.elements()[ 0 ] ,
@@ -159,7 +153,7 @@ public class HomomorphicFunctionsTests {
     public void testHomomorphicHalfAdder() {
         long start, stop;
         SimplePolynomialFunction homomorphicHalfAdder = HomomorphicFunctions.HomomorphicHalfAdder( 64 , privateKey );
-        SimplePolynomialFunction adder = PolynomialFunctions.HALF_ADDER( 64 );
+        SimplePolynomialFunction adder = BasicOperators.HALF_ADDER( 64 );
         BitVector v1 = BitUtils.randomVector( 64 );
         BitVector v2 = BitUtils.randomVector( 64 );
         BitVector vConcatR1 = new BitVector( new long[] { 

@@ -33,7 +33,6 @@ import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.util.CompoundPolynomialFunctions;
 import com.kryptnostic.multivariate.util.FunctionUtils;
 import com.kryptnostic.multivariate.util.ParameterizedPolynomialFunctions;
-import com.kryptnostic.multivariate.util.PolynomialFunctions;
 import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 @Configuration
@@ -160,8 +159,8 @@ public class PolynomialFunctionTests {
 
     @Timed
     public void generalComposeTest() {
-        SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(INPUT_LENGTH, OUTPUT_LENGTH, 10, 3);
-        SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(INPUT_LENGTH, INPUT_LENGTH, 10, 2);
+        SimplePolynomialFunction outer = SimplePolynomialFunctions.randomFunction(INPUT_LENGTH, OUTPUT_LENGTH, 10, 3);
+        SimplePolynomialFunction inner = SimplePolynomialFunctions.randomFunction(INPUT_LENGTH, INPUT_LENGTH, 10, 2);
 
         Stopwatch watch = Stopwatch.createStarted();
         SimplePolynomialFunction composed = outer.compose(inner);
@@ -182,9 +181,9 @@ public class PolynomialFunctionTests {
     
     @Timed
     public void testGeneralComposeParameterized() {
-        SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(128, 64);
-        SimplePolynomialFunction other = PolynomialFunctions.randomFunction(128, 128);
-        SimplePolynomialFunction[] pipelines = {PolynomialFunctions.identity(128)};
+        SimplePolynomialFunction outer = SimplePolynomialFunctions.randomFunction(128, 64);
+        SimplePolynomialFunction other = SimplePolynomialFunctions.randomFunction(128, 128);
+        SimplePolynomialFunction[] pipelines = {SimplePolynomialFunctions.identity(128)};
         SimplePolynomialFunction inner = ParameterizedPolynomialFunctions.fromUnshiftedVariables(other.getInputLength(), other, pipelines);
         
         SimplePolynomialFunction composed = outer.compose(inner);
@@ -198,11 +197,10 @@ public class PolynomialFunctionTests {
 
     @Timed
     public void partialComposeTest() {
-        SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(INPUT_LENGTH, INPUT_LENGTH, 10, 2);
-        SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(INPUT_LENGTH, INPUT_LENGTH >> 1);
+        SimplePolynomialFunction outer = SimplePolynomialFunctions.randomFunction(INPUT_LENGTH, INPUT_LENGTH, 10, 2);
+        SimplePolynomialFunction inner = SimplePolynomialFunctions.randomFunction(INPUT_LENGTH, INPUT_LENGTH >> 1);
 
         SimplePolynomialFunction composedLeft = outer.partialComposeLeft(inner);
-
 
         for (int i = 0; i < 25; ++i) {
             BitVector innerInput = BitVectors.randomVector(inner.getInputLength());
@@ -220,10 +218,12 @@ public class PolynomialFunctionTests {
         final int inputLength = 256;
         final int outputLength = 128;
 
-        SimplePolynomialFunction lhs = PolynomialFunctions.denseRandomMultivariateQuadratic(inputLength, outputLength);
-        SimplePolynomialFunction rhs = PolynomialFunctions.denseRandomMultivariateQuadratic(inputLength, outputLength);
+        SimplePolynomialFunction lhs = SimplePolynomialFunctions.denseRandomMultivariateQuadratic(inputLength,
+                outputLength);
+        SimplePolynomialFunction rhs = SimplePolynomialFunctions.denseRandomMultivariateQuadratic(inputLength,
+                outputLength);
 
-        SimplePolynomialFunction concatenated = PolynomialFunctions.concatenate(lhs, rhs);
+        SimplePolynomialFunction concatenated = SimplePolynomialFunctions.concatenate(lhs, rhs);
 
         BitVector input = BitVectors.randomVector(inputLength);
 
@@ -240,11 +240,13 @@ public class PolynomialFunctionTests {
         SimplePolynomialFunction lhs = randomFunction();
         SimplePolynomialFunction rhs = randomFunction();
 
-        Pair<int[], int[]> inputMaps = SimplePolynomialFunctions.getSplitMap(lhs.getInputLength(), rhs.getInputLength());
-        Pair<int[], int[]> outputMaps = SimplePolynomialFunctions.getSplitMap(lhs.getOutputLength(), rhs.getOutputLength());
-        
-        SimplePolynomialFunction interleaved = SimplePolynomialFunctions.interleaveFunctions(lhs, rhs, inputMaps.getLeft(), inputMaps.getRight(),
-                outputMaps.getLeft(), outputMaps.getRight());
+        Pair<int[], int[]> inputMaps = SimplePolynomialFunctions
+                .getSplitMap(lhs.getInputLength(), rhs.getInputLength());
+        Pair<int[], int[]> outputMaps = SimplePolynomialFunctions.getSplitMap(lhs.getOutputLength(),
+                rhs.getOutputLength());
+
+        SimplePolynomialFunction interleaved = SimplePolynomialFunctions.interleaveFunctions(lhs, rhs,
+                inputMaps.getLeft(), inputMaps.getRight(), outputMaps.getLeft(), outputMaps.getRight());
 
         BitVector lhInput = BitVectors.randomVector(INPUT_LENGTH);
         BitVector rhInput = BitVectors.randomVector(INPUT_LENGTH);
@@ -263,14 +265,14 @@ public class PolynomialFunctionTests {
         String fString = f.toString();
         logger.trace("f = {}", fString);
 
-        SimplePolynomialFunction fPrime = FunctionUtils.fromString(f.getInputLength(), fString);
+        SimplePolynomialFunction fPrime = SimplePolynomialFunctions.fromString(f.getInputLength(), fString);
         Assert.assertEquals(f, fPrime);
     }
 
     @Timed
     public void testRandomlyPartitionMVQ() {
         SimplePolynomialFunction f = denseRandomFunction().optimize();
-        Pair<SimplePolynomialFunction, SimplePolynomialFunction> gh = PolynomialFunctions.randomlyPartitionMVQ(f);
+        Pair<SimplePolynomialFunction, SimplePolynomialFunction> gh = SimplePolynomialFunctions.randomlyPartitionMVQ(f);
         SimplePolynomialFunction g = gh.getLeft();
         SimplePolynomialFunction h = gh.getRight();
 
@@ -290,8 +292,9 @@ public class PolynomialFunctionTests {
         final int outputLength = 128;
 
         long start = System.currentTimeMillis();
-        SimplePolynomialFunction f = PolynomialFunctions.denseRandomMultivariateQuadratic(inputLength, outputLength);
-        SimplePolynomialFunction inner = PolynomialFunctions.randomManyToOneLinearCombination(inputLength);
+        SimplePolynomialFunction f = SimplePolynomialFunctions.denseRandomMultivariateQuadratic(inputLength,
+                outputLength);
+        SimplePolynomialFunction inner = SimplePolynomialFunctions.randomManyToOneLinearCombination(inputLength);
         PolynomialFunctionPipelineStage stage = PolynomialFunctionPipelineStage.build(f, inner);
         long stop = System.currentTimeMillis();
         long millis = stop - start;
@@ -308,8 +311,10 @@ public class PolynomialFunctionTests {
 
         BitVector concatenatedInput = BitVectors.concatenate(inputLower, inputUpper);
 
-        Assert.assertEquals(inputLower, PolynomialFunctions.lowerIdentity(inputLength << 1).apply(concatenatedInput));
-        Assert.assertEquals(inputUpper, PolynomialFunctions.upperIdentity(inputLength << 1).apply(concatenatedInput));
+        Assert.assertEquals(inputLower,
+                SimplePolynomialFunctions.lowerIdentity(inputLength << 1).apply(concatenatedInput));
+        Assert.assertEquals(inputUpper,
+                SimplePolynomialFunctions.upperIdentity(inputLength << 1).apply(concatenatedInput));
 
         BitVector combinationActual = stage.getCombination().apply(concatenatedInput);
         Assert.assertEquals(expected, combinationActual);
@@ -328,18 +333,20 @@ public class PolynomialFunctionTests {
         EnhancedBitMatrix c1 = EnhancedBitMatrix.randomInvertibleMatrix(inputLength);
         EnhancedBitMatrix c2 = EnhancedBitMatrix.randomInvertibleMatrix(inputLength);
 
-        SimplePolynomialFunction combination = PolynomialFunctions.linearCombination(c1, c2);
+        SimplePolynomialFunction combination = SimplePolynomialFunctions.linearCombination(c1, c2);
 
         BitVector expected = c1.multiply(inputLower);
         expected.xor(c2.multiply(inputUpper));
 
         BitVector concatenatedInput = BitVectors.concatenate(inputLower, inputUpper);
 
-        Assert.assertEquals(inputLower, PolynomialFunctions.lowerIdentity(inputLength << 1).apply(concatenatedInput));
-        Assert.assertEquals(inputUpper, PolynomialFunctions.upperIdentity(inputLength << 1).apply(concatenatedInput));
+        Assert.assertEquals(inputLower,
+                SimplePolynomialFunctions.lowerIdentity(inputLength << 1).apply(concatenatedInput));
+        Assert.assertEquals(inputUpper,
+                SimplePolynomialFunctions.upperIdentity(inputLength << 1).apply(concatenatedInput));
 
-        SimplePolynomialFunction f = c1.multiply(PolynomialFunctions.lowerIdentity(inputLength << 1));
-        SimplePolynomialFunction g = c2.multiply(PolynomialFunctions.upperIdentity(inputLength << 1));
+        SimplePolynomialFunction f = c1.multiply(SimplePolynomialFunctions.lowerIdentity(inputLength << 1));
+        SimplePolynomialFunction g = c2.multiply(SimplePolynomialFunctions.upperIdentity(inputLength << 1));
 
         Assert.assertEquals(c1.multiply(inputLower), f.apply(concatenatedInput));
         Assert.assertEquals(c2.multiply(inputUpper), g.apply(concatenatedInput));
@@ -354,13 +361,13 @@ public class PolynomialFunctionTests {
         final int inputLength = 128;
         final int outputLength = 128;
 
-        SimplePolynomialFunction[] functions = PolynomialFunctions.arrayOfRandomMultivariateQuadratics(inputLength,
-                outputLength, PIPELINE_LENGTH);
+        SimplePolynomialFunction[] functions = SimplePolynomialFunctions.arrayOfRandomMultivariateQuadratics(
+                inputLength, outputLength, PIPELINE_LENGTH);
 
-        SimplePolynomialFunction inner = PolynomialFunctions.randomManyToOneLinearCombination(inputLength);
+        SimplePolynomialFunction inner = SimplePolynomialFunctions.randomManyToOneLinearCombination(inputLength);
 
         Stopwatch watch = Stopwatch.createStarted();
-        Pair<SimplePolynomialFunction, SimplePolynomialFunction[]> pipelineDescription = PolynomialFunctions
+        Pair<SimplePolynomialFunction, SimplePolynomialFunction[]> pipelineDescription = SimplePolynomialFunctions
                 .buildNonlinearPipeline(inner, functions);
         logger.info("Non-linear unit pipeline generation took {} ms", PIPELINE_LENGTH,
                 watch.elapsed(TimeUnit.MILLISECONDS));
@@ -406,46 +413,46 @@ public class PolynomialFunctionTests {
     @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     @Timed
     public SimplePolynomialFunction randomFunction() {
-        return PolynomialFunctions.lightRandomFunction(INPUT_LENGTH, OUTPUT_LENGTH);
+        return SimplePolynomialFunctions.lightRandomFunction(INPUT_LENGTH, OUTPUT_LENGTH);
     }
 
     @Bean
     @Timed
     public SimplePolynomialFunction identity() {
-        return PolynomialFunctions.identity(INPUT_LENGTH).deoptimize();
+        return SimplePolynomialFunctions.identity(INPUT_LENGTH).deoptimize();
     }
 
     @Bean
     @Timed
     public SimplePolynomialFunction optimizedIdentity() {
-        return PolynomialFunctions.identity(INPUT_LENGTH);
+        return SimplePolynomialFunctions.identity(INPUT_LENGTH);
     }
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     @Timed
     public SimplePolynomialFunction denseRandomFunction() {
-        return PolynomialFunctions.denseRandomMultivariateQuadratic(INPUT_LENGTH, OUTPUT_LENGTH);
+        return SimplePolynomialFunctions.denseRandomMultivariateQuadratic(INPUT_LENGTH, OUTPUT_LENGTH);
     }
 
     @Bean
     @Timed
     public SimplePolynomialFunction singletonDenseRandomFunction() {
-        return PolynomialFunctions.denseRandomMultivariateQuadratic(INPUT_LENGTH, OUTPUT_LENGTH);
+        return SimplePolynomialFunctions.denseRandomMultivariateQuadratic(INPUT_LENGTH, OUTPUT_LENGTH);
     }
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     @Timed
     public SimplePolynomialFunction linearFunction() {
-        return PolynomialFunctions.randomManyToOneLinearCombination(INPUT_LENGTH).deoptimize();
+        return SimplePolynomialFunctions.randomManyToOneLinearCombination(INPUT_LENGTH).deoptimize();
     }
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     @Timed
     public SimplePolynomialFunction optimizedLinearFunction() {
-        return PolynomialFunctions.randomManyToOneLinearCombination(INPUT_LENGTH);
+        return SimplePolynomialFunctions.randomManyToOneLinearCombination(INPUT_LENGTH);
     }
 
     @Bean
@@ -521,13 +528,13 @@ public class PolynomialFunctionTests {
 
     @Timed
     public void testConcatenateInputsAndOutputs() {
-        SimplePolynomialFunction lhs = PolynomialFunctions.lightRandomFunction(256, 256);
-        SimplePolynomialFunction rhs = PolynomialFunctions.lightRandomFunction(128, 64);
+        SimplePolynomialFunction lhs = SimplePolynomialFunctions.lightRandomFunction(256, 256);
+        SimplePolynomialFunction rhs = SimplePolynomialFunctions.lightRandomFunction(128, 64);
 
         SimplePolynomialFunction concatenated = SimplePolynomialFunctions.concatenateInputsAndOutputs(lhs, rhs);
         long[] src = new long[] { r.nextLong(), r.nextLong(), r.nextLong(), r.nextLong(), r.nextLong(), r.nextLong() };
         BitVector input = new BitVector(src, 384);
-        BitVector lhsInput = new BitVector(new long[] { src[0], src[1], src[2], src[3]}, 256);
+        BitVector lhsInput = new BitVector(new long[] { src[0], src[1], src[2], src[3] }, 256);
         BitVector rhsInput = new BitVector(new long[] { src[4], src[5] }, 128);
 
         BitVector concatenatedResult = concatenated.apply(input);
@@ -547,13 +554,13 @@ public class PolynomialFunctionTests {
         final int inputLength = 128;
         final int outputLength = 128;
 
-        SimplePolynomialFunction[] functions = PolynomialFunctions.arrayOfRandomMultivariateQuadratics(inputLength,
-                outputLength, PIPELINE_LENGTH);
+        SimplePolynomialFunction[] functions = SimplePolynomialFunctions.arrayOfRandomMultivariateQuadratics(
+                inputLength, outputLength, PIPELINE_LENGTH);
 
-        SimplePolynomialFunction inner = PolynomialFunctions.randomManyToOneLinearCombination(inputLength);
+        SimplePolynomialFunction inner = SimplePolynomialFunctions.randomManyToOneLinearCombination(inputLength);
 
         Stopwatch watch = Stopwatch.createStarted();
-        Pair<SimplePolynomialFunction, SimplePolynomialFunction[]> pipelineDescription = PolynomialFunctions
+        Pair<SimplePolynomialFunction, SimplePolynomialFunction[]> pipelineDescription = SimplePolynomialFunctions
                 .buildNonlinearPipeline(inner, functions);
         logger.info("Non-linear pipeline generation of length {} took {} ms", PIPELINE_LENGTH,
                 watch.elapsed(TimeUnit.MILLISECONDS));

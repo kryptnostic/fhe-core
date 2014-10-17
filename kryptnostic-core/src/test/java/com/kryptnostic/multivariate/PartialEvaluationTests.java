@@ -10,7 +10,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.util.PolynomialFunctions;
+import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 @Configuration
 public class PartialEvaluationTests {
@@ -48,6 +48,6 @@ public class PartialEvaluationTests {
     
     @Bean
     public SimplePolynomialFunction testFunction() {
-        return PolynomialFunctions.denseRandomMultivariateQuadratic( INPUT_LENGTH, OUTPUT_LENGTH );
+        return SimplePolynomialFunctions.denseRandomMultivariateQuadratic( INPUT_LENGTH, OUTPUT_LENGTH );
     }
 }
