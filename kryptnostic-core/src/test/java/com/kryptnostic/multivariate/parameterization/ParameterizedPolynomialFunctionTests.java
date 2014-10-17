@@ -1,7 +1,5 @@
 package com.kryptnostic.multivariate.parameterization;
 
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -9,11 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import cern.colt.bitvector.BitVector;
 
-import com.google.common.collect.Lists;
 import com.kryptnostic.bitwise.BitVectors;
-import com.kryptnostic.multivariate.CompoundPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.PolynomialFunctions;
-import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 public class ParameterizedPolynomialFunctionTests {
@@ -39,13 +34,11 @@ public class ParameterizedPolynomialFunctionTests {
         BitVector actualResult = concat.apply(BitVectors.concatenate(input1, input2));
         Assert.assertEquals(expectedResult, actualResult);
     }
-    
+
     @Test
     public void testComposeInnerParameterized() {
         SimplePolynomialFunction outer = PolynomialFunctions.lightRandomFunction(128, 64);
-        SimplePolynomialFunction base = PolynomialFunctions.lightRandomFunction(128, 128);
-        SimplePolynomialFunction[] pipelines = {PolynomialFunctions.identity(128)};
-        SimplePolynomialFunction inner = ParameterizedPolynomialFunctions.fromUnshiftedVariables(base.getInputLength(), base, pipelines);
+        SimplePolynomialFunction inner = ParameterizedPolynomialFunctions.randomParameterizedFunction(128, 128);
         logger.info("Composing with inner parameterized function.");
         SimplePolynomialFunction composed = outer.compose(inner);
         logger.info("Done composing.");
@@ -55,16 +48,12 @@ public class ParameterizedPolynomialFunctionTests {
         BitVector actual = composed.apply(input);
         Assert.assertEquals(expected, actual);
     }
-    
+
     @Test
     public void testComposeOuterParameterized() {
         SimplePolynomialFunction inner = PolynomialFunctions.lightRandomFunction(64, 64);
-        
-        SimplePolynomialFunction base = PolynomialFunctions.lightRandomFunction(64, 128);
-        base = ParameterizedPolynomialFunctions.extend(128, base);
-        List<CompoundPolynomialFunction> pipelines = Lists.newArrayList();
-        pipelines.add(new CompoundPolynomialFunctionGF2(Lists.newArrayList(PolynomialFunctions.identity(64))));
-        SimplePolynomialFunction outer = new ParameterizedPolynomialFunctionGF2(64, base.getOutputLength(), base.getMonomials(), base.getContributions(), pipelines);
+        SimplePolynomialFunction outer = ParameterizedPolynomialFunctions.randomParameterizedFunction(64, 128);
+
         BitVector input = BitVectors.randomVector(64);
         BitVector intermediate = inner.apply(input);
         BitVector expected = outer.apply(intermediate);
@@ -74,6 +63,24 @@ public class ParameterizedPolynomialFunctionTests {
         BitVector actual = composed.apply(input);
         Assert.assertEquals(expected, actual);
     }
-    
-    // TODO compose parameterized with parameterized
+
+    // TODO fix bug when inputs and outputs not same length. is caused by pipelines not matching correctly (both sized by input)
+    @Test
+    public void testComposeParameterizedWithParameterized() {
+        SimplePolynomialFunction inner = ParameterizedPolynomialFunctions.randomParameterizedFunction(64, 64);
+        SimplePolynomialFunction outer = ParameterizedPolynomialFunctions.randomParameterizedFunction(64, 64);
+        
+        SimplePolynomialFunction composed = outer.compose(inner);
+        BitVector input = BitVectors.randomVector(64);
+        
+        Assert.assertEquals(outer.apply(inner.apply(input)), composed.apply(input));
+    }
+
+    // Simply tests that a random parameterized function can be evaluated.
+    @Test
+    public void testRandomParameterizedFunction() {
+        int inputLength = 128, outputLength = 128;
+        SimplePolynomialFunction ppf = ParameterizedPolynomialFunctions.randomParameterizedFunction(inputLength, outputLength);
+        Assert.assertNotNull(ppf.apply(BitVectors.randomVector(inputLength)));
+    }
 }
