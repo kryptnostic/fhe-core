@@ -1,19 +1,16 @@
 package com.kryptnostic.crypto;
 
-import java.util.Arrays;
-
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import cern.colt.bitvector.BitVector;
 
-import com.google.common.base.Charsets;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
-import com.kryptnostic.linear.EnhancedBitMatrix.NonSquareMatrixException;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 import com.kryptnostic.multivariate.PolynomialFunctions;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
@@ -90,6 +87,36 @@ public class EncryptedSearchPrivateKeyTests {
         SimplePolynomialFunction h = privateKey.getQueryHasher( globalHash , fhePrivateKey );
         BitVector intermediate = h.apply( BitVectors.concatenate( encryptedSearchHash , encryptedSearchNonce ) );
         BitVector actual = BitVectors.fromSquareMatrix( privateKey.getLeftQueryExpander().leftInverse().multiply( EnhancedBitMatrix.squareMatrixfromBitVector( intermediate ) ).multiply( privateKey.getRightQueryExpander().rightInverse() ) );
+        Assert.assertEquals( expected, actual );
+        
+        //Now let's test running a search
+        EnhancedBitMatrix documentKey = privateKey.newDocumentKey();
+        EncryptedSearchSharingKey sharingKey = EncryptedSearchSharingKey.fromPrivateKey( privateKey , documentKey );
+//        EncryptedSearchBridgeKey bridgeKey = new EncryptedSearchBridgeKey( privateKey , sharingKey );
+//        SimplePolynomialFunction f = privateKey.getDownmixingIndexer( documentKey );
+    }
+    
+    @Test
+    public void testQueryHasherPairGeneration() throws SingularMatrixException {
+        String term = "barbarian";
+        
+        BitVector searchHash = privateKey.hash( term ); 
+        BitVector encryptedSearchHash = privateKey.prepareSearchToken( term );
+        
+        BitVector searchNonce = BitVectors.randomVector( 64 );
+        BitVector encryptedSearchNonce =  fhePublicKey.getEncrypter().apply( BitVectors.concatenate( searchNonce , BitVectors.randomVector( 64 ) ) );
+        
+        EnhancedBitMatrix expectedMatrix = EnhancedBitMatrix.squareMatrixfromBitVector( globalHash.apply( BitVectors.concatenate( searchHash, searchNonce ) ) );
+        BitVector expected = BitVectors.fromMatrix( expectedMatrix.multiply( expectedMatrix ) );
+        
+        Pair<SimplePolynomialFunction,SimplePolynomialFunction> p = privateKey.getQueryHasherPair( globalHash , fhePrivateKey );
+        SimplePolynomialFunction hL = p.getLeft();
+        SimplePolynomialFunction hR = p.getRight();
+        
+        EnhancedBitMatrix intermediateL = EnhancedBitMatrix.squareMatrixfromBitVector( hL.apply( BitVectors.concatenate( encryptedSearchHash , encryptedSearchNonce ) ) );
+        EnhancedBitMatrix intermediateR = EnhancedBitMatrix.squareMatrixfromBitVector( hR.apply( BitVectors.concatenate( encryptedSearchHash , encryptedSearchNonce ) ) );
+        
+        BitVector actual = BitVectors.fromSquareMatrix( intermediateL.multiply( intermediateR ) );
         Assert.assertEquals( expected, actual );
         
         //Now let's test running a search

@@ -1,5 +1,7 @@
 package com.kryptnostic.crypto;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import cern.colt.bitvector.BitVector;
 
 import com.google.common.base.Charsets;
@@ -26,7 +28,7 @@ public class EncryptedSearchPrivateKey {
      */
     private final EnhancedBitMatrix leftIndexCollapser,rightIndexCollapser;
 
-    private final EnhancedBitMatrix hashCollapser;
+    private final EnhancedBitMatrix hashCollapser,squaringMatrix;
     private final SimplePolynomialFunction indexingFunction;
     private final PublicKey publicKey;
     
@@ -44,6 +46,7 @@ public class EncryptedSearchPrivateKey {
         } else {
             hashCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( hashBits >>> 1 , hashBits , 25 );
         }
+        this.squaringMatrix = EnhancedBitMatrix.randomInvertibleMatrix( 8 );
         this.publicKey = publicKey;
     }
         
@@ -90,7 +93,45 @@ public class EncryptedSearchPrivateKey {
     }
     
     public SimplePolynomialFunction getQueryHasher( SimplePolynomialFunction globalHash, PrivateKey privateKey ) throws SingularMatrixException {
-        return twoSidedMultiply( globalHash.compose( privateKey.getMirroredDecryptor() ) , leftQueryExpander , rightQueryExpander );
+        SimplePolynomialFunction hashOfDecryptor = globalHash.compose( privateKey.getMirroredDecryptor() );
+        return twoSidedMultiply( hashOfDecryptor , leftQueryExpander , rightQueryExpander );
+    }
+    
+    public Pair<SimplePolynomialFunction, SimplePolynomialFunction> getQueryHasherPair( SimplePolynomialFunction globalHash , PrivateKey privateKey ) throws SingularMatrixException { 
+        SimplePolynomialFunction hashOfDecryptor = globalHash.compose( privateKey.getMirroredDecryptor() );
+        return Pair.of( rightMultiply( hashOfDecryptor , squaringMatrix ) , leftMultiply( hashOfDecryptor , squaringMatrix.inverse() ) );
+    }
+    
+    public static SimplePolynomialFunction rightMultiply( SimplePolynomialFunction f , EnhancedBitMatrix rhs ) {
+        BitVector[] contributions = f.getContributions();
+        BitVector[] newContributions = new BitVector[ contributions.length ];
+        
+        for( int i = 0 ; i < contributions.length ; ++i ) {
+            newContributions[ i ] = BitVectors.fromSquareMatrix( EnhancedBitMatrix.squareMatrixfromBitVector( contributions[ i ] ).multiply( rhs ) );
+        }
+        
+        if( f.getClass().equals(  ParameterizedPolynomialFunctionGF2.class ) ) {
+            ParameterizedPolynomialFunctionGF2 g = (ParameterizedPolynomialFunctionGF2) f;
+            return new ParameterizedPolynomialFunctionGF2( g.getInputLength(), newContributions[0].size() , g.getMonomials(), newContributions , g.getPipelines() );
+        } else {
+            return new OptimizedPolynomialFunctionGF2( f.getInputLength() , newContributions[0].size() , f.getMonomials(), newContributions );
+        }
+    }
+    
+    public static SimplePolynomialFunction leftMultiply( SimplePolynomialFunction f , EnhancedBitMatrix lhs ) {
+        BitVector[] contributions = f.getContributions();
+        BitVector[] newContributions = new BitVector[ contributions.length ];
+        
+        for( int i = 0 ; i < contributions.length ; ++i ) {
+            newContributions[ i ] = BitVectors.fromSquareMatrix( lhs.multiply( EnhancedBitMatrix.squareMatrixfromBitVector( contributions[ i ] ) ) );
+        }
+        
+        if( f.getClass().equals(  ParameterizedPolynomialFunctionGF2.class ) ) {
+            ParameterizedPolynomialFunctionGF2 g = (ParameterizedPolynomialFunctionGF2) f;
+            return new ParameterizedPolynomialFunctionGF2( g.getInputLength(), newContributions[0].size() , g.getMonomials(), newContributions , g.getPipelines() );
+        } else {
+            return new OptimizedPolynomialFunctionGF2( f.getInputLength() , newContributions[0].size() , f.getMonomials(), newContributions );
+        }
     }
     
     public static SimplePolynomialFunction twoSidedMultiply(SimplePolynomialFunction f, EnhancedBitMatrix lhs, EnhancedBitMatrix rhs ) {
