@@ -5,6 +5,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 
+/**
+ * This class is for the non-collusion resistant scheme utilizing matrix products
+ * as bridge functions to search another user's index.
+ * @author Matthew Tamayo-Rios &lt;matthew@kryptnostic.com&gt;
+ */
 public class EncryptedSearchSharingKey {
     private static final String LEFT_EXPANDER_FIELD = "leftExpander";
     private static final String RIGHT_EXPANDER_FIELD = "rightExpander";

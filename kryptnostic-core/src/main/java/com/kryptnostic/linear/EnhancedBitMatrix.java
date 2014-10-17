@@ -130,16 +130,7 @@ public class EnhancedBitMatrix {
         
         rowReducedEchelonForm( workingSet , inverse );
         
-        //Make sure we can actually compute the right generalized inverse
-        for( BitVector wsRow : workingSet.getRows() ) {
-            if( wsRow.cardinality() == 0 ) {
-                throw new SingularMatrixException( "Matrix has no generalized right inverse." );
-            }
-        }
-        
-        if( !inverse.inverse().multiply( workingSet ).equals( this ) ) {
-            logger.error("I hate my life right now.");
-        }
+        isFullRank( workingSet );
         
         int numCols = cols();
         BitVector[] basis = new BitVector[ numCols ];
@@ -150,9 +141,6 @@ public class EnhancedBitMatrix {
         Integer[] firstNonZeroIndex = new Integer[ wsRows.size() ];
         for( int i = 0; i < wsRows.size(); ++i ) {
             BitVector v = wsRows.get( i );
-            if( (v.cardinality() == 0 ) && (inverse.getRow( i ).cardinality()!=0) ) {
-//                throw new SingularMatrixException( "Matrix has no generalized right inverse." );
-            }
             int value = -1;
             for( int j = 0; j < v.size() ; ++j ) {
                 if( v.get( j ) ) {
@@ -199,7 +187,15 @@ public class EnhancedBitMatrix {
 
     }
     
-    public static BitVector map( Integer[] firstNonZeroIndex , BitVector constant , int len ) {
+    static void isFullRank( EnhancedBitMatrix m ) throws SingularMatrixException {
+        for( BitVector row : m.getRows() ) {
+            if( row.cardinality() == 0 ) {
+                throw new SingularMatrixException( "Matrix has no generalized right inverse." );
+            }
+        }
+    }
+    
+    static BitVector map( Integer[] firstNonZeroIndex , BitVector constant , int len ) {
         BitVector result = new BitVector( len );
         for( int i = 0 ; i < firstNonZeroIndex.length ; ++i ) {
             if( constant.get( i ) ) {
@@ -216,15 +212,7 @@ public class EnhancedBitMatrix {
         rowReducedEchelonForm( workingSet , inverse );
         
         //Make sure we can actually compute the right generalized inverse
-        for( BitVector wsRow : workingSet.getRows() ) {
-            if( wsRow.cardinality() == 0 ) {
-                throw new SingularMatrixException( "Matrix has no generalized right inverse." );
-            }
-        }
-        
-        if( !inverse.inverse().multiply( workingSet ).equals( this.transpose() ) ) {
-            logger.error("I hate my life right now.");
-        }
+        isFullRank( workingSet );
         
         int numCols = rows();
         BitVector[] basis = new BitVector[ numCols ];
