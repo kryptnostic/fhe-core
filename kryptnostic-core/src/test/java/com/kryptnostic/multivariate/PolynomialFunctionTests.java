@@ -232,30 +232,18 @@ public class PolynomialFunctionTests {
 
     @Timed
     public void testInterleaveFunctions() {
-        final int inputLength = 256;
-        final int outputLength = 128;
+        SimplePolynomialFunction lhs = randomFunction();
+        SimplePolynomialFunction rhs = randomFunction();
 
-        SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction(inputLength, outputLength, 10, 2);
-        SimplePolynomialFunction rhs = PolynomialFunctions.randomFunction(inputLength, outputLength, 10, 2);
+        Pair<int[], int[]> inputMaps = FunctionUtils.getSplitMap(lhs.getInputLength(), rhs.getInputLength());
+        Pair<int[], int[]> outputMaps = FunctionUtils.getSplitMap(lhs.getOutputLength(), rhs.getOutputLength());
+        
+        SimplePolynomialFunction interleaved = FunctionUtils.interleaveFunctions(lhs, rhs, inputMaps.getLeft(), inputMaps.getRight(),
+                outputMaps.getLeft(), outputMaps.getRight());
 
-        int[] lhsInputMap = new int[inputLength];
-        int[] rhsInputMap = new int[inputLength];
-        for (int i = 0; i < inputLength; i++) {
-            lhsInputMap[i] = i;
-            rhsInputMap[i] = i + inputLength;
-        }
-        int[] lhsOutputMap = new int[outputLength];
-        int[] rhsOutputMap = new int[outputLength];
-        for (int i = 0; i < outputLength; i++) {
-            lhsOutputMap[i] = i;
-            rhsOutputMap[i] = i + outputLength;
-        }
-        SimplePolynomialFunction interleaved = FunctionUtils.interleaveFunctions(lhs, rhs, lhsInputMap, rhsInputMap,
-                lhsOutputMap, rhsOutputMap);
-
-        BitVector lhInput = BitVectors.randomVector(inputLength);
-        BitVector rhInput = BitVectors.randomVector(inputLength);
-        BitVector interleavedInput = BitVectors.concatenate(lhInput, rhInput);
+        BitVector lhInput = BitVectors.randomVector(INPUT_LENGTH);
+        BitVector rhInput = BitVectors.randomVector(INPUT_LENGTH);
+        BitVector interleavedInput = FunctionUtils.concatenate(lhInput, rhInput);
 
         BitVector lhResult = lhs.apply(lhInput);
         BitVector rhResult = rhs.apply(rhInput);
@@ -413,13 +401,7 @@ public class PolynomialFunctionTests {
     @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     @Timed
     public SimplePolynomialFunction randomFunction() {
-        return PolynomialFunctions.randomFunction(INPUT_LENGTH, OUTPUT_LENGTH);
-    }
-
-    @Bean
-    @Timed
-    public SimplePolynomialFunction singletonRandomFunction() {
-        return PolynomialFunctions.randomFunction(INPUT_LENGTH, OUTPUT_LENGTH);
+        return PolynomialFunctions.lightRandomFunction(INPUT_LENGTH, OUTPUT_LENGTH);
     }
 
     @Bean
@@ -534,8 +516,8 @@ public class PolynomialFunctionTests {
 
     @Timed
     public void testConcatenateInputsAndOutputs() {
-        SimplePolynomialFunction lhs = PolynomialFunctions.randomFunction(256, 256);
-        SimplePolynomialFunction rhs = PolynomialFunctions.randomFunction(128, 64);
+        SimplePolynomialFunction lhs = PolynomialFunctions.lightRandomFunction(256, 256);
+        SimplePolynomialFunction rhs = PolynomialFunctions.lightRandomFunction(128, 64);
 
         SimplePolynomialFunction concatenated = FunctionUtils.concatenateInputsAndOutputs(lhs, rhs);
         long[] src = new long[] { r.nextLong(), r.nextLong(), r.nextLong(), r.nextLong(), r.nextLong(), r.nextLong() };

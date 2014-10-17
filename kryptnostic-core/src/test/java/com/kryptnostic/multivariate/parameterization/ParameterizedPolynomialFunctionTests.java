@@ -18,15 +18,13 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 public class ParameterizedPolynomialFunctionTests {
     private static final Logger logger = LoggerFactory.getLogger(ParameterizedPolynomialFunctionTests.class);
-    private final int MAX_TERMS = 10;
-    private final int MAX_ORDER = 2;
 
     @Test
     public void testConcatenateInputsAndOutputs() throws Exception {
-        SimplePolynomialFunction function = PolynomialFunctions.randomFunction(128, 64);
-        SimplePolynomialFunction function2 = PolynomialFunctions.randomFunction(128, 128);
+        SimplePolynomialFunction function = PolynomialFunctions.lightRandomFunction(128, 64);
+        SimplePolynomialFunction function2 = PolynomialFunctions.lightRandomFunction(128, 128);
 
-        SimplePolynomialFunction function3 = PolynomialFunctions.randomFunction(128, 128);
+        SimplePolynomialFunction function3 = PolynomialFunctions.lightRandomFunction(128, 128);
         SimplePolynomialFunction[] pipeline = { function3 };
 
         ParameterizedPolynomialFunctionGF2 parameterized = (ParameterizedPolynomialFunctionGF2) ParameterizedPolynomialFunctions
@@ -44,8 +42,8 @@ public class ParameterizedPolynomialFunctionTests {
     
     @Test
     public void testComposeInnerParameterized() {
-        SimplePolynomialFunction outer = PolynomialFunctions.randomFunction(128, 64, MAX_TERMS, MAX_ORDER);
-        SimplePolynomialFunction base = PolynomialFunctions.randomFunction(128, 128, MAX_TERMS, MAX_ORDER);
+        SimplePolynomialFunction outer = PolynomialFunctions.lightRandomFunction(128, 64);
+        SimplePolynomialFunction base = PolynomialFunctions.lightRandomFunction(128, 128);
         SimplePolynomialFunction[] pipelines = {PolynomialFunctions.identity(128)};
         SimplePolynomialFunction inner = ParameterizedPolynomialFunctions.fromUnshiftedVariables(base.getInputLength(), base, pipelines);
         logger.info("Composing with inner parameterized function.");
@@ -60,9 +58,9 @@ public class ParameterizedPolynomialFunctionTests {
     
     @Test
     public void testComposeOuterParameterized() {
-        SimplePolynomialFunction inner = PolynomialFunctions.randomFunction(64, 64, MAX_TERMS, MAX_ORDER);
+        SimplePolynomialFunction inner = PolynomialFunctions.lightRandomFunction(64, 64);
         
-        SimplePolynomialFunction base = PolynomialFunctions.randomFunction(64, 128, MAX_TERMS, MAX_ORDER);
+        SimplePolynomialFunction base = PolynomialFunctions.lightRandomFunction(64, 128);
         base = ParameterizedPolynomialFunctions.extend(128, base);
         List<CompoundPolynomialFunction> pipelines = Lists.newArrayList();
         pipelines.add(new CompoundPolynomialFunctionGF2(Lists.newArrayList(PolynomialFunctions.identity(64))));

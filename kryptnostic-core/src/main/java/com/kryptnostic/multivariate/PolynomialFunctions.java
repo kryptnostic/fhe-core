@@ -4,10 +4,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import cern.colt.bitvector.BitVector;
 
@@ -29,10 +26,6 @@ import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
  * @author Matthew Tamayo-Rios
  */
 public final class PolynomialFunctions {
-    private static final Logger logger = LoggerFactory.getLogger(PolynomialFunctions.class);
-    private static final int INTEGER_BYTES = Integer.SIZE / Byte.SIZE;
-    private static final int INTEGER_BYTES_X4 = INTEGER_BYTES * 4;
-    private static final Base64 codec = new Base64();
 
     private PolynomialFunctions() {
     }
@@ -343,6 +336,15 @@ public final class PolynomialFunctions {
      */
     public static SimplePolynomialFunction randomFunction(int inputLen, int outputLen) {
         return randomFunction(inputLen, outputLen, 16, 3);
+    }
+    
+    /**
+     * Generates random polynomial functions containing a maximum of 10 terms of max order 2.
+     * 
+     * @return SimplePolynomialFunction
+     */
+    public static SimplePolynomialFunction lightRandomFunction(int inputLen, int outputLen) {
+        return randomFunction(inputLen, outputLen, 10, 2);
     }
 
     /**

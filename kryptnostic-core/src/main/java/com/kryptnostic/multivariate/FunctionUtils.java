@@ -121,7 +121,7 @@ public class FunctionUtils {
      * 
      * @return Pair of lhMap and rhMap
      */
-    private static Pair<int[], int[]> getSplitMap(int lhLength, int rhLength) {
+    protected static Pair<int[], int[]> getSplitMap(int lhLength, int rhLength) {
         int totalLength = lhLength + rhLength;
         int[] lhMap = new int[lhLength];
         int[] rhMap = new int[rhLength];
