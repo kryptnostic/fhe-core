@@ -14,11 +14,10 @@ def getVersionName = { ->
     return semVer
 }
 
-description = "Java Framework for building clustered RESTful web applications"
+description = "Kryptnostic Java Multivariate Polynomial Crypto Libraries"
 group = "com.kryptnostic"
 version = getVersionName()
 
-apply plugin: "application"
 apply plugin: "java"
 apply plugin: "maven"
 apply plugin: "eclipse"
@@ -37,7 +36,6 @@ repositories {
   maven {
         url "https://oss.sonatype.org/content/repositories/snapshots"
   }
-
 }
 
 
