@@ -109,7 +109,7 @@ public class MultivariateLearning {
 		EnhancedBitMatrix outputsTransposed = new EnhancedBitMatrix( outputs ).transpose();
 		EnhancedBitMatrix inputsTransposed = new EnhancedBitMatrix( inputs ).transpose();
 		try {
-			EnhancedBitMatrix generalizedInverseInputs = inputsTransposed.rightGeneralizedInverse();
+			EnhancedBitMatrix generalizedInverseInputs = inputsTransposed.rightInverse();
 			coefficients = outputsTransposed.multiply( generalizedInverseInputs );
 		} catch (SingularMatrixException e) {
 			logger.info( e.toString() );

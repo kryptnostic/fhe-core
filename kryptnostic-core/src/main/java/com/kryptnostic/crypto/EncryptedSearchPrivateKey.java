@@ -35,16 +35,16 @@ public class EncryptedSearchPrivateKey {
     public EncryptedSearchPrivateKey( PrivateKey privateKey, PublicKey publicKey ) throws SingularMatrixException {
         int doubleHashBits = hashBits << 1;
         indexingFunction = SimplePolynomialFunctions.denseRandomMultivariateQuadratic( hashBits , hashBits );
-        leftQueryExpander = EnhancedBitMatrix.randomLeftInvertibleMatrix( 16 , 8 , 1000 );
-        rightQueryExpander = EnhancedBitMatrix.randomRightInvertibleMatrix( 8 , 16 , 1000 );
+        leftQueryExpander = EnhancedBitMatrix.randomLeftInvertibleMatrix( 16 , 8 , 10000 );
+        rightQueryExpander = EnhancedBitMatrix.randomRightInvertibleMatrix( 8 , 16 , 10000 );
         
-        leftIndexCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( hashBits , doubleHashBits , 1000 );
-        rightIndexCollapser = EnhancedBitMatrix.randomLeftInvertibleMatrix( doubleHashBits , hashBits , 1000 );
+        leftIndexCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( hashBits , doubleHashBits , 10000 );
+        rightIndexCollapser = EnhancedBitMatrix.randomLeftInvertibleMatrix( doubleHashBits , hashBits , 10000 );
         
         if( publicKey.getEncrypter().getInputLength() == doubleHashBits ) {
             hashCollapser = EnhancedBitMatrix.identity( doubleHashBits );
         } else {
-            hashCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( hashBits >>> 1 , hashBits , 1000 );
+            hashCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( hashBits >>> 1 , hashBits , 10000 );
         }
         this.squaringMatrix = EnhancedBitMatrix.randomInvertibleMatrix( 8 );
         this.publicKey = publicKey;
