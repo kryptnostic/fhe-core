@@ -86,11 +86,6 @@ public class EncryptedSearchPrivateKeyTests {
         BitVector actual = BitVectors.fromSquareMatrix( privateKey.getLeftQueryExpander().leftInverse().multiply( EnhancedBitMatrix.squareMatrixfromBitVector( intermediate ) ).multiply( privateKey.getRightQueryExpander().rightInverse() ) );
         Assert.assertEquals( expected, actual );
         
-        //Now let's test running a search
-        EnhancedBitMatrix documentKey = privateKey.newDocumentKey();
-        EncryptedSearchSharingKey sharingKey = EncryptedSearchSharingKey.fromPrivateKey( privateKey , documentKey );
-//        EncryptedSearchBridgeKey bridgeKey = new EncryptedSearchBridgeKey( privateKey , sharingKey );
-//        SimplePolynomialFunction f = privateKey.getDownmixingIndexer( documentKey );
     }
     
     @Test
@@ -113,14 +108,18 @@ public class EncryptedSearchPrivateKeyTests {
         EnhancedBitMatrix intermediateL = EnhancedBitMatrix.squareMatrixfromBitVector( hL.apply( BitVectors.concatenate( encryptedSearchHash , encryptedSearchNonce ) ) );
         EnhancedBitMatrix intermediateR = EnhancedBitMatrix.squareMatrixfromBitVector( hR.apply( BitVectors.concatenate( encryptedSearchHash , encryptedSearchNonce ) ) );
         
+        EnhancedBitMatrix documentKey = privateKey.newDocumentKey();
+        EncryptedSearchSharingKey sharingKey = new EncryptedSearchSharingKey( documentKey );
+        EncryptedSearchBridgeKey bridgeKey = new EncryptedSearchBridgeKey( privateKey , sharingKey );
+        
         BitVector actual = BitVectors.fromSquareMatrix( intermediateL.multiply( intermediateR ) );
         Assert.assertEquals( expected, actual );
         
         //Now let's test running a search
-        EnhancedBitMatrix documentKey = privateKey.newDocumentKey();
-        EncryptedSearchSharingKey sharingKey = EncryptedSearchSharingKey.fromPrivateKey( privateKey , documentKey );
-//        EncryptedSearchBridgeKey bridgeKey = new EncryptedSearchBridgeKey( privateKey , sharingKey );
-//        SimplePolynomialFunction f = privateKey.getDownmixingIndexer( documentKey );
+        actual = BitVectors.fromSquareMatrix( intermediateL.multiply( bridgeKey.getBridge() ).multiply( intermediateR ) );
+        expectedMatrix = EnhancedBitMatrix.squareMatrixfromBitVector( globalHash.apply( BitVectors.concatenate( searchHash, searchNonce ) ) );
+        expected = BitVectors.fromSquareMatrix( expectedMatrix.multiply( sharingKey.getMiddle() ).multiply( expectedMatrix ) );
+        Assert.assertEquals( expected, actual );
     }
     
 }

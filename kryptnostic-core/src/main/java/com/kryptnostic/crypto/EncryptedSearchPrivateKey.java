@@ -81,8 +81,12 @@ public class EncryptedSearchPrivateKey {
         return rightIndexCollapser;
     }
     
+    public EnhancedBitMatrix getSquaringMatrix() {
+        return squaringMatrix;
+    }
+    
     public EnhancedBitMatrix newDocumentKey() {
-        return EnhancedBitMatrix.randomInvertibleMatrix( hashBits );
+        return EnhancedBitMatrix.randomInvertibleMatrix( 8 );
     }
 
     public SimplePolynomialFunction getDownmixingIndexer(EnhancedBitMatrix documentKey) {

@@ -3,7 +3,6 @@ package com.kryptnostic.crypto;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.kryptnostic.linear.EnhancedBitMatrix;
-import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
 
 /**
  * This class is for the non-collusion resistant scheme utilizing matrix products
@@ -11,30 +10,19 @@ import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
  * @author Matthew Tamayo-Rios &lt;matthew@kryptnostic.com&gt;
  */
 public class EncryptedSearchSharingKey {
-    private static final String LEFT_EXPANDER_FIELD = "leftExpander";
-    private static final String RIGHT_EXPANDER_FIELD = "rightExpander";
+    private static final String MIDDLE_FIELD = "middle";
     
-    private final EnhancedBitMatrix leftExpander, rightExpander;
+    private final EnhancedBitMatrix middle;
     
     @JsonCreator
     public EncryptedSearchSharingKey( 
-            @JsonProperty(LEFT_EXPANDER_FIELD) EnhancedBitMatrix leftExpander , 
-            @JsonProperty(RIGHT_EXPANDER_FIELD) EnhancedBitMatrix rightExpander ) {
-        this.leftExpander = leftExpander;
-        this.rightExpander = rightExpander;
+            @JsonProperty(MIDDLE_FIELD) EnhancedBitMatrix middle 
+            ) {
+        this.middle = middle;
     }
     
-    @JsonProperty(LEFT_EXPANDER_FIELD)
-    public EnhancedBitMatrix getLeftExpander() {
-        return leftExpander;
-    }
-    
-    @JsonProperty(RIGHT_EXPANDER_FIELD)
-    public EnhancedBitMatrix getRightExpander() {
-        return rightExpander;
-    }
-    
-    public static EncryptedSearchSharingKey fromPrivateKey( EncryptedSearchPrivateKey privateKey , EnhancedBitMatrix documentKey ) throws SingularMatrixException {
-        return new EncryptedSearchSharingKey( privateKey.getLeftIndexCollapser().rightInverse().multiply( documentKey ) , privateKey.getRightIndexCollapser().leftInverse() );
+    @JsonProperty(MIDDLE_FIELD)
+    public EnhancedBitMatrix getMiddle() {
+        return middle;
     }
 }
