@@ -3,4 +3,4 @@ jdk:
   - oraclejdk7
   - openjdk6
   - openjdk7
-script: travis_wait "./gradlew check"
+script: "./gradlew check --debug"
