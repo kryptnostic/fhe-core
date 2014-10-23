@@ -32,7 +32,7 @@ import com.kryptnostic.multivariate.util.FunctionUtils;
 import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@class")
-public class EnhancedBitMatrix {
+public class EnhancedBitMatrix im{
     private static final String ROWS_PROPERTY = "rows";
 
     private static final Random r = new SecureRandom();
