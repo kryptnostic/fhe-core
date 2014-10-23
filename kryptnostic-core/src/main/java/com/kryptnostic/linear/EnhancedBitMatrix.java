@@ -706,7 +706,7 @@ public class EnhancedBitMatrix im{
         Preconditions.checkArgument( attempts > 0, "Number of attempts must be greater than zero." );
         
         EnhancedBitMatrix result = EnhancedBitMatrix.randomMatrix( rows , cols );
-        for( int i = 0 ; i < 25 ; ++i ) {
+        for( int i = 0 ; i < attempts ; ++i ) {
             try {
                 result.rightInverse();
                 return result;
