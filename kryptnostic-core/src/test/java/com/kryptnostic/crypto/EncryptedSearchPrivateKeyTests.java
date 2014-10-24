@@ -28,38 +28,6 @@ public class EncryptedSearchPrivateKeyTests {
     }
     
     @Test
-    public void testLeftIndexCollapser() throws SingularMatrixException {
-        EnhancedBitMatrix left = privateKey.getLeftIndexCollapser();
-        EnhancedBitMatrix right = left.rightInverse();
-        EnhancedBitMatrix identity = right.multiply( left );
-        Assert.assertTrue( identity.isIdentity() );
-    }
-    
-    @Test
-    public void testLeftQueryExpander() throws SingularMatrixException {
-        EnhancedBitMatrix left = privateKey.getLeftQueryExpander();
-        EnhancedBitMatrix right = left.leftInverse();
-        EnhancedBitMatrix identity = right.multiply( left );
-        Assert.assertTrue( identity.isIdentity() );
-    }
-    
-    @Test
-    public void testRightQueryExpander() throws SingularMatrixException {
-        EnhancedBitMatrix left = privateKey.getRightQueryExpander();
-        EnhancedBitMatrix right = left.rightInverse();
-        EnhancedBitMatrix identity = left.multiply( right );
-        Assert.assertTrue( identity.isIdentity() );
-    }
-    
-    @Test
-    public void testRightIndexCollapser() throws SingularMatrixException {
-        EnhancedBitMatrix left = privateKey.getRightIndexCollapser();
-        EnhancedBitMatrix right = left.leftInverse();
-        EnhancedBitMatrix identity = left.multiply( right );
-        Assert.assertTrue( identity.isIdentity() );
-    }
-    
-    @Test
     public void testQueryGeneration() throws SingularMatrixException {
         String term = "risefall";
         BitVector expected = privateKey.hash( term );
@@ -69,25 +37,6 @@ public class EncryptedSearchPrivateKeyTests {
         Assert.assertEquals( expected , actual );
     }
 
-    @Test
-    public void testQueryHasherGeneration() throws SingularMatrixException {
-        String term = "barbarian";
-        
-        BitVector searchHash = privateKey.hash( term ); 
-        BitVector encryptedSearchHash = privateKey.prepareSearchToken( term );
-        
-        BitVector searchNonce = BitVectors.randomVector( 64 );
-        BitVector encryptedSearchNonce =  fhePublicKey.getEncrypter().apply( BitVectors.concatenate( searchNonce , BitVectors.randomVector( 64 ) ) );
-        
-        BitVector expected = globalHash.apply( BitVectors.concatenate( searchHash, searchNonce ) );
-        
-        SimplePolynomialFunction h = privateKey.getQueryHasher( globalHash , fhePrivateKey );
-        BitVector intermediate = h.apply( BitVectors.concatenate( encryptedSearchHash , encryptedSearchNonce ) );
-        BitVector actual = BitVectors.fromSquareMatrix( privateKey.getLeftQueryExpander().leftInverse().multiply( EnhancedBitMatrix.squareMatrixfromBitVector( intermediate ) ).multiply( privateKey.getRightQueryExpander().rightInverse() ) );
-        Assert.assertEquals( expected, actual );
-        
-    }
-    
     @Test
     public void testQueryHasherPairGeneration() throws SingularMatrixException {
         String term = "barbarian";
