@@ -61,7 +61,7 @@ public class EncryptedSearchPrivateKey {
     }
     
     public EnhancedBitMatrix getRightSquaringMatrix() {
-        return leftSquaringMatrix;
+        return rightSquaringMatrix;
     }
 
     public EnhancedBitMatrix newDocumentKey() {
