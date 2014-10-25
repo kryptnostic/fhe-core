@@ -334,4 +334,17 @@ public final class ParameterizedPolynomialFunctions {
         pipelines.add(new CompoundPolynomialFunctionGF2(Lists.newArrayList(SimplePolynomialFunctions.identity(inputLength))));
         return new ParameterizedPolynomialFunctionGF2(inputLength, base.getOutputLength(), base.getMonomials(), base.getContributions(), pipelines);
     }
+    
+    public static SimplePolynomialFunction heavyRandomParameterizedFunction( int inputLength, int outputLength , int pipelineWidth , int pipelineDepth ) {
+        SimplePolynomialFunction f = SimplePolynomialFunctions.denseRandomMultivariateQuadratic( inputLength + pipelineWidth*inputLength, 128 );
+        List<CompoundPolynomialFunction> pipeline = Lists.newArrayListWithCapacity( pipelineWidth );
+        for( int i = 0 ; i < pipelineWidth; ++i ){
+            SimplePolynomialFunction[] functions = new SimplePolynomialFunction[ pipelineDepth ];
+            for( int j = 0 ; j < pipelineDepth ; ++j ) {
+                functions[ j ] = SimplePolynomialFunctions.denseRandomMultivariateQuadratic( inputLength, inputLength );
+            }
+            pipeline.add( CompoundPolynomialFunctions.fromFunctions( functions ) );
+        }
+        return new ParameterizedPolynomialFunctionGF2( inputLength , 128 , f.getMonomials(), f.getContributions(), pipeline );
+    }
 }

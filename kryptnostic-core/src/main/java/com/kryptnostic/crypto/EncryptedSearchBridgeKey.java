@@ -16,8 +16,8 @@ public class EncryptedSearchBridgeKey implements Serializable {
 
     public EncryptedSearchBridgeKey(EncryptedSearchPrivateKey privateKey, EncryptedSearchSharingKey sharingKey)
             throws SingularMatrixException {
-        this.bridge = privateKey.getSquaringMatrix().inverse().multiply(sharingKey.getMiddle())
-                .multiply(privateKey.getSquaringMatrix());
+        this.bridge = privateKey.getLeftSquaringMatrix().inverse().multiply(sharingKey.getMiddle())
+                .multiply(privateKey.getRightSquaringMatrix().inverse());
     }
 
     @JsonCreator
