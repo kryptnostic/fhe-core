@@ -2,10 +2,15 @@ package com.kryptnostic.crypto.padding;
 
 import java.util.Arrays;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ZeroPaddingStrategy implements PaddingStrategy {
+    private static final String INPUT_BYTE_LENGTH_PROPERTY = "input-byte-length";
     public final int inputByteLength;
     
-    public ZeroPaddingStrategy( int inputByteLength ) {
+    @JsonCreator
+    public ZeroPaddingStrategy( @JsonProperty(INPUT_BYTE_LENGTH_PROPERTY) int inputByteLength ) {
         this.inputByteLength = inputByteLength;
     }
 
@@ -17,5 +22,10 @@ public class ZeroPaddingStrategy implements PaddingStrategy {
         } else {
             return unpadded;
         }
+    }
+   
+    @JsonProperty(INPUT_BYTE_LENGTH_PROPERTY)
+    public int getInputByteLength() {
+        return inputByteLength;
     }
 }
