@@ -23,7 +23,7 @@ public class EncryptedSearchPrivateKeyTests {
     public static void generateKey() throws SingularMatrixException {
         fhePrivateKey = new PrivateKey( 128, 64 );
         fhePublicKey = new PublicKey( fhePrivateKey );
-        privateKey = new EncryptedSearchPrivateKey( fhePrivateKey, fhePublicKey );
+        privateKey = new EncryptedSearchPrivateKey( fhePublicKey.getEncrypter().getInputLength() , 8 );
         globalHash = SimplePolynomialFunctions.denseRandomMultivariateQuadratic(
                 EncryptedSearchPrivateKey.getHashBits(),
                 EncryptedSearchPrivateKey.getHashBits() >>> 1 );
@@ -33,7 +33,7 @@ public class EncryptedSearchPrivateKeyTests {
     public void testQueryGeneration() throws SingularMatrixException {
         String term = "risefall";
         BitVector expected = privateKey.hash( term );
-        BitVector intermediate = privateKey.prepareSearchToken( term );
+        BitVector intermediate = privateKey.prepareSearchToken( fhePublicKey , term );
         BitVector actual = fhePrivateKey.getDecryptor().apply( intermediate );
 
         Assert.assertEquals( expected, actual );
@@ -44,7 +44,7 @@ public class EncryptedSearchPrivateKeyTests {
         String term = "barbarian";
 
         BitVector searchHash = privateKey.hash( term );
-        BitVector encryptedSearchHash = privateKey.prepareSearchToken( term );
+        BitVector encryptedSearchHash = privateKey.prepareSearchToken(fhePublicKey, term );
 
         BitVector searchNonce = BitVectors.randomVector( 64 );
         BitVector encryptedSearchNonce = fhePublicKey.getEncrypter().apply(
