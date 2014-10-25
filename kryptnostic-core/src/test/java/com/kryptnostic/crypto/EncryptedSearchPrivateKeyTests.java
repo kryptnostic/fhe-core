@@ -23,7 +23,7 @@ public class EncryptedSearchPrivateKeyTests {
     public static void generateKey() throws SingularMatrixException {
         fhePrivateKey = new PrivateKey( 128, 64 );
         fhePublicKey = new PublicKey( fhePrivateKey );
-        privateKey = new EncryptedSearchPrivateKey( fhePublicKey.getEncrypter().getInputLength() , 8 );
+        privateKey = new EncryptedSearchPrivateKey( 8 );
         globalHash = SimplePolynomialFunctions.denseRandomMultivariateQuadratic(
                 EncryptedSearchPrivateKey.getHashBits(),
                 EncryptedSearchPrivateKey.getHashBits() >>> 1 );

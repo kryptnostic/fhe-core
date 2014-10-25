@@ -23,7 +23,7 @@ public class EncryptedSearchPrivateKey {
     private static final HashFunction hf       = Hashing.murmur3_128();
     private static final int          hashBits = hf.bits();
 
-    private final EnhancedBitMatrix   hashCollapser, leftSquaringMatrix, rightSquaringMatrix;
+    private final EnhancedBitMatrix   leftSquaringMatrix, rightSquaringMatrix;
 
     @JsonCreator
     public EncryptedSearchPrivateKey(
@@ -32,18 +32,9 @@ public class EncryptedSearchPrivateKey {
             @JsonProperty( RIGHT_SQUARING_MATRIX ) EnhancedBitMatrix rightSquaringMatrix ) throws SingularMatrixException {
         this.leftSquaringMatrix = leftSquaringMatrix;
         this.rightSquaringMatrix =rightSquaringMatrix;
-        this.hashCollapser = hashCollapser;
     }
 
-    public EncryptedSearchPrivateKey( int inputLength , int sqrRootHashLength ) throws SingularMatrixException {
-        final int NUMBER_OF_TRIES = 1000000;
-        final int doubleHashBits = hashBits << 1; //i.e 256
-        
-        if( inputLength == doubleHashBits ) { 
-            hashCollapser = EnhancedBitMatrix.identity( doubleHashBits );
-        } else {
-            hashCollapser = EnhancedBitMatrix.randomRightInvertibleMatrix( inputLength >>> 1, hashBits , NUMBER_OF_TRIES );
-        }
+    public EncryptedSearchPrivateKey( int sqrRootHashLength ) throws SingularMatrixException {
         this.leftSquaringMatrix = EnhancedBitMatrix.randomInvertibleMatrix( sqrRootHashLength );
         this.rightSquaringMatrix = EnhancedBitMatrix.randomInvertibleMatrix( sqrRootHashLength );
     }
@@ -62,13 +53,7 @@ public class EncryptedSearchPrivateKey {
     }
 
     public BitVector hash( String term ) {
-        return hashCollapser
-                .multiply( BitVectors.fromBytes( hashBits, hf.hashString( term, Charsets.UTF_8 ).asBytes() ) );
-    }
-    
-    @JsonProperty( HASH_COLLAPSER ) 
-    public EnhancedBitMatrix getHashCollapser() {
-        return hashCollapser;
+        return BitVectors.fromBytes( hashBits, hf.hashString( term, Charsets.UTF_8 ).asBytes() );
     }
     
     @JsonProperty( LEFT_SQUARING_MATRIX ) 
