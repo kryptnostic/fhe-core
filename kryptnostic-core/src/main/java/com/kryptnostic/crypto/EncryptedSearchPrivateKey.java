@@ -17,11 +17,11 @@ import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
 import com.kryptnostic.multivariate.polynomial.ParameterizedPolynomialFunctionGF2;
 
 public class EncryptedSearchPrivateKey {
-    public static final String HASH_COLLAPSER = "hashCollapser";
-    public static final String LEFT_SQUARING_MATRIX = "leftMatrix";
-    public static final String RIGHT_SQUARING_MATRIX = "rightMatrix";
-    private static final HashFunction hf       = Hashing.murmur3_128();
-    private static final int          hashBits = hf.bits();
+    public static final String        HASH_COLLAPSER        = "hashCollapser";
+    public static final String        LEFT_SQUARING_MATRIX  = "leftMatrix";
+    public static final String        RIGHT_SQUARING_MATRIX = "rightMatrix";
+    private static final HashFunction hf                    = Hashing.murmur3_128();
+    private static final int          hashBits              = hf.bits();
 
     private final EnhancedBitMatrix   leftSquaringMatrix, rightSquaringMatrix;
 
@@ -31,7 +31,7 @@ public class EncryptedSearchPrivateKey {
             @JsonProperty( LEFT_SQUARING_MATRIX ) EnhancedBitMatrix leftSquaringMatrix,
             @JsonProperty( RIGHT_SQUARING_MATRIX ) EnhancedBitMatrix rightSquaringMatrix ) throws SingularMatrixException {
         this.leftSquaringMatrix = leftSquaringMatrix;
-        this.rightSquaringMatrix =rightSquaringMatrix;
+        this.rightSquaringMatrix = rightSquaringMatrix;
     }
 
     public EncryptedSearchPrivateKey( int sqrRootHashLength ) throws SingularMatrixException {
@@ -53,14 +53,17 @@ public class EncryptedSearchPrivateKey {
     }
 
     public BitVector hash( String term ) {
-        return BitVectors.fromBytes( hashBits, hf.hashString( term, Charsets.UTF_8 ).asBytes() );
+        BitVector hash = BitVectors.fromBytes( hashBits, hf.hashString( term, Charsets.UTF_8 ).asBytes() );
+        BitVector halfHash = hash.partFromTo( 0, 63 );
+        halfHash.xor( hash.partFromTo( 64, 127 ) );
+        return halfHash;
     }
-    
-    @JsonProperty( LEFT_SQUARING_MATRIX ) 
+
+    @JsonProperty( LEFT_SQUARING_MATRIX )
     public EnhancedBitMatrix getLeftSquaringMatrix() {
         return leftSquaringMatrix;
     }
-    
+
     @JsonProperty( RIGHT_SQUARING_MATRIX )
     public EnhancedBitMatrix getRightSquaringMatrix() {
         return rightSquaringMatrix;
@@ -163,5 +166,5 @@ public class EncryptedSearchPrivateKey {
     public static int getHashBits() {
         return hashBits;
     }
-    
+
 }
