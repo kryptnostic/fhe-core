@@ -1,6 +1,7 @@
 package com.kryptnostic.crypto;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Random;
 
 import org.slf4j.Logger;
@@ -150,5 +151,59 @@ public class PublicKey {
 
     public int getLongsPerBlock() {
         return longsPerBlock;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.hashCode( complexityChain );
+        result = prime * result + ( ( encrypter == null ) ? 0 : encrypter.hashCode() );
+        result = prime * result + longsPerBlock;
+        result = prime * result + ( ( m == null ) ? 0 : m.hashCode() );
+        result = prime * result + ( ( paddingStrategy == null ) ? 0 : paddingStrategy.hashCode() );
+        return result;
+    }
+
+    @Override
+    public boolean equals( Object obj ) {
+        if ( this == obj ) {
+            return true;
+        }
+        if ( obj == null ) {
+            return false;
+        }
+        if ( !( obj instanceof PublicKey ) ) {
+            return false;
+        }
+        PublicKey other = (PublicKey) obj;
+        if ( !Arrays.equals( complexityChain, other.complexityChain ) ) {
+            return false;
+        }
+        if ( encrypter == null ) {
+            if ( other.encrypter != null ) {
+                return false;
+            }
+        } else if ( !encrypter.equals( other.encrypter ) ) {
+            return false;
+        }
+        if ( longsPerBlock != other.longsPerBlock ) {
+            return false;
+        }
+        if ( m == null ) {
+            if ( other.m != null ) {
+                return false;
+            }
+        } else if ( !m.equals( other.m ) ) {
+            return false;
+        }
+        if ( paddingStrategy == null ) {
+            if ( other.paddingStrategy != null ) {
+                return false;
+            }
+        } else if ( !paddingStrategy.equals( other.paddingStrategy ) ) {
+            return false;
+        }
+        return true;
     }
 }
