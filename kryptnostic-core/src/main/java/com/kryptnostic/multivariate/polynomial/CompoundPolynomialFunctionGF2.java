@@ -1,5 +1,6 @@
 package com.kryptnostic.multivariate.polynomial;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,7 +17,6 @@ import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.util.FunctionUtils;
 
 /**
  * Basic implementation of CompoundPolynomialFunction over GF2, consisting of a linked list of functions. The input to
@@ -26,7 +26,8 @@ import com.kryptnostic.multivariate.util.FunctionUtils;
  * 
  * @author Matthew Tamayo-Rios
  */
-public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction {
+public class CompoundPolynomialFunctionGF2 implements CompoundPolynomialFunction,Serializable {
+    private static final long serialVersionUID = 5911932565890972307L;
     private static final String FUNCTIONS_PROPERTY = "functions";
     private final LinkedList<PolynomialFunction> functions;
 

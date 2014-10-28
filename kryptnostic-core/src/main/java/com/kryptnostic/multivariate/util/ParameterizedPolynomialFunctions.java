@@ -143,7 +143,7 @@ public final class ParameterizedPolynomialFunctions {
                 Iterable<CompoundPolynomialFunction> pipelines = Iterables.concat(ppfF.getPipelines(),
                         ppfG.getPipelines());
                 return new ParameterizedPolynomialFunctionGF2(ppfF.getInputLength(), ppfF.getOutputLength(),
-                        partialResult.getMonomials(), partialResult.getContributions(), pipelines);
+                        partialResult.getMonomials(), partialResult.getContributions(), ImmutableList.copyOf( pipelines) );
             }
         } else if (f.isParameterized() && !g.isParameterized()) {
             // Problem is that extendedLhs
@@ -198,7 +198,7 @@ public final class ParameterizedPolynomialFunctions {
                 Iterable<CompoundPolynomialFunction> pipelines = Iterables.concat(ppfF.getPipelines(),
                         ppfG.getPipelines());
                 return new ParameterizedPolynomialFunctionGF2(ppfF.getInputLength(), ppfF.getOutputLength(),
-                        partialResult.getMonomials(), partialResult.getContributions(), pipelines);
+                        partialResult.getMonomials(), partialResult.getContributions(), ImmutableList.copyOf( pipelines) );
             }
         } else if (f.isParameterized() && !g.isParameterized()) {
             // Problem is that extendedLhs
