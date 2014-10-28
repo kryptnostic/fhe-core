@@ -15,111 +15,74 @@ import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 public class EncryptedSearchPrivateKeyTests {
     private static EncryptedSearchPrivateKey privateKey;
-    private static PrivateKey fhePrivateKey;
-    private static PublicKey fhePublicKey;
-    private static SimplePolynomialFunction globalHash;
-    
+    private static PrivateKey                fhePrivateKey;
+    private static PublicKey                 fhePublicKey;
+    private static SimplePolynomialFunction  globalHash;
+
     @BeforeClass
     public static void generateKey() throws SingularMatrixException {
-        fhePrivateKey = new PrivateKey(128,64);
+        fhePrivateKey = new PrivateKey( 128, 64 );
         fhePublicKey = new PublicKey( fhePrivateKey );
-        privateKey = new EncryptedSearchPrivateKey(fhePrivateKey,fhePublicKey);
-        globalHash = SimplePolynomialFunctions.denseRandomMultivariateQuadratic( EncryptedSearchPrivateKey.getHashBits() , EncryptedSearchPrivateKey.getHashBits() >>> 1);
+        privateKey = new EncryptedSearchPrivateKey( 8 );
+        globalHash = SimplePolynomialFunctions.denseRandomMultivariateQuadratic(
+                EncryptedSearchPrivateKey.getHashBits(),
+                EncryptedSearchPrivateKey.getHashBits() >>> 1 );
     }
-    
-    @Test
-    public void testLeftIndexCollapser() throws SingularMatrixException {
-        EnhancedBitMatrix left = privateKey.getLeftIndexCollapser();
-        EnhancedBitMatrix right = left.rightInverse();
-        EnhancedBitMatrix identity = right.multiply( left );
-        Assert.assertTrue( identity.isIdentity() );
-    }
-    
-    @Test
-    public void testLeftQueryExpander() throws SingularMatrixException {
-        EnhancedBitMatrix left = privateKey.getLeftQueryExpander();
-        EnhancedBitMatrix right = left.leftInverse();
-        EnhancedBitMatrix identity = right.multiply( left );
-        Assert.assertTrue( identity.isIdentity() );
-    }
-    
-    @Test
-    public void testRightQueryExpander() throws SingularMatrixException {
-        EnhancedBitMatrix left = privateKey.getRightQueryExpander();
-        EnhancedBitMatrix right = left.rightInverse();
-        EnhancedBitMatrix identity = left.multiply( right );
-        Assert.assertTrue( identity.isIdentity() );
-    }
-    
-    @Test
-    public void testRightIndexCollapser() throws SingularMatrixException {
-        EnhancedBitMatrix left = privateKey.getRightIndexCollapser();
-        EnhancedBitMatrix right = left.leftInverse();
-        EnhancedBitMatrix identity = left.multiply( right );
-        Assert.assertTrue( identity.isIdentity() );
-    }
-    
+
     @Test
     public void testQueryGeneration() throws SingularMatrixException {
         String term = "risefall";
         BitVector expected = privateKey.hash( term );
-        BitVector intermediate = privateKey.prepareSearchToken( term );
+        BitVector intermediate = privateKey.prepareSearchToken( fhePublicKey , term );
         BitVector actual = fhePrivateKey.getDecryptor().apply( intermediate );
 
-        Assert.assertEquals( expected , actual );
+        Assert.assertEquals( expected, actual );
     }
 
-    @Test
-    public void testQueryHasherGeneration() throws SingularMatrixException {
-        String term = "barbarian";
-        
-        BitVector searchHash = privateKey.hash( term ); 
-        BitVector encryptedSearchHash = privateKey.prepareSearchToken( term );
-        
-        BitVector searchNonce = BitVectors.randomVector( 64 );
-        BitVector encryptedSearchNonce =  fhePublicKey.getEncrypter().apply( BitVectors.concatenate( searchNonce , BitVectors.randomVector( 64 ) ) );
-        
-        BitVector expected = globalHash.apply( BitVectors.concatenate( searchHash, searchNonce ) );
-        
-        SimplePolynomialFunction h = privateKey.getQueryHasher( globalHash , fhePrivateKey );
-        BitVector intermediate = h.apply( BitVectors.concatenate( encryptedSearchHash , encryptedSearchNonce ) );
-        BitVector actual = BitVectors.fromSquareMatrix( privateKey.getLeftQueryExpander().leftInverse().multiply( EnhancedBitMatrix.squareMatrixfromBitVector( intermediate ) ).multiply( privateKey.getRightQueryExpander().rightInverse() ) );
-        Assert.assertEquals( expected, actual );
-        
-    }
-    
     @Test
     public void testQueryHasherPairGeneration() throws SingularMatrixException {
         String term = "barbarian";
-        
-        BitVector searchHash = privateKey.hash( term ); 
-        BitVector encryptedSearchHash = privateKey.prepareSearchToken( term );
-        
+
+        BitVector searchHash = privateKey.hash( term );
+        BitVector encryptedSearchHash = privateKey.prepareSearchToken(fhePublicKey, term );
+
         BitVector searchNonce = BitVectors.randomVector( 64 );
-        BitVector encryptedSearchNonce =  fhePublicKey.getEncrypter().apply( BitVectors.concatenate( searchNonce , BitVectors.randomVector( 64 ) ) );
-        
-        EnhancedBitMatrix expectedMatrix = EnhancedBitMatrix.squareMatrixfromBitVector( globalHash.apply( BitVectors.concatenate( searchHash, searchNonce ) ) );
+        BitVector encryptedSearchNonce = fhePublicKey.getEncrypter().apply(
+                BitVectors.concatenate( searchNonce, BitVectors.randomVector( 64 ) ) );
+
+        EnhancedBitMatrix expectedMatrix = EnhancedBitMatrix.squareMatrixfromBitVector( globalHash.apply( BitVectors
+                .concatenate( searchHash, searchNonce ) ) );
         BitVector expected = BitVectors.fromMatrix( expectedMatrix.multiply( expectedMatrix ) );
-        
-        Pair<SimplePolynomialFunction,SimplePolynomialFunction> p = privateKey.getQueryHasherPair( globalHash , fhePrivateKey );
+
+        Pair<SimplePolynomialFunction, SimplePolynomialFunction> p = privateKey.getQueryHasherPair(
+                globalHash,
+                fhePrivateKey );
         SimplePolynomialFunction hL = p.getLeft();
         SimplePolynomialFunction hR = p.getRight();
-        
-        EnhancedBitMatrix intermediateL = EnhancedBitMatrix.squareMatrixfromBitVector( hL.apply( BitVectors.concatenate( encryptedSearchHash , encryptedSearchNonce ) ) );
-        EnhancedBitMatrix intermediateR = EnhancedBitMatrix.squareMatrixfromBitVector( hR.apply( BitVectors.concatenate( encryptedSearchHash , encryptedSearchNonce ) ) );
-        
+
+        EnhancedBitMatrix intermediateL = EnhancedBitMatrix.squareMatrixfromBitVector( hL.apply( BitVectors
+                .concatenate( encryptedSearchHash, encryptedSearchNonce ) ) );
+        EnhancedBitMatrix intermediateR = EnhancedBitMatrix.squareMatrixfromBitVector( hR.apply( BitVectors
+                .concatenate( encryptedSearchHash, encryptedSearchNonce ) ) );
+
         EnhancedBitMatrix documentKey = privateKey.newDocumentKey();
         EncryptedSearchSharingKey sharingKey = new EncryptedSearchSharingKey( documentKey );
-        EncryptedSearchBridgeKey bridgeKey = new EncryptedSearchBridgeKey( privateKey , sharingKey );
-        
-        BitVector actual = BitVectors.fromSquareMatrix( intermediateL.multiply( intermediateR ) );
+        EncryptedSearchBridgeKey bridgeKey = new EncryptedSearchBridgeKey( privateKey, sharingKey );
+
+        BitVector actual = BitVectors.fromSquareMatrix( intermediateL.multiply(
+                privateKey.getLeftSquaringMatrix().inverse() ).multiply(
+                privateKey.getRightSquaringMatrix().inverse().multiply( intermediateR ) ) );
         Assert.assertEquals( expected, actual );
-        
-        //Now let's test running a search
-        actual = BitVectors.fromSquareMatrix( intermediateL.multiply( bridgeKey.getBridge() ).multiply( intermediateR ) );
-        expectedMatrix = EnhancedBitMatrix.squareMatrixfromBitVector( globalHash.apply( BitVectors.concatenate( searchHash, searchNonce ) ) );
-        expected = BitVectors.fromSquareMatrix( expectedMatrix.multiply( sharingKey.getMiddle() ).multiply( expectedMatrix ) );
+
+        // Now let's test running a search
+        actual = BitVectors
+                .fromSquareMatrix( intermediateL.multiply( bridgeKey.getBridge() ).multiply( intermediateR ) );
+        expectedMatrix = EnhancedBitMatrix.squareMatrixfromBitVector( globalHash.apply( BitVectors.concatenate(
+                searchHash,
+                searchNonce ) ) );
+        expected = BitVectors.fromSquareMatrix( expectedMatrix.multiply( sharingKey.getMiddle() ).multiply(
+                expectedMatrix ) );
         Assert.assertEquals( expected, actual );
     }
-    
+
 }

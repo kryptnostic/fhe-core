@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import cern.colt.bitvector.BitVector;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.NonSquareMatrixException;
@@ -24,6 +26,19 @@ import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
  * @author Matthew Tamayo-Rios
  */
 public class PrivateKey {
+    private static final String D_PROPERTY = "d";
+    private static final String L_PROPERTY = "l";
+    private static final String E1_PROPERTY = "e1";
+    private static final String E2_PROPERTY = "e2";
+    private static final String A_PROPERTY = "a";
+    private static final String B_PROPERTY = "b";
+    private static final String F_PROPERTY = "f";
+    private static final String G_PROPERTY = "g";
+    private static final String DECRYPTOR_PROPERTY = "decryptor";
+    private static final String MIRRORED_DECRYPTOR_PROPERTY = "mirrored-decryptor";
+    private static final String COMPLEXITY_CHAIN_PROPERTY = "complexity-chain";
+    private static final String LONGS_PER_BLOCK_PROPERTY = "longs-per-block";
+
     private static final int DEFAULT_CHAIN_LENGTH = 2; // The value of this constant is fairly arbitrary.
     private static final Logger logger = LoggerFactory.getLogger(PrivateKey.class);
     // private static ObjectMapper mapper = new ObjectMapper();
@@ -44,6 +59,29 @@ public class PrivateKey {
 
     public PrivateKey(int cipherTextBlockLength, int plainTextBlockLength) {
         this(cipherTextBlockLength, plainTextBlockLength, DEFAULT_CHAIN_LENGTH);
+    }
+
+    @JsonCreator
+    public PrivateKey(@JsonProperty(D_PROPERTY) EnhancedBitMatrix D, @JsonProperty(L_PROPERTY) EnhancedBitMatrix L,
+            @JsonProperty(E1_PROPERTY) EnhancedBitMatrix E1, @JsonProperty(E2_PROPERTY) EnhancedBitMatrix E2,
+            @JsonProperty(A_PROPERTY) EnhancedBitMatrix A, @JsonProperty(B_PROPERTY) EnhancedBitMatrix B,
+            @JsonProperty(F_PROPERTY) SimplePolynomialFunction F, @JsonProperty(G_PROPERTY) SimplePolynomialFunction G,
+            @JsonProperty(DECRYPTOR_PROPERTY) SimplePolynomialFunction decryptor,
+            @JsonProperty(MIRRORED_DECRYPTOR_PROPERTY) SimplePolynomialFunction mirroredDecryptor,
+            @JsonProperty(COMPLEXITY_CHAIN_PROPERTY) SimplePolynomialFunction[] complexityChain,
+            @JsonProperty(LONGS_PER_BLOCK_PROPERTY) int longsPerBlock) {
+        this.D = D;
+        this.L = L;
+        this.E1 = E1;
+        this.E2 = E2;
+        this.A = A;
+        this.B = B;
+        this.F = F;
+        this.G = G;
+        this.decryptor = decryptor;
+        this.mirroredDecryptor = mirroredDecryptor;
+        this.complexityChain = complexityChain;
+        this.longsPerBlock = longsPerBlock;
     }
 
     /**
@@ -68,15 +106,16 @@ public class PrivateKey {
              * Loop until valid matrices have been generated.
              */
             try {
-                e1gen = EnhancedBitMatrix.randomMatrix( cipherTextBlockLength , plainTextBlockLength );
+                e1gen = EnhancedBitMatrix.randomMatrix(cipherTextBlockLength, plainTextBlockLength);
 
                 dgen = e1gen.getLeftNullifyingMatrix();
-                Preconditions.checkState( dgen.multiply( e1gen ).isZero() , "Generated D matrix must nullify E1." );
-                
+                Preconditions.checkState(dgen.multiply(e1gen).isZero(), "Generated D matrix must nullify E1.");
+
                 e2gen = dgen.rightInverse();
-                Preconditions.checkState( dgen.multiply( e2gen ).isIdentity(), "Generated D matrix must be left generalized inverse of E2." );
-                
-                lgen = buildL( e1gen , e2gen );
+                Preconditions.checkState(dgen.multiply(e2gen).isIdentity(),
+                        "Generated D matrix must be left generalized inverse of E2.");
+
+                lgen = buildL(e1gen, e2gen);
 
                 initialized = true;
 
@@ -160,8 +199,6 @@ public class PrivateKey {
     public EnhancedBitMatrix getD() {
         return D;
     }
-    
-    
 
     public EnhancedBitMatrix getL() {
         return L;
@@ -186,6 +223,18 @@ public class PrivateKey {
     public SimplePolynomialFunction getG() {
         return G;
     }
+    
+    public SimplePolynomialFunction getF() {
+        return F;
+    }
+    
+    public SimplePolynomialFunction[] getComplexityChain() {
+        return complexityChain;
+    }
+    
+    public int getLongsPerBlock() {
+        return longsPerBlock;
+    }
 
     public EnhancedBitMatrix randomizedL() throws SingularMatrixException {
         EnhancedBitMatrix randomL = Preconditions.checkNotNull(E2, "E2 must not be null.").getLeftNullifyingMatrix();
@@ -206,11 +255,11 @@ public class PrivateKey {
     public SimplePolynomialFunction getDecryptor() {
         return decryptor;
     }
-    
+
     public SimplePolynomialFunction getMirroredDecryptor() {
         return mirroredDecryptor;
     }
-    
+
     public SimplePolynomialFunction buildDecryptor() throws SingularMatrixException {
         /*
          * G( x ) = Inv( A + B ) (L + D) x D( x ) = L x + A G( x ) + c'_1 h'_1 + c'_2 h'_2
@@ -227,35 +276,39 @@ public class PrivateKey {
                         pipeline.getRight()));
         return DofX;
     }
-    
+
     public SimplePolynomialFunction buildMirroredDecryptor() throws SingularMatrixException {
         /*
-         * G( x ) = Inv( A + B ) (L + D) x 
-         * D( x ) = L x + A G( x ) + c'_1 h'_1 + c'_2 h'_2 
+         * G( x ) = Inv( A + B ) (L + D) x D( x ) = L x + A G( x ) + c'_1 h'_1 + c'_2 h'_2
          */
-        SimplePolynomialFunction X = SimplePolynomialFunctions.identity( E1.rows() );
-        SimplePolynomialFunction GofX = A.add( B ).inverse().multiply( L.add( D ) ).multiply( X );
-        
-//        SimplePolynomialFunction GofY = new OptimizedPolynomialFunctionGF2( GofX.getInputLength() , GofX.getOutputLength() , Arrays.copyOf( GofX.getMonomials() , GofX.getMonomials().length ), Arrays.copyOf( GofX.getContributions() , GofX.getContributions().length ) );
-        
-        Pair<SimplePolynomialFunction,SimplePolynomialFunction[]> pipeline = SimplePolynomialFunctions.buildNonlinearPipeline( GofX , complexityChain );
-        
+        SimplePolynomialFunction X = SimplePolynomialFunctions.identity(E1.rows());
+        SimplePolynomialFunction GofX = A.add(B).inverse().multiply(L.add(D)).multiply(X);
+
+        // SimplePolynomialFunction GofY = new OptimizedPolynomialFunctionGF2( GofX.getInputLength() ,
+        // GofX.getOutputLength() , Arrays.copyOf( GofX.getMonomials() , GofX.getMonomials().length ), Arrays.copyOf(
+        // GofX.getContributions() , GofX.getContributions().length ) );
+
+        Pair<SimplePolynomialFunction, SimplePolynomialFunction[]> pipeline = SimplePolynomialFunctions
+                .buildNonlinearPipeline(GofX, complexityChain);
+
         SimplePolynomialFunction[] pipelines = pipeline.getRight();
-        SimplePolynomialFunction[] mirroredPipelines = new SimplePolynomialFunction[ pipelines.length ]; 
-        
-        for( int i = 0 ; i < pipelines.length ; ++i ) {
-            mirroredPipelines[ i ] = mirror( pipelines[ i ] );
+        SimplePolynomialFunction[] mirroredPipelines = new SimplePolynomialFunction[pipelines.length];
+
+        for (int i = 0; i < pipelines.length; ++i) {
+            mirroredPipelines[i] = mirror(pipelines[i]);
         }
-        
-        SimplePolynomialFunction DofX = mirror( L.multiply( X ).xor( A.multiply( GofX ) ) ).xor( ParameterizedPolynomialFunctions.fromUnshiftedVariables( GofX.getInputLength()<<1 , mirror( pipeline.getLeft() ) , mirroredPipelines ) );
-        
+
+        SimplePolynomialFunction DofX = mirror(L.multiply(X).xor(A.multiply(GofX))).xor(
+                ParameterizedPolynomialFunctions.fromUnshiftedVariables(GofX.getInputLength() << 1,
+                        mirror(pipeline.getLeft()), mirroredPipelines));
+
         return DofX;
     }
-    
-    private static SimplePolynomialFunction mirror( SimplePolynomialFunction f ) {
-        return SimplePolynomialFunctions.concatenateInputsAndOutputs( f , f );
+
+    private static SimplePolynomialFunction mirror(SimplePolynomialFunction f) {
+        return SimplePolynomialFunctions.concatenateInputsAndOutputs(f, f);
     }
-    
+
     public byte[] decryptFromEnvelope(Ciphertext ciphertext) {
         /*
          * Decrypt using the message length to discard unneeded bytes.
@@ -280,13 +333,99 @@ public class PrivateKey {
 
         return new BitVector(cipherLongs, longsPerBlock << 6);
     }
-    
-    static EnhancedBitMatrix buildL( EnhancedBitMatrix E1 , EnhancedBitMatrix E2 ) throws SingularMatrixException {
+
+    static EnhancedBitMatrix buildL(EnhancedBitMatrix E1, EnhancedBitMatrix E2) throws SingularMatrixException {
         EnhancedBitMatrix L = E2.getLeftNullifyingMatrix();
-        Preconditions.checkState( L.multiply( E2 ).isZero() , "Generated L matrix must nullify E2." );
-        L = L.multiply( E1).inverse().multiply( L );  //Normalize
-        Preconditions.checkState( L.multiply( E1 ).isIdentity(), "Generated D matrix must be left generalized inverse of E2." );
+        Preconditions.checkState(L.multiply(E2).isZero(), "Generated L matrix must nullify E2.");
+        L = L.multiply(E1).inverse().multiply(L); // Normalize
+        Preconditions.checkState(L.multiply(E1).isIdentity(),
+                "Generated D matrix must be left generalized inverse of E2.");
         return L;
     }
-//    public abstract Object decryptObject( Object object ,  Class<?> clazz );
+    // public abstract Object decryptObject( Object object , Class<?> clazz );
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ( ( A == null ) ? 0 : A.hashCode() );
+        result = prime * result + ( ( B == null ) ? 0 : B.hashCode() );
+        result = prime * result + ( ( D == null ) ? 0 : D.hashCode() );
+        result = prime * result + ( ( E1 == null ) ? 0 : E1.hashCode() );
+        result = prime * result + ( ( E2 == null ) ? 0 : E2.hashCode() );
+        result = prime * result + ( ( F == null ) ? 0 : F.hashCode() );
+        result = prime * result + ( ( G == null ) ? 0 : G.hashCode() );
+        result = prime * result + ( ( L == null ) ? 0 : L.hashCode() );
+        result = prime * result + Arrays.hashCode(complexityChain);
+        result = prime * result + ( ( decryptor == null ) ? 0 : decryptor.hashCode() );
+        result = prime * result + longsPerBlock;
+        result = prime * result + ( ( mirroredDecryptor == null ) ? 0 : mirroredDecryptor.hashCode() );
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        PrivateKey other = (PrivateKey) obj;
+        if (A == null) {
+            if (other.A != null)
+                return false;
+        } else if (!A.equals(other.A))
+            return false;
+        if (B == null) {
+            if (other.B != null)
+                return false;
+        } else if (!B.equals(other.B))
+            return false;
+        if (D == null) {
+            if (other.D != null)
+                return false;
+        } else if (!D.equals(other.D))
+            return false;
+        if (E1 == null) {
+            if (other.E1 != null)
+                return false;
+        } else if (!E1.equals(other.E1))
+            return false;
+        if (E2 == null) {
+            if (other.E2 != null)
+                return false;
+        } else if (!E2.equals(other.E2))
+            return false;
+        if (F == null) {
+            if (other.F != null)
+                return false;
+        } else if (!F.equals(other.F))
+            return false;
+        if (G == null) {
+            if (other.G != null)
+                return false;
+        } else if (!G.equals(other.G))
+            return false;
+        if (L == null) {
+            if (other.L != null)
+                return false;
+        } else if (!L.equals(other.L))
+            return false;
+        if (!Arrays.equals(complexityChain, other.complexityChain))
+            return false;
+        if (decryptor == null) {
+            if (other.decryptor != null)
+                return false;
+        } else if (!decryptor.equals(other.decryptor))
+            return false;
+        if (longsPerBlock != other.longsPerBlock)
+            return false;
+        if (mirroredDecryptor == null) {
+            if (other.mirroredDecryptor != null)
+                return false;
+        } else if (!mirroredDecryptor.equals(other.mirroredDecryptor))
+            return false;
+        return true;
+    }
 }

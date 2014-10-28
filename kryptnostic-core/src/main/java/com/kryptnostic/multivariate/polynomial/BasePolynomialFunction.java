@@ -42,6 +42,7 @@ import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
  * @author Matthew Tamayo-Rios
  */
 public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 implements SimplePolynomialFunction {
+    private static final long serialVersionUID = 7153423105308932737L;
     private static final Logger logger = LoggerFactory.getLogger(BasePolynomialFunction.class);
     private final Lock productLock = new ReentrantLock();
     
@@ -64,6 +65,10 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
             @JsonProperty(CONTRIBUTIONS_PROPERTY) BitVector[] contributions) {
         super(inputLength, outputLength, monomials, contributions);
 
+    }
+
+    public BasePolynomialFunction() {
+        super();
     }
 
     public static class Builder extends PolynomialFunctionRepresentationGF2.Builder {

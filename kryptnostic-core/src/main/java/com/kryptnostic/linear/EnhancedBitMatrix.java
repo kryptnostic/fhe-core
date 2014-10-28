@@ -1,5 +1,6 @@
 package com.kryptnostic.linear;
 
+import java.io.Serializable;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
@@ -13,6 +14,10 @@ import org.slf4j.LoggerFactory;
 
 import cern.colt.bitvector.BitVector;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -27,7 +32,12 @@ import com.kryptnostic.multivariate.polynomial.ParameterizedPolynomialFunctionGF
 import com.kryptnostic.multivariate.util.FunctionUtils;
 import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
-public class EnhancedBitMatrix {
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+public class EnhancedBitMatrix implements Serializable {
+    private static final long serialVersionUID = -5282532204111493373L;
+
+    private static final String ROWS_PROPERTY = "rows";
+
     private static final Random r = new SecureRandom();
     private static final Logger logger = LoggerFactory.getLogger( EnhancedBitMatrix.class );
     protected final List<BitVector> rows;
@@ -53,7 +63,8 @@ public class EnhancedBitMatrix {
         this( m.rows );
     }
     
-    public EnhancedBitMatrix( Iterable<BitVector> rows ) {
+    @JsonCreator
+    public EnhancedBitMatrix( @JsonProperty(ROWS_PROPERTY) Iterable<BitVector> rows ) {
         this.rows = 
                 Lists.newArrayList(
                         Iterables.transform( rows , new Function<BitVector,BitVector>() {
@@ -87,6 +98,7 @@ public class EnhancedBitMatrix {
         rows.get( row ).clear( col );
     }
     
+    @JsonIgnore
     public boolean isZero() {
         for( BitVector row : rows ) {
             if( row.cardinality() > 0 ) {
@@ -96,9 +108,11 @@ public class EnhancedBitMatrix {
         return true;
     }
     
+    @JsonProperty( ROWS_PROPERTY )
     public List<BitVector> getRows() {
-    	return rows;
+    	    return rows;
     }
+    
     //TODO: Add unit test
     public EnhancedBitMatrix add( EnhancedBitMatrix rhs ) {
         Preconditions.checkArgument( rows()==rhs.rows() , "Matrices being added must have the same number of rows.");
@@ -278,6 +292,7 @@ public class EnhancedBitMatrix {
     }
     
     //TODO: Figure out why this routine stopped working 
+    @JsonIgnore
     public EnhancedBitMatrix getNullspaceBasis() {
         //TODO: Optimize this
         int rows = cols();
@@ -348,6 +363,7 @@ public class EnhancedBitMatrix {
         return new EnhancedBitMatrix( filtered );
     }
     
+    @JsonIgnore
     public EnhancedBitMatrix getLeftNullifyingMatrix() throws SingularMatrixException {
         EnhancedBitMatrix nmat = nullspace();
         Set<Integer> rowsToKeep = Sets.newHashSet();
@@ -536,6 +552,7 @@ public class EnhancedBitMatrix {
     }
     
     //TODO: Add unit test
+    @JsonIgnore
     public boolean isIdentity() {
         for( int i = 0 ; i < rows() ; ++i ) {
             BitVector row = rows.get( i );
@@ -692,7 +709,7 @@ public class EnhancedBitMatrix {
         Preconditions.checkArgument( attempts > 0, "Number of attempts must be greater than zero." );
         
         EnhancedBitMatrix result = EnhancedBitMatrix.randomMatrix( rows , cols );
-        for( int i = 0 ; i < 25 ; ++i ) {
+        for( int i = 0 ; i < attempts ; ++i ) {
             try {
                 result.rightInverse();
                 return result;
@@ -772,6 +789,7 @@ public class EnhancedBitMatrix {
         }
     }
 
+    @JsonIgnore
     public BitVector getRow(int i) {
         return rows.get( i ).copy();
     }

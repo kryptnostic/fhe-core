@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.kryptnostic.crypto.PrivateKey;
@@ -118,7 +119,7 @@ public class HomomorphicFunctions {
         logger.info("Computed product of decryption functons");
 
         return privateKey.encryptBinary(new ParameterizedPolynomialFunctionGF2(rhsInput, decryptor.getOutputLength(),
-                XY.getMonomials(), XY.getContributions(), Iterables.concat(newLhsPipeline, newRhsPipeline)));
+                XY.getMonomials(), XY.getContributions(), ImmutableList.copyOf( Iterables.concat(newLhsPipeline, newRhsPipeline))));
     }
 
 }

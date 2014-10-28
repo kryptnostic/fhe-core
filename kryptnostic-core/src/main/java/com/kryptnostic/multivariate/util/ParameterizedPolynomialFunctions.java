@@ -143,7 +143,7 @@ public final class ParameterizedPolynomialFunctions {
                 Iterable<CompoundPolynomialFunction> pipelines = Iterables.concat(ppfF.getPipelines(),
                         ppfG.getPipelines());
                 return new ParameterizedPolynomialFunctionGF2(ppfF.getInputLength(), ppfF.getOutputLength(),
-                        partialResult.getMonomials(), partialResult.getContributions(), pipelines);
+                        partialResult.getMonomials(), partialResult.getContributions(), ImmutableList.copyOf( pipelines) );
             }
         } else if (f.isParameterized() && !g.isParameterized()) {
             // Problem is that extendedLhs
@@ -198,7 +198,7 @@ public final class ParameterizedPolynomialFunctions {
                 Iterable<CompoundPolynomialFunction> pipelines = Iterables.concat(ppfF.getPipelines(),
                         ppfG.getPipelines());
                 return new ParameterizedPolynomialFunctionGF2(ppfF.getInputLength(), ppfF.getOutputLength(),
-                        partialResult.getMonomials(), partialResult.getContributions(), pipelines);
+                        partialResult.getMonomials(), partialResult.getContributions(), ImmutableList.copyOf( pipelines) );
             }
         } else if (f.isParameterized() && !g.isParameterized()) {
             // Problem is that extendedLhs
@@ -333,5 +333,18 @@ public final class ParameterizedPolynomialFunctions {
         List<CompoundPolynomialFunction> pipelines = Lists.newArrayList();
         pipelines.add(new CompoundPolynomialFunctionGF2(Lists.newArrayList(SimplePolynomialFunctions.identity(inputLength))));
         return new ParameterizedPolynomialFunctionGF2(inputLength, base.getOutputLength(), base.getMonomials(), base.getContributions(), pipelines);
+    }
+    
+    public static SimplePolynomialFunction heavyRandomParameterizedFunction( int inputLength, int outputLength , int pipelineWidth , int pipelineDepth ) {
+        SimplePolynomialFunction f = SimplePolynomialFunctions.denseRandomMultivariateQuadratic( inputLength + pipelineWidth*inputLength, 128 );
+        List<CompoundPolynomialFunction> pipeline = Lists.newArrayListWithCapacity( pipelineWidth );
+        for( int i = 0 ; i < pipelineWidth; ++i ){
+            SimplePolynomialFunction[] functions = new SimplePolynomialFunction[ pipelineDepth ];
+            for( int j = 0 ; j < pipelineDepth ; ++j ) {
+                functions[ j ] = SimplePolynomialFunctions.denseRandomMultivariateQuadratic( inputLength, inputLength );
+            }
+            pipeline.add( CompoundPolynomialFunctions.fromFunctions( functions ) );
+        }
+        return new ParameterizedPolynomialFunctionGF2( inputLength , 128 , f.getMonomials(), f.getContributions(), pipeline );
     }
 }

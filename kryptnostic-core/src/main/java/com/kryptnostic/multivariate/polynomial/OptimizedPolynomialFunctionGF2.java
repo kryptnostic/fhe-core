@@ -19,6 +19,7 @@ import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
+    private static final long serialVersionUID = -3308994228325375229L;
     private static final Logger logger = LoggerFactory.getLogger(OptimizedPolynomialFunctionGF2.class);
     protected static final int CONCURRENCY_LEVEL = Runtime.getRuntime().availableProcessors() - 1;
     protected static final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors
@@ -30,6 +31,10 @@ public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
             @JsonProperty(MONOMIALS_PROPERTY) Monomial[] monomials,
             @JsonProperty(CONTRIBUTIONS_PROPERTY) BitVector[] contributions) {
         super(inputLength, outputLength, monomials, contributions);
+    }
+
+    public OptimizedPolynomialFunctionGF2() {
+        super();
     }
 
     public BitVector apply(final BitVector input) {
