@@ -2,7 +2,9 @@ package com.kryptnostic.multivariate.composition;
 
 import java.util.concurrent.TimeUnit;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,7 @@ public class RecursiveLinearizingComposerTest {
     
     @Test 
     public void testRecurisveLinearizingComposer() {
+        logger.debug("Starting recursive linearing composer tests.");
         BasePolynomialFunction f = (BasePolynomialFunction)SimplePolynomialFunctions.denseRandomMultivariateQuadratic( 128 , 128);
         BasePolynomialFunction inner = (BasePolynomialFunction) EnhancedBitMatrix.randomMatrix( 128 , 256 ) .multiply(  SimplePolynomialFunctions.identity( 256 ) );
         
@@ -36,5 +39,15 @@ public class RecursiveLinearizingComposerTest {
         BitVector actual = composed.apply( input );
         
         Assert.assertEquals( expected , actual );
+    }
+    
+    @Before
+    public void testStart() {
+        logger.debug( "Starting test." );
+    }
+    
+    @After
+    public void testStop() {
+        logger.debug( "Finishing test." );
     }
 }

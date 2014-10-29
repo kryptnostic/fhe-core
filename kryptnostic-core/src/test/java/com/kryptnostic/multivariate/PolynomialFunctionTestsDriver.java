@@ -1,12 +1,18 @@
 package com.kryptnostic.multivariate;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.kryptnostic.test.AbstractInstrumentedTest;
 
 
 public class PolynomialFunctionTestsDriver extends AbstractInstrumentedTest  {
+    private static final Logger logger = LoggerFactory.getLogger( PolynomialFunctionTestsDriver.class );
     private final PolynomialFunctionTests tests;
+    
     public PolynomialFunctionTestsDriver() {
         super( PolynomialFunctionTests.class );
         tests = getTestContext().getBean( PolynomialFunctionTests.class );
@@ -97,6 +103,16 @@ public class PolynomialFunctionTestsDriver extends AbstractInstrumentedTest  {
         for( int i = 0 ; i < 1000; ++i ) {
             tests.builderTest();
         }
+    }
+    
+    @Before
+    public void testStart() {
+        logger.debug( "Starting test." );
+    }
+    
+    @After
+    public void testStop() {
+        logger.debug( "Finishing test." );
     }
 }
 
