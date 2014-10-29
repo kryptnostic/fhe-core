@@ -3,8 +3,10 @@ package com.kryptnostic.multivariate.composition;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,4 +52,15 @@ public class RecursiveLinearizingComposerTest {
     public void testStop() {
         logger.debug( "Finishing test." );
     }
+    
+    @BeforeClass
+    public static void logTestStart() {
+        logger.debug("Tests starting...");
+    }
+    
+    @AfterClass
+    public static void logTestStop() {
+        logger.debug("Tests stopping...");
+    }
+    
 }
