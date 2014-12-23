@@ -22,7 +22,6 @@ public final class ParameterizedPolynomialFunctions {
     }
 
     public static SimplePolynomialFunction extend(int extendedSize, SimplePolynomialFunction f) {
-        Preconditions.checkArgument(extendedSize % 64 == 0, "Extension size must be multiple of 64.");
         Monomial[] originalMonomials = f.getMonomials();
         BitVector[] originalContributions = f.getContributions();
         Monomial[] newMonomials = new Monomial[originalMonomials.length];
@@ -37,7 +36,6 @@ public final class ParameterizedPolynomialFunctions {
     }
 
     public static SimplePolynomialFunction extendAndShift(int extendedSize, int shiftSize, SimplePolynomialFunction f) {
-        Preconditions.checkArgument(shiftSize % 64 == 0, "Shift size must be multiple of 64.");
         Monomial[] originalMonomials = f.getMonomials();
         BitVector[] originalContributions = f.getContributions();
         Monomial[] newMonomials = new Monomial[originalMonomials.length];

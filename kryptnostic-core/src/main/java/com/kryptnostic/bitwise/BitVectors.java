@@ -19,6 +19,13 @@ import com.google.common.collect.Sets;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.multivariate.MultivariateUtils;
 
+/**
+ * Routines for manipulating bitvectors.
+ * 
+ * @author Matthew Tamayo-Rios &lt;matthew@kryptnostic.com&gt; 
+ * @author Sina Iman &lt;sina@kryptnostic.com&gt;
+ * @author Nick Hewitt &lt;nick@kryptnostic.com&gt;
+ */
 public final class BitVectors {
     private static final Random r = new SecureRandom();
     private static final int INTEGER_BYTES = Integer.SIZE / Byte.SIZE;

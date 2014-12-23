@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -353,14 +354,7 @@ public class EnhancedBitMatrix implements Serializable {
             }
         }
         
-        List<BitVector> filtered = Lists.newArrayList();
-        for( BitVector b : basis ) {
-            if( b!=null ) {
-                filtered.add( b );
-            }
-        }
-
-        return new EnhancedBitMatrix( filtered );
+        return new EnhancedBitMatrix( Iterables.filter( Arrays.asList( basis ), Predicates.notNull() ) );
     }
     
     @JsonIgnore

@@ -26,6 +26,7 @@ public class FunctionUtils {
         return newArray;
     }
 
+    @Deprecated
     public static BitVector concatenate(BitVector... elements) {
         Preconditions.checkArgument(
                 Preconditions.checkNotNull(elements, "Null elements are not concatenatable.").length > 1,
@@ -50,6 +51,7 @@ public class FunctionUtils {
         return result;
     }
 
+    @Deprecated
     public static BitVector concatenate(BitVector lhs, BitVector rhs) {
         Preconditions.checkArgument(( lhs.size() % 64 ) == 0 && ( rhs.size() % 64 ) == 0,
                 "Block length for concatenate must be a multiple of 64.");

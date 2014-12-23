@@ -492,7 +492,7 @@ public class SimplePolynomialFunctions {
             BitVector lhsContribution = Objects.firstNonNull( lhsMap.get( monomial ), lhsZero );
             BitVector rhsContribution = Objects.firstNonNull( rhsMap.get( monomial ), rhsZero );
 
-            monomialContributionMap.put( monomial, FunctionUtils.concatenate( lhsContribution, rhsContribution ) );
+            monomialContributionMap.put( monomial, BitVectors.concatenate( lhsContribution, rhsContribution ) );
         }
 
         return fromMonomialContributionMap( first.getInputLength(), combinedOutputLength, monomialContributionMap );
