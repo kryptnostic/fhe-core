@@ -15,7 +15,6 @@ import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.multivariate.gf2.CompoundPolynomialFunction;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.util.FunctionUtils;
 import com.kryptnostic.multivariate.util.ParameterizedPolynomialFunctions;
 
 /**
@@ -75,7 +74,7 @@ public class ParameterizedPolynomialFunctionGF2 extends OptimizedPolynomialFunct
             CompoundPolynomialFunction pipeline = pipelines.get( i );
             parameters[ i + 1 ] = pipeline.apply( input );
         }
-        return super.apply( FunctionUtils.concatenate( parameters ) );
+        return super.apply( BitVectors.concatenate( parameters ) );
     }
 
     @Override

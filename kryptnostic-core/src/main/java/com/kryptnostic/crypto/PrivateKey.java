@@ -50,6 +50,7 @@ public class PrivateKey {
     private final EnhancedBitMatrix A;
     private final EnhancedBitMatrix B;
 
+    //TODO: Remove F as it is no longer used.
     private final SimplePolynomialFunction F;
     private final SimplePolynomialFunction G;
     private final SimplePolynomialFunction decryptor;

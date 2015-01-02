@@ -22,7 +22,7 @@ import com.kryptnostic.multivariate.gf2.Monomial;
  * @author Matthew Tamayo-Rios
  */
 public class PolynomialFunctionRepresentationGF2 implements Serializable {
-    private static final long serialVersionUID = 6408384700566922194L;
+    private static final long     serialVersionUID       = 6408384700566922194L;
     protected static final String INPUT_LENGTH_PROPERTY  = "input-length";
     protected static final String OUTPUT_LENGTH_PROPERTY = "output-length";
     protected static final String MONOMIALS_PROPERTY     = "monomials";
@@ -211,6 +211,31 @@ public class PolynomialFunctionRepresentationGF2 implements Serializable {
             }
             rep.append( "\n" );
         }
+
+        return rep.toString();
+    }
+
+    public String toLatexString() {
+        return toLatexString("x");
+    }
+    
+    public String toLatexString( String var ) {
+        StringBuilder rep = new StringBuilder( "\\mathbf f( \\mathbf x ) = \\left{[}" );
+        for ( int row = 0; row < outputLength; ++row ) {
+            boolean first = true;
+            for ( int i = 0; i < monomials.length; ++i ) {
+                if ( contributions[ i ].get( row ) ) {
+                    if ( !first ) {
+                        rep.append( " + " );
+                    } else {
+                        first = false;
+                    }
+                    rep.append( monomials[ i ].toLatexStringMonomial( var ) );
+                }
+            }
+            rep.append( "\n" );
+        }
+        rep.append( "\right{]}" );
 
         return rep.toString();
     }
