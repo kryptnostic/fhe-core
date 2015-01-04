@@ -36,45 +36,49 @@ public class ToyTests {
 
     @Test
     public void printToySystem() {
-        logger.info( "A: {}", privKey.getA() );
+        logger.info( "A: \n{}", privKey.getA().toLatexString() );
 
-        logger.info( "B: {}", privKey.getB() );
+        logger.info( "B: \n{}", privKey.getB().toLatexString() );
 
-        logger.info( "g: {}", privKey.getG() );
+        logger.info( "g: \n{}", privKey.getG() );
 
-        logger.info( "L: {}", privKey.getL() );
+        logger.info( "E1: \n{}", privKey.getE1().toLatexString() );
 
-        logger.info( "D: {}", privKey.getD() );
+        logger.info( "E2: \n{}", privKey.getE2().toLatexString() );
+        
+        logger.info( "L: \n{}", privKey.getL().toLatexString() );
 
-        logger.info( "C_0: {}", privKey.getComplexityChain()[ 0 ] );
+        logger.info( "D: \n{}", privKey.getD().toLatexString() );
 
-        logger.info( "C_1: {}", privKey.getComplexityChain()[ 1 ] );
+        logger.info( "C_0: \n{}", privKey.getComplexityChain()[ 0 ] );
+
+        logger.info( "C_1: \n{}", privKey.getComplexityChain()[ 1 ] );
 
         ParameterizedPolynomialFunctionGF2 enc = (ParameterizedPolynomialFunctionGF2) pubKey.getEncrypter();
         List<CompoundPolynomialFunction> chains = enc.getPipelines();
-        logger.info( "encryptor: {}", enc.toLatexString() );
+        logger.info( "encryptor: \n{}", enc.toLatexString() );
         for ( PolynomialFunction pf : chains.iterator().next().getFunctions() ) {
-            logger.info( "Cpf: {}", ( (BasePolynomialFunction) pf ).toLatexString() );
+            logger.info( "Cpf: \n{}", ( (BasePolynomialFunction) pf ).toLatexString() );
         }
 
         ParameterizedPolynomialFunctionGF2 dec = (ParameterizedPolynomialFunctionGF2) pubKey.getEncrypter();
         chains = dec.getPipelines();
-        logger.info( "decryptor: {}", dec );
+        logger.info( "decryptor: \n{}", dec.toLatexString() );
         for ( PolynomialFunction pf : chains.iterator().next().getFunctions() ) {
-            logger.info( "Cpf: {}", ( (BasePolynomialFunction) pf ).toLatexString() );
+            logger.info( "Cpf: \n{}", ( (BasePolynomialFunction) pf ).toLatexString() );
         }
 
         BitVector input = BitVectors.randomVector( 4 );
         BitVector nonce = BitVectors.randomVector( 4 );
 
-        logger.info( "Plaintext: {}", input );
-        logger.info( "Nonce: {}", nonce );
+        logger.info( "Plaintext: \n{}", BitVectors.asBitString( input ) );
+        logger.info( "Nonce: \n{}", BitVectors.asBitString( nonce ) );
 
         BitVector ciphertext = pubKey.getEncrypter().apply( BitVectors.concatenate( input, nonce ) );
-        logger.info( "Ciphertext: {}", ciphertext );
+        logger.info( "Ciphertext: \n{}", BitVectors.asBitString( ciphertext ) );
 
         BitVector decrypted = privKey.getDecryptor().apply( ciphertext );
-        logger.info( "Decrypted: {}", decrypted );
+        logger.info( "Decrypted: \n{}", BitVectors.asBitString( decrypted ) );
         Assert.assertEquals( input, decrypted );
     }
 }

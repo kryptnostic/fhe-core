@@ -220,7 +220,8 @@ public class PolynomialFunctionRepresentationGF2 implements Serializable {
     }
     
     public String toLatexString( String var ) {
-        StringBuilder rep = new StringBuilder( "\\mathbf f( \\mathbf x ) = \\left{[}" );
+        StringBuilder rep = new StringBuilder( "\\mathbf f( \\mathbf x ) = \\left[ \\begin{array}{c}\n" );
+        int skipIndex = outputLength - 1;
         for ( int row = 0; row < outputLength; ++row ) {
             boolean first = true;
             for ( int i = 0; i < monomials.length; ++i ) {
@@ -233,9 +234,13 @@ public class PolynomialFunctionRepresentationGF2 implements Serializable {
                     rep.append( monomials[ i ].toLatexStringMonomial( var ) );
                 }
             }
-            rep.append( "\n" );
+            if( row == skipIndex ) {
+                rep.append( "\n" );
+            } else {
+                rep.append( " \\\\\n" );
+            }
         }
-        rep.append( "\right{]}" );
+        rep.append( "\\end{array} \\right]" );
 
         return rep.toString();
     }

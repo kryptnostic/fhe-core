@@ -235,16 +235,21 @@ public class Monomial extends BitVector {
     }
 
     public String toLatexStringMonomial( String var ) {
-        return "\\mathbf " + toStringMonomial( var + "_", " " );
+        return "\\mathbf " + toStringMonomial( var + "_", " ", Optional.of( "{" ), Optional.of( "}" ) );
     }
 
     public String toStringMonomial( String var ) {
-        return toStringMonomial( var, "*" );
+        return toStringMonomial( var, "*", Optional.<String>absent(), Optional.<String>absent() );
     }
 
-    public String toStringMonomial( String var, String separator ) {
+    public String toStringMonomial( String var, String separator, Optional<String> left, Optional<String> right ) {
         StringBuilder rep = new StringBuilder();
         boolean first = true;
+        
+        if( isZero() ) {
+            return "1";
+        }
+        
         for ( int i = 0; i < size(); ++i ) {
             if ( get( i ) ) {
                 if ( !first ) {
@@ -252,7 +257,7 @@ public class Monomial extends BitVector {
                 } else {
                     first = false;
                 }
-                rep.append( var ).append( i + 1 );
+                rep.append( var ).append( left.or( "" ) ).append( i + 1 ).append( right.or( "" ) );
             }
         }
 
