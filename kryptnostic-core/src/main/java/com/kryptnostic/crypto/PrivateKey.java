@@ -50,6 +50,7 @@ public class PrivateKey {
     private final EnhancedBitMatrix A;
     private final EnhancedBitMatrix B;
 
+    //TODO: Remove F as it is no longer used.
     private final SimplePolynomialFunction F;
     private final SimplePolynomialFunction G;
     private final SimplePolynomialFunction decryptor;
@@ -107,7 +108,6 @@ public class PrivateKey {
              */
             try {
                 e1gen = EnhancedBitMatrix.randomMatrix(cipherTextBlockLength, plainTextBlockLength);
-
                 dgen = e1gen.getLeftNullifyingMatrix();
                 Preconditions.checkState(dgen.multiply(e1gen).isZero(), "Generated D matrix must nullify E1.");
 
@@ -262,7 +262,8 @@ public class PrivateKey {
 
     public SimplePolynomialFunction buildDecryptor() throws SingularMatrixException {
         /*
-         * G( x ) = Inv( A + B ) (L + D) x D( x ) = L x + A G( x ) + c'_1 h'_1 + c'_2 h'_2
+         * G( x ) = Inv( A + B ) (L + D) x 
+         * \mathcal D( x ) = L x + A G( x ) + c'_1 h'_1 + c'_2 h'_2
          */
         SimplePolynomialFunction X = SimplePolynomialFunctions.identity(E1.rows());
         SimplePolynomialFunction GofX = A.add(B).inverse().multiply(L.add(D)).multiply(X);
