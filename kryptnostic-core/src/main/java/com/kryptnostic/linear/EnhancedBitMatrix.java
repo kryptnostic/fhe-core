@@ -362,13 +362,17 @@ public class EnhancedBitMatrix implements Serializable {
     public EnhancedBitMatrix getLeftNullifyingMatrix() throws SingularMatrixException {
         EnhancedBitMatrix nmat = nullspace();
         Set<Integer> rowsToKeep = Sets.newHashSet();
-        int rowCountToKeep = cols();
-        Preconditions.checkState( rowCountToKeep <= nmat.rows(), "Cannot keep more rows than exist." );
-        while ( rowsToKeep.size() != rowCountToKeep ) {
-            rowsToKeep.add( r.nextInt( rowCountToKeep ) );
+        int numRowsRequired = cols();
+
+        if ( nmat.rows() != numRowsRequired ) {
+            throw new SingularMatrixException( "Insufficient number of unique rows in nullspace." );
         }
 
-        BitVector[] newRows = new BitVector[ rowCountToKeep ];
+        while ( rowsToKeep.size() != numRowsRequired ) {
+            rowsToKeep.add( r.nextInt( numRowsRequired ) );
+        }
+
+        BitVector[] newRows = new BitVector[ numRowsRequired ];
 
         int i = 0;
         for ( int rowToKeep : rowsToKeep ) {
@@ -477,20 +481,25 @@ public class EnhancedBitMatrix implements Serializable {
     }
 
     public String toLatexString() {
-        StringBuilder sb = new StringBuilder( "\\left[ \\begin{array}{" );
-        
-        for ( int i = 0; i < rows.size(); ++i ) {
+        return toLatexString( "\\mathbf X" );
+    }
+    
+    public String toLatexString( String matrixName ) {
+        StringBuilder sb = new StringBuilder( "\\begin{equation}\n" ).append( matrixName ).append(
+                " = \\left[ \\begin{array}{" );
+        int numCols = cols();
+        for ( int i = 0; i < numCols; ++i ) {
             sb.append( "c" );
         }
-        
+
         sb.append( "}\n" );
-        
+
         for ( BitVector row : rows ) {
-            sb.append( BitVectors.asBitString( row , " & ") );
+            sb.append( BitVectors.asBitString( row, " & " ) );
             sb.append( " \\\\\n" );
         }
 
-        sb.append( "\\right]" );
+        sb.append( "\\end{array} \\right]\n\\end{equation}" );
         return sb.toString();
     }
 

@@ -261,6 +261,10 @@ public final class BitVectors {
         return -1;
     }
 
+    public static String asLatexString( BitVector input ) {
+        return "\\left[ \\begin{array}{c} " + asBitString( input , "\\\\" ) + "\\end{array} \\right]";
+    }
+    
     public static String asBitString( BitVector input ) {
         return asBitString( input, " " );
     }

@@ -3,6 +3,7 @@ package com.kryptnostic.multivariate.polynomial;
 import java.io.Serializable;
 import java.security.InvalidParameterException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -12,8 +13,10 @@ import cern.colt.bitvector.BitVector;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.kryptnostic.multivariate.MultivariateUtils;
+import com.kryptnostic.multivariate.PolynomialLabeling;
 import com.kryptnostic.multivariate.gf2.Monomial;
 
 /**
@@ -216,33 +219,47 @@ public class PolynomialFunctionRepresentationGF2 implements Serializable {
     }
 
     public String toLatexString() {
-        return toLatexString("x");
+        return toLatexString( "\\mathbf x" );
     }
-    
+
+    @SuppressWarnings( "unchecked" )
     public String toLatexString( String var ) {
-        StringBuilder rep = new StringBuilder( "\\mathbf f( \\mathbf x ) = \\left[ \\begin{array}{c}\n" );
+        Pair<String, Integer> baseLabel = Pair.of( var, monomials[0].size() );
+        return toLatexString( "f", new PolynomialLabeling( baseLabel ) );
+    }
+
+    public String toLatexString( String functionName, PolynomialLabeling labels ) {
+        // Build the header.
+        StringBuilder rep = new StringBuilder( "\\begin{equation}\n" ).append( functionName ).append( "(" )
+                .append( labels.getVarList() ).append( ") = \\left[ \\begin{array}{c}\n" );
+
         int skipIndex = outputLength - 1;
         for ( int row = 0; row < outputLength; ++row ) {
-            boolean first = true;
+            List<String> monomialLabels = Lists.newArrayList();
+
+            // For each output row write down all the monomials
             for ( int i = 0; i < monomials.length; ++i ) {
                 if ( contributions[ i ].get( row ) ) {
-                    if ( !first ) {
-                        rep.append( " + " );
-                    } else {
-                        first = false;
-                    }
-                    rep.append( monomials[ i ].toLatexStringMonomial( var ) );
+                    monomialLabels.add( monomials[ i ].toLatexStringMonomial( labels ) );
                 }
             }
-            if( row == skipIndex ) {
+            final int last = monomialLabels.size() - 1;
+
+            for ( int i = 0; i < monomialLabels.size(); ++i ) {
+                rep.append( monomialLabels.get( i ) );
+                if ( i != last ) {
+                    rep.append( " + " );
+                }
+            }
+            if ( row == skipIndex ) {
                 rep.append( "\n" );
             } else {
                 rep.append( " \\\\\n" );
             }
         }
-        rep.append( "\\end{array} \\right]" );
+        rep.append( "\\end{array} \\right]\n\\end{equation} " );
 
-        return rep.toString();
+        return rep.toString().trim();
     }
 
     public static PolynomialFunctionRepresentationGF2 randomFunction( int inputLen, int outputLen ) {

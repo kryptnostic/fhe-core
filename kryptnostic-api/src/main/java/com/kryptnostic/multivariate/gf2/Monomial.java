@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import cern.colt.bitvector.BitVector;
 
 import com.google.common.base.CharMatcher;
@@ -12,6 +14,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
+import com.kryptnostic.multivariate.PolynomialLabeling;
 import com.kryptnostic.multivariate.predicates.MonomialOrderHomogeneityPredicate;
 
 public class Monomial extends BitVector {
@@ -234,30 +237,50 @@ public class Monomial extends BitVector {
         return toStringMonomial( "x" );
     }
 
+    @SuppressWarnings( "unchecked" )
     public String toLatexStringMonomial( String var ) {
-        return "\\mathbf " + toStringMonomial( var + "_", " ", Optional.of( "{" ), Optional.of( "}" ) );
+        Pair<String, Integer> singletonLabel = Pair.<String, Integer> of( var, this.size() );
+        return toStringMonomial( new PolynomialLabeling( singletonLabel ), " ", Optional.of( "{" ), Optional.of( "}" ) );
     }
 
+    public String toLatexStringMonomial( PolynomialLabeling labels ) {
+        return toStringMonomial( labels, " ", Optional.of( "{" ), Optional.of( "}" ) );
+    }
+
+    @SuppressWarnings( "unchecked" )
     public String toStringMonomial( String var ) {
-        return toStringMonomial( var, "*", Optional.<String>absent(), Optional.<String>absent() );
+        Pair<String, Integer> singletonLabel = Pair.<String, Integer> of( var, this.size() );
+        return toStringMonomial(
+                new PolynomialLabeling( singletonLabel ),
+                "*",
+                Optional.<String> absent(),
+                Optional.<String> absent() );
     }
 
-    public String toStringMonomial( String var, String separator, Optional<String> left, Optional<String> right ) {
+    public String toStringMonomial(
+            PolynomialLabeling labels,
+            String separator,
+            Optional<String> left,
+            Optional<String> right ) {
         StringBuilder rep = new StringBuilder();
-        boolean first = true;
-        
-        if( isZero() ) {
+
+        // Constant monomial
+        if ( isZero() ) {
             return "1";
         }
-        
+
+        int weightLoaded = 0;
+        final int weight = cardinality();
+
         for ( int i = 0; i < size(); ++i ) {
             if ( get( i ) ) {
-                if ( !first ) {
+                weightLoaded++;
+                if ( weightLoaded != 1 && weightLoaded != weight ) {
                     rep.append( separator );
-                } else {
-                    first = false;
                 }
-                rep.append( var ).append( left.or( "" ) ).append( i + 1 ).append( right.or( "" ) );
+
+                rep.append( labels.getLabelForIndex( i ) ).append( "_" ).append( left.or( "" ) ).append( labels.getAdjustedIndex( i ) )
+                        .append( right.or( "" ) );
             }
         }
 
