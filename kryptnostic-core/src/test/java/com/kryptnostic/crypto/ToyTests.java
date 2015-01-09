@@ -5,7 +5,6 @@ import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,12 +23,12 @@ import com.kryptnostic.multivariate.polynomial.ParameterizedPolynomialFunctionGF
 import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 
 public class ToyTests {
-    private static final Logger             logger        = LoggerFactory.getLogger( ToyTests.class );
-    private static PrivateKey               privKey;
-    private static PublicKey                pubKey;
+    private static final Logger  logger        = LoggerFactory.getLogger( ToyTests.class );
+    private static PrivateKey    privKey;
+    private static PublicKey     pubKey;
 
-    private static final Integer            INPUT_LENGTH  = 4;
-    private static final Integer            OUTPUT_LENGTH = 8;
+    private static final Integer INPUT_LENGTH  = 4;
+    private static final Integer OUTPUT_LENGTH = 8;
 
     @BeforeClass
     public static void generateKeys() {
@@ -44,7 +43,6 @@ public class ToyTests {
 
     @SuppressWarnings( "unchecked" )
     @Test
-    @Ignore
     public void printToySystem() throws SingularMatrixException {
         BitVector input = BitVectors.randomVector( INPUT_LENGTH );
         BitVector nonce = BitVectors.randomVector( INPUT_LENGTH );
@@ -54,6 +52,10 @@ public class ToyTests {
         Pair<String, Integer> s0Label = Pair.of( "\\mathbf s", INPUT_LENGTH );
         Pair<String, Integer> s1Label = Pair.of( "\\mathbf f", OUTPUT_LENGTH );
         Pair<String, Integer> ss0Label = Pair.of( "\\mathbf s", OUTPUT_LENGTH );
+
+        logger.info(
+                "\n\\begin{equation}\n\\mu={}\n\\end{equation}",
+                BitVectors.asLatexString( privKey.getMixingConstant() ) );
 
         logger.info( "\n{}", privKey.getA().toLatexString( "\\mathbf A" ) );
 
@@ -103,7 +105,7 @@ public class ToyTests {
             BitVector chainOutput = pf.apply( chainInput );
             if ( index == 1 ) {
                 logger.info(
-                        "\n\\begin{equation}\n{}( \\mathbf m , \\mathbf r ) = \\textrm{RandomPartition}({})(\\mathbf g( \\mathbf m, \\mathbf r )) \n\\end{equation}",
+                        "\n\\begin{equation}\n{}( \\mathbf m , \\mathbf r ) = \\textrm{RandomPartition}({})(\\mathbf g( \\mathbf m, \\mathbf r )+\\mu) \n\\end{equation}",
                         functionName,
                         functionName );
                 logger.info( "Cpf: \n{}", ( (BasePolynomialFunction) pf ).toLatexString(
@@ -156,7 +158,7 @@ public class ToyTests {
             BitVector chainOutput = pf.apply( chainInput );
             if ( index == 1 ) {
                 logger.info(
-                        "\n\\begin{equation}\n{}( \\mathbf x ) = \\textrm{RandomPartition}({})(\\mathbf g( \\mathbf x )) \n\\end{equation}",
+                        "\n\\begin{equation}\n{}( \\mathbf x ) = \\textrm{RandomPartition}({})(\\mathbf g( \\mathbf x ) + \\mu ) \n\\end{equation}",
                         functionName,
                         functionName );
                 logger.info(
