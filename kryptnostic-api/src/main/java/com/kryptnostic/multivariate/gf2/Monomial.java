@@ -240,11 +240,11 @@ public class Monomial extends BitVector {
     @SuppressWarnings( "unchecked" )
     public String toLatexStringMonomial( String var ) {
         Pair<String, Integer> singletonLabel = Pair.<String, Integer> of( var, this.size() );
-        return toStringMonomial( new PolynomialLabeling( singletonLabel ), " ", Optional.of( "{" ), Optional.of( "}" ) );
+        return toLatexStringMonomial( new PolynomialLabeling( singletonLabel ), " ", Optional.of( "{" ), Optional.of( "}" ) );
     }
 
     public String toLatexStringMonomial( PolynomialLabeling labels ) {
-        return toStringMonomial( labels, " ", Optional.of( "{" ), Optional.of( "}" ) );
+        return toLatexStringMonomial( labels, " ", Optional.of( "{" ), Optional.of( "}" ) );
     }
 
     @SuppressWarnings( "unchecked" )
@@ -257,7 +257,38 @@ public class Monomial extends BitVector {
                 Optional.<String> absent() );
     }
 
+    
     public String toStringMonomial(
+            PolynomialLabeling labels,
+            String separator,
+            Optional<String> left,
+            Optional<String> right ) {
+        StringBuilder rep = new StringBuilder();
+
+        // Constant monomial
+        if ( isZero() ) {
+            return "1";
+        }
+
+        int weightLoaded = 0;
+        final int weight = cardinality();
+
+        for ( int i = 0; i < size(); ++i ) {
+            if ( get( i ) ) {
+                weightLoaded++;
+                if ( weightLoaded != 1 ) {
+                    rep.append( separator );
+                }
+
+                rep.append( labels.getLabelForIndex( i ) ).append( left.or( "" ) ).append( labels.getAdjustedIndex( i ) )
+                        .append( right.or( "" ) );
+            }
+        }
+
+        return rep.toString();
+    }
+    
+    public String toLatexStringMonomial(
             PolynomialLabeling labels,
             String separator,
             Optional<String> left,

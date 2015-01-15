@@ -527,6 +527,11 @@ public class SimplePolynomialFunctions {
         return Pair.of( g, h );
     }
 
+    public static SimplePolynomialFunction constant( int inputLength, BitVector constant ) {
+        return new OptimizedPolynomialFunctionGF2( inputLength, constant.size(), new Monomial[] { new Monomial(
+                inputLength ) }, new BitVector[] { constant } );
+    }
+
     public static SimplePolynomialFunction identity( int monomialCount ) {
         Monomial[] monomials = new Monomial[ monomialCount ];
         BitVector[] contributions = new BitVector[ monomialCount ];
