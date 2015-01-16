@@ -326,7 +326,9 @@ public class PrivateKey {
         // GofX.getContributions() , GofX.getContributions().length ) );
 
         Pair<SimplePolynomialFunction, SimplePolynomialFunction[]> pipeline = SimplePolynomialFunctions
-                .buildNonlinearPipeline( GofX, complexityChain );
+                .buildNonlinearPipeline(
+                        GofX.xor( SimplePolynomialFunctions.constant( E1.rows(), mixingConstant ) ),
+                        complexityChain );
 
         SimplePolynomialFunction[] pipelines = pipeline.getRight();
         SimplePolynomialFunction[] mirroredPipelines = new SimplePolynomialFunction[ pipelines.length ];
