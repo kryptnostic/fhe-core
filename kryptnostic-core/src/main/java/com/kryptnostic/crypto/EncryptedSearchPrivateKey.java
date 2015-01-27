@@ -46,15 +46,18 @@ public class EncryptedSearchPrivateKey {
      */
     public BitVector prepareSearchToken( PublicKey publicKey, String term ) {
         BitVector searchHash = hash( term );
-        return publicKey.getEncrypter().apply(
-                BitVectors.concatenate( searchHash, BitVectors.randomVector( searchHash.size() ) ) );
+        SimplePolynomialFunction encrypter = publicKey.getEncrypter();
+        return BitVectors.concatenate(
+                encrypter.apply( searchHash.partFromTo( 0, 63 ), BitVectors.randomVector( 64 ) ),
+                encrypter.apply( searchHash.partFromTo( 64, 127 ), BitVectors.randomVector( 64 ) ) );
     }
 
     public BitVector hash( String term ) {
         BitVector hash = BitVectors.fromBytes( hashBits, hf.hashString( term, Charsets.UTF_8 ).asBytes() );
-        BitVector halfHash = hash.partFromTo( 0, 63 );
-        halfHash.xor( hash.partFromTo( 64, 127 ) );
-        return halfHash;
+        // TODO: Figure out better way of doing this than
+        // BitVector halfHash = hash.partFromTo( 0, 63 );
+        // halfHash.xor( hash.partFromTo( 64, 127 ) );
+        return hash;
     }
 
     @JsonProperty( LEFT_SQUARING_MATRIX )
@@ -71,6 +74,7 @@ public class EncryptedSearchPrivateKey {
         return EnhancedBitMatrix.randomInvertibleMatrix( 8 );
     }
 
+    // TODO: Consider using two separate random functions for the query hasher pair.
     public Pair<SimplePolynomialFunction, SimplePolynomialFunction> getQueryHasherPair(
             SimplePolynomialFunction globalHash,
             PrivateKey privateKey ) throws SingularMatrixException {
