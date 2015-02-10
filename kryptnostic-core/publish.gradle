@@ -37,6 +37,8 @@ if( ( (branch.equals("develop") || branch.equals("master") || branch.contains("r
         sign configurations.pom
     }
 
+    print("Using publishing repo: " + branch.equals("develop") ? snapshotUrl : releaseUrl )
+    
     publishing {
         repositories {
             maven { 
