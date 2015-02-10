@@ -40,7 +40,6 @@ public class EncryptedSearchPrivateKeyTests {
         String term = "risefall";
         BitVector expected = privateKey.hash( term );
         BitVector intermediate = privateKey.prepareSearchToken( fhePublicKey, term );
-
         BitVector actual = BitVectors.concatenate(
                 fhePrivateKey.getDecryptor().apply( intermediate.partFromTo( 0, 127 ) ),
                 fhePrivateKey.getDecryptor().apply( intermediate.partFromTo( 128, 255 ) ) );
@@ -93,12 +92,10 @@ public class EncryptedSearchPrivateKeyTests {
         // Now let's test running a search
         actual = BitVectors
                 .fromSquareMatrix( intermediateL.multiply( bridgeKey.getBridge() ).multiply( intermediateR ) );
-
         expectedMatrix = EnhancedBitMatrix.squareMatrixfromBitVector( globalHash.apply( searchHash ) );
 
         expected = BitVectors.fromSquareMatrix( expectedMatrix.multiply( sharingKey.getMiddle() ).multiply(
                 expectedMatrix ) );
         Assert.assertEquals( expected, actual );
     }
-
 }
