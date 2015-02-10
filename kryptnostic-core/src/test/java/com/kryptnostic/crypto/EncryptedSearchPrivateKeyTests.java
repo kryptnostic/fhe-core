@@ -40,7 +40,9 @@ public class EncryptedSearchPrivateKeyTests {
         String term = "risefall";
         BitVector expected = privateKey.hash( term );
         BitVector intermediate = privateKey.prepareSearchToken( fhePublicKey, term );
-        BitVector actual = fhePrivateKey.getDecryptor().apply( intermediate );
+        BitVector actual = BitVectors.concatenate(
+                fhePrivateKey.getDecryptor().apply( intermediate.partFromTo( 0, 127 ) ),
+                fhePrivateKey.getDecryptor().apply( intermediate.partFromTo( 128, 255 ) ) );
 
         Assert.assertEquals( expected, actual );
     }
@@ -52,7 +54,7 @@ public class EncryptedSearchPrivateKeyTests {
         BitVector searchHash = privateKey.hash( term );
         BitVector encryptedSearchHash = privateKey.prepareSearchToken( fhePublicKey, term );
 
-        EnhancedBitMatrix expectedMatrix = EnhancedBitMatrix.squareMatrixfromBitVector( globalHash.apply( searchHash  ) );
+        EnhancedBitMatrix expectedMatrix = EnhancedBitMatrix.squareMatrixfromBitVector( globalHash.apply( searchHash ) );
         BitVector expected = BitVectors.fromMatrix( expectedMatrix.multiply( expectedMatrix ) );
 
         Pair<SimplePolynomialFunction, SimplePolynomialFunction> p = privateKey.getQueryHasherPair(
@@ -74,8 +76,7 @@ public class EncryptedSearchPrivateKeyTests {
         logger.info( "Evaluation took: {} ms", s.elapsed( TimeUnit.MILLISECONDS ) );
 
         EnhancedBitMatrix intermediateL = EnhancedBitMatrix.squareMatrixfromBitVector( hL.apply( encryptedSearchHash ) );
-        EnhancedBitMatrix intermediateR = EnhancedBitMatrix
-                .squareMatrixfromBitVector( hR.apply( encryptedSearchHash ) );
+        EnhancedBitMatrix intermediateR = EnhancedBitMatrix.squareMatrixfromBitVector( hR.apply( encryptedSearchHash ) );
 
         EnhancedBitMatrix documentKey = privateKey.newDocumentKey();
         EncryptedSearchSharingKey sharingKey = new EncryptedSearchSharingKey( documentKey );
@@ -89,7 +90,7 @@ public class EncryptedSearchPrivateKeyTests {
         // Now let's test running a search
         actual = BitVectors
                 .fromSquareMatrix( intermediateL.multiply( bridgeKey.getBridge() ).multiply( intermediateR ) );
-        expectedMatrix = EnhancedBitMatrix.squareMatrixfromBitVector( globalHash.apply( searchHash ) ) ;
+        expectedMatrix = EnhancedBitMatrix.squareMatrixfromBitVector( globalHash.apply( searchHash ) );
         expected = BitVectors.fromSquareMatrix( expectedMatrix.multiply( sharingKey.getMiddle() ).multiply(
                 expectedMatrix ) );
         Assert.assertEquals( expected, actual );
