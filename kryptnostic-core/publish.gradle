@@ -38,71 +38,69 @@ if( ( (branch.equals("develop") || branch.equals("master") || branch.contains("r
     }
 
     publishing {
-        repositories {
-            if( branch.equals( "develop" ) ) {
-                maven { 
-                    url snapshotUrl
-                    credentials {
-                        username = "$System.env.bamboo_SONATYPE_USERNAME"
-                        password = "$System.env.bamboo_SONATYPE_PASSWORD"
-                    }
-                }
-                } else {
-                    maven { 
-                        url releaseUrl
-                        credentials {
-                            username = "$System.env.bamboo_SONATYPE_USERNAME"
-                            password = "$System.env.bamboo_SONATYPE_PASSWORD"
-                        }
-                    }
+        repositories {           
+            maven { 
+                url releaseUrl
+                credentials {
+                    username = "$System.env.bamboo_SONATYPE_USERNAME"
+                    password = "$System.env.bamboo_SONATYPE_PASSWORD"
                 }
             }
 
-            publications {
-                mavenJava(MavenPublication) {
-                    from components.java
-                    artifact ('README.md') {
-                        classifier = 'README'
-                        extension  = 'md'
-                    }
+            maven { 
+                url snapshotUrl
+                credentials {
+                    username = "$System.env.bamboo_SONATYPE_USERNAME"
+                    password = "$System.env.bamboo_SONATYPE_PASSWORD"
+                }
+            }
 
-                    artifact javadocJar
-                    artifact sourcesJar
+        }
 
-                    pom.withXml {
-                        asNode().children().last() + {
-                            resolveStrategy = Closure.DELEGATE_FIRST
-                            name 'fhe-core'
-                            description 'Kryptnostic implementations of Fully Homomorphic Encryption'
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                artifact ('README.md') {
+                    classifier = 'README'
+                    extension  = 'md'
+                }
+
+                artifact javadocJar
+                artifact sourcesJar
+
+                pom.withXml {
+                    asNode().children().last() + {
+                        resolveStrategy = Closure.DELEGATE_FIRST
+                        name 'fhe-core'
+                        description 'Kryptnostic implementations of Fully Homomorphic Encryption'
+                        url 'https://www.github.com/kryptnostic/fhe-core'
+                        scm {
                             url 'https://www.github.com/kryptnostic/fhe-core'
-                            scm {
-                                url 'https://www.github.com/kryptnostic/fhe-core'
-                                connection 'https://www.github.com/kryptnostic/fhe-core'
-                                developerConnection 'https://www.github.com/kryptnostic/fhe-core'
+                            connection 'https://www.github.com/kryptnostic/fhe-core'
+                            developerConnection 'https://www.github.com/kryptnostic/fhe-core'
+                        }
+                        licenses {
+                            license {
+                                name 'Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License'
+                                url 'https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode'
+                                distribution 'repo'
                             }
-                            licenses {
-                                license {
-                                    name 'Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License'
-                                    url 'https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode'
-                                    distribution 'repo'
-                                }
+                        }
+                        developers {
+                            developer {
+                                id 'geekbeast'
+                                name 'Matthew Tamayo-Rios'
+                                email 'matthew@kryptnostic.com'
                             }
-                            developers {
-                                developer {
-                                    id 'geekbeast'
-                                    name 'Matthew Tamayo-Rios'
-                                    email 'matthew@kryptnostic.com'
-                                }
-                                developer {
-                                    id 'hubsmoke'
-                                    name 'Sina Iman'
-                                    email 'sina@kryptnostic.com'
-                                }
-                                developer {
-                                    id 'nickdhewitt'
-                                    name 'Nick Hewitt'
-                                    email 'nick@kryptnostic.com'
-                                }
+                            developer {
+                                id 'hubsmoke'
+                                name 'Sina Iman'
+                                email 'sina@kryptnostic.com'
+                            }
+                            developer {
+                                id 'nickdhewitt'
+                                name 'Nick Hewitt'
+                                email 'nick@kryptnostic.com'
                             }
                         }
                     }
@@ -110,3 +108,4 @@ if( ( (branch.equals("develop") || branch.equals("master") || branch.contains("r
             }
         }
     }
+}
