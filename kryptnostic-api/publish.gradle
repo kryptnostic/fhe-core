@@ -5,7 +5,7 @@ exec {
 }
 def branch=stdout.toString().trim();
 
-if( ( (branch.equals("develop") || branch.equals("master") ) ) && 
+if( ( (branch.equals("develop") || branch.equals("master") || branch.contains("release/") ) ) && 
     ( System.getenv("bamboo_JAR_SIGNING_KEYRING") != null) && 
     ( System.getenv("bamboo_JAR_SIGNING_PASSWORD")!=null ) && 
     ( System.getenv("bamboo_SONATYPE_USERNAME")!=null ) && 
@@ -33,10 +33,14 @@ if( ( (branch.equals("develop") || branch.equals("master") ) ) &&
         sign configurations.archives
     }
 
+    signing {
+        sign configurations.pom
+    }
+    
     publishing {
         repositories {
             maven { 
-                url snapshotUrl
+                url branch.equals("develop") ? snapshotUrl : releaseUrl
                 credentials {
                     username = "$System.env.bamboo_SONATYPE_USERNAME"
                     password = "$System.env.bamboo_SONATYPE_PASSWORD"
