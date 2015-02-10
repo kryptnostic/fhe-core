@@ -36,9 +36,7 @@ if( ( (branch.equals("develop") || branch.equals("master") || branch.contains("r
     signing {
         sign configurations.pom
     }
-
-    print("Using publishing repo: " + branch.equals("develop") ? snapshotUrl : releaseUrl )
-    
+   
     publishing {
         repositories {           
             maven { 
@@ -50,7 +48,14 @@ if( ( (branch.equals("develop") || branch.equals("master") || branch.contains("r
             }
 
             maven { 
-                url branch.equals("develop") ? snapshotUrl : releaseUrl
+                url snapshotUrl
+                credentials {
+                    username = "$System.env.bamboo_SONATYPE_USERNAME"
+                    password = "$System.env.bamboo_SONATYPE_PASSWORD"
+                }
+            }
+            maven { 
+                url releaseUrl
                 credentials {
                     username = "$System.env.bamboo_SONATYPE_USERNAME"
                     password = "$System.env.bamboo_SONATYPE_PASSWORD"
