@@ -70,7 +70,7 @@ public class EncryptedSearchPrivateKey {
         return rightSquaringMatrix;
     }
 
-    public EnhancedBitMatrix newDocumentKey() {
+    public EnhancedBitMatrix newObjectKey() {
         return EnhancedBitMatrix.randomInvertibleMatrix( 8 );
     }
 
