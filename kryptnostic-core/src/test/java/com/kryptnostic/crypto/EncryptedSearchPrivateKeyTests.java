@@ -78,7 +78,7 @@ public class EncryptedSearchPrivateKeyTests {
         EnhancedBitMatrix intermediateL = EnhancedBitMatrix.squareMatrixfromBitVector( hL.apply( encryptedSearchHash ) );
         EnhancedBitMatrix intermediateR = EnhancedBitMatrix.squareMatrixfromBitVector( hR.apply( encryptedSearchHash ) );
 
-        EnhancedBitMatrix documentKey = privateKey.newDocumentKey();
+        EnhancedBitMatrix documentKey = privateKey.newObjectKey();
         EncryptedSearchSharingKey sharingKey = new EncryptedSearchSharingKey( documentKey );
         EncryptedSearchBridgeKey bridgeKey = new EncryptedSearchBridgeKey( privateKey, sharingKey );
 
