@@ -1,6 +1,8 @@
 language: java
 jdk:
   - oraclejdk7
-  - openjdk6
   - openjdk7
+install: 
+  - git fetch --tags
+  - git describe --tags
 script: "./gradlew check --debug"
