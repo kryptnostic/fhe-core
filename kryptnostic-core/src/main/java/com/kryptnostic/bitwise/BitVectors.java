@@ -30,7 +30,14 @@ public final class BitVectors {
     private static final Random r             = new SecureRandom();
     private static final int    INTEGER_BYTES = Integer.SIZE / Byte.SIZE;
     private static final Base64 codec         = new Base64();
-
+    private static final BitVector topExtender;
+    
+    static {
+        //A bitvector of length 1 set to 1, used for affine computations
+        topExtender = new BitVector( 1 );
+        topExtender.set( 0 );
+    }
+    
     private BitVectors() {}
 
     private final static Function<BitVector, BitVector> cloner = new Function<BitVector, BitVector>() {
@@ -259,6 +266,10 @@ public final class BitVectors {
             }
         }
         return -1;
+    }
+    
+    public static BitVector affineExtend( BitVector input ) {
+        return concatenate( input , topExtender );
     }
 
     public static String asLatexString( BitVector input ) {
