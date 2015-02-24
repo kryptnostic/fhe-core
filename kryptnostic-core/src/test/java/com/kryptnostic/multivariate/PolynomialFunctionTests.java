@@ -162,8 +162,8 @@ public class PolynomialFunctionTests {
 
     @Timed
     public void bucketTest() {
-        OptimizedPolynomialFunctionGF2 outer = (OptimizedPolynomialFunctionGF2) singletonDenseRandomFunction();
-        BasePolynomialFunction inner = (BasePolynomialFunction) linearFunction();
+        OptimizedPolynomialFunctionGF2 outer = (OptimizedPolynomialFunctionGF2) SimplePolynomialFunctions.denseRandomMultivariateQuadratic( 256 , 256 );
+        BasePolynomialFunction inner = (BasePolynomialFunction) SimplePolynomialFunctions.randomManyToOneLinearCombination( 256 );
         Stopwatch watch = Stopwatch.createStarted();
         EnhancedBitMatrix BT = inner.orderedAffineContributions();
         logger.info( "Sorting contributions took {} ms.", watch.elapsed( TimeUnit.MILLISECONDS ) );
@@ -173,7 +173,7 @@ public class PolynomialFunctionTests {
         logger.info( "Bucketing took {} ms.", watch.elapsed( TimeUnit.MILLISECONDS ) );
 
         for ( int i = 0; i < 25; ++i ) {
-            BitVector randomInput = BitVectors.randomVector( INPUT_LENGTH << 1 );
+            BitVector randomInput = BitVectors.randomVector( 256 << 1 );
             BitVector innerResultByMatrix = BT.transpose().multiply( BitVectors.affineExtend( randomInput ) );
             BitVector innerResult = inner.apply( randomInput );
             BitVector outerResult = outer.apply( innerResult );
@@ -209,15 +209,15 @@ public class PolynomialFunctionTests {
 
     @Timed
     public void mvqCompostTest() {
-        OptimizedPolynomialFunctionGF2 outer = (OptimizedPolynomialFunctionGF2) singletonDenseRandomFunction();
-        SimplePolynomialFunction inner = linearFunction();
+        OptimizedPolynomialFunctionGF2 outer = (OptimizedPolynomialFunctionGF2)  SimplePolynomialFunctions.denseRandomMultivariateQuadratic( 256 , 256 );
+        SimplePolynomialFunction inner = SimplePolynomialFunctions.randomManyToOneLinearCombination( 256 );
 
         Stopwatch watch = Stopwatch.createStarted();
         SimplePolynomialFunction composed = outer.mvqCompose( inner );
         logger.info( "Compose took {} ms.", watch.elapsed( TimeUnit.MILLISECONDS ) );
 
         for ( int i = 0; i < 25; ++i ) {
-            BitVector randomInput = BitVectors.randomVector( INPUT_LENGTH << 1 );
+            BitVector randomInput = BitVectors.randomVector( 256 << 1 );
             BitVector innerResult = inner.apply( randomInput );
             BitVector outerResult = outer.apply( innerResult );
             BitVector composedResult = composed.apply( randomInput );

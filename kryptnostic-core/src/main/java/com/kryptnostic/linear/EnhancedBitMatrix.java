@@ -589,15 +589,12 @@ public class EnhancedBitMatrix implements Serializable {
     }
 
     public EnhancedBitMatrix resizeColumns( final int k ) {
-        return EnhancedBitMatrix.directFromRows( Lists.transform( rows, new Function<BitVector, BitVector>() {
-            final int currentCols = cols();
-            @Override
-            public BitVector apply( BitVector input ) {
-                return input.partFromTo( currentCols - k , currentCols - 1 );
-//                return input.partFromTo( 0, k - 1 );
-
-            }
-        } ) );
+        BitVector[] newRows = new BitVector[ rows.size() ];
+        final int currentCols = cols();
+        for( int i = 0 ; i < newRows.length ; ++i ) {
+            newRows[ i ] = rows.get( i ).partFromTo( currentCols - k , currentCols - 1 );
+        }
+        return EnhancedBitMatrix.directFromRows( Arrays.asList( newRows ) );
     }
 
     public static EnhancedBitMatrix identityExpander( int identityRows, int randomRows ) {

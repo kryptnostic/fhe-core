@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -21,8 +22,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -516,10 +517,10 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
         Preconditions.checkArgument(
                 inputLength == inner.getOutputLength(),
                 "Input length of outer function must match output length of inner function it is being composed with" );
-        if( (inner.getMaximumMonomialOrder() == 1) && (getMaximumMonomialOrder()==2) ) {
+        if ( ( inner.getMaximumMonomialOrder() == 1 ) && ( getMaximumMonomialOrder() == 2 ) ) {
             return mvqCompose( inner );
         }
-        
+
         ComposePreProcessResults prereqs = preProcessCompose( inner );
 
         logger.debug( "Expanding outer monomials." );
@@ -532,17 +533,19 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
     private final BitVector zero = new BitVector( outputLength );
 
     public EnhancedBitMatrix orderedAffineContributions() {
-        Preconditions.checkState(
-                ( monomials.length - inputLength ) < 2,
-                "Number of monomials suggests a non-linear function." );
-        BitVector[] ordered = new BitVector[ inputLength + 1 ];
+        // Preconditions.checkState(
+        // ( monomials.length - inputLength ) < 2,
+        // "Number of monomials suggests a non-linear function." );
+        int realInputLength = ( this instanceof ParameterizedPolynomialFunctionGF2 ) ? monomials[ 0 ].size()
+                : inputLength;
+        BitVector[] ordered = new BitVector[ realInputLength + 1 ];
         for ( int i = 0; i < monomials.length; ++i ) {
             Monomial m = monomials[ i ];
             Preconditions.checkState( m.isZero() || ( m.cardinality() == 1 ), "Non-affine terms are not allowed." );
             if ( m.isZero() ) {
-                ordered[ contributions.length - 1 ] = contributions[ i ];
+                ordered[ ordered.length - 1 ] = contributions[ i ];
             } else {
-                for ( int j = 0; j < inputLength; ++j ) {
+                for ( int j = 0; j < realInputLength; ++j ) {
                     if ( m.get( j ) ) {
                         ordered[ j ] = contributions[ i ];
                         break;
@@ -555,6 +558,11 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
                 ordered[ i ] = zero;
             }
         }
+
+        // if( ordered[ ordered.length - 1 ] == null ) {
+        // ordered[ ordered.length - 1 ] = zero;
+        // }
+
         return EnhancedBitMatrix.directFromRows( Arrays.asList( ordered ) );
     }
 
@@ -595,40 +603,58 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
                 }
             }
         }
+
+        for ( int i = 0; i < bucket.length; ++i ) {
+            if ( bucket[ i ] == null ) {
+                bucket[ i ] = zero;
+            }
+        }
         return bucket;
     }
 
     public BitVector[][] bucket() {
         BitVector[][] buckets = new BitVector[ inputLength + 1 ][];
-        for ( int i = 0; i < inputLength; ++i ) {
+        for ( int i = 0; i < buckets.length - 1; ++i ) {
             buckets[ i ] = bucket( i );
         }
+        boolean noConstantMonomial = true;
         for ( int i = 0; i < monomials.length; ++i ) {
             if ( monomials[ i ].isZero() ) {
                 buckets[ buckets.length - 1 ] = new BitVector[] { contributions[ i ] };
+                noConstantMonomial = false;
                 break;
             }
+        }
+
+        if ( noConstantMonomial ) {
+            buckets[ buckets.length - 1 ] = new BitVector[] { zero };
         }
 
         return buckets;
     }
 
     public SimplePolynomialFunction mvqCompose( SimplePolynomialFunction inner ) {
-        BitVector[][] buckets = bucket();
-        Map<Monomial, BitVector> mc = Maps.newHashMap();
-        EnhancedBitMatrix BT = ( (BasePolynomialFunction) inner ).orderedAffineContributions();
-        EnhancedBitMatrix B = BT.transpose();
-        final int innerInputLength = inner.getInputLength();
+        Preconditions.checkArgument(
+                inner.getOutputLength() == getInputLength(),
+                "Inner output length must be equal outer input length." );
+        final int innerInputLength = ( inner instanceof ParameterizedPolynomialFunctionGF2 ) ? inner.getMonomials()[ 0 ]
+                .size() : inner.getInputLength();
+        final BitVector[][] buckets = bucket();
+        final Map<Monomial, BitVector> mc = Maps.newHashMapWithExpectedSize( 1 + innerInputLength
+                + ( innerInputLength * ( innerInputLength - 1 ) / 2 ) );
+        final EnhancedBitMatrix BT = ( (BasePolynomialFunction) inner ).orderedAffineContributions();
+        final EnhancedBitMatrix B = BT.transpose();
 
         final Monomial[] cache = new Monomial[ innerInputLength + 1 ];
-
+        // final BitVector[][] rcache = new BitVector[ innerInputLength + 1 ][ innerInputLength + 1 ];
         for ( int i = 0; i < innerInputLength; ++i ) {
-            cache[ i ] = Monomial.linearMonomial( inner.getInputLength(), i );
+            cache[ i ] = Monomial.linearMonomial( innerInputLength, i );
         }
 
         cache[ innerInputLength ] = Monomial.constantMonomial( innerInputLength );
 
         mc.put( cache[ innerInputLength ], buckets[ inputLength ][ 0 ] );
+        // Stopwatch w = Stopwatch.createUnstarted();
         for ( int i = 0; i < buckets.length - 1; ++i ) {
             EnhancedBitMatrix AT = EnhancedBitMatrix.directFromRows( Arrays.asList( buckets[ i ] ) );
             EnhancedBitMatrix coeffMatrix = ( i == 0 ? BT : BT.resizeColumns( BT.cols() - i ) ).multiply( AT );
@@ -639,8 +665,13 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
                     for ( int k = 0; k < ( innerInputLength + 1 ); ++k ) {
                         // inner_i * inner_j
                         Monomial key = cache[ j ].product( cache[ k ] );
+                        // w.start();
+                        // BitVector c = rcache[j][k];//
                         BitVector c = mc.get( key );
+                        // logger.debug( "Processing product {} took {} ms" , j , w.elapsed( TimeUnit.MICROSECONDS ) );
+                        // w.reset();
                         if ( c == null ) {
+                            // c = rcache[j][k] = new BitVector( outputLength );
                             c = new BitVector( outputLength );
                             mc.put( key, c );
                         }
@@ -648,10 +679,21 @@ public class BasePolynomialFunction extends PolynomialFunctionRepresentationGF2 
                     }
                 }
             }
-
         }
-
-        return SimplePolynomialFunctions.fromMonomialContributionMap( innerInputLength, outputLength, mc );
+        SimplePolynomialFunction base = SimplePolynomialFunctions.fromMonomialContributionMap(
+                innerInputLength,
+                outputLength,
+                mc );
+        if ( inner instanceof ParameterizedPolynomialFunctionGF2 ) {
+            return new ParameterizedPolynomialFunctionGF2(
+                    inner.getInputLength(),
+                    getOutputLength(),
+                    base.getMonomials(),
+                    base.getContributions(),
+                    ( (ParameterizedPolynomialFunctionGF2) inner ).getPipelines() );
+        } else {
+            return base;
+        }
     }
 
     /**

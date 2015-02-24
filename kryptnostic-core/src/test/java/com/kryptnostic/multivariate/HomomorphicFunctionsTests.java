@@ -67,8 +67,8 @@ public class HomomorphicFunctionsTests {
         long start = System.currentTimeMillis();
         SimplePolynomialFunction homomorphicXor = privateKey.computeHomomorphicFunction( and );
         long stop = System.currentTimeMillis();
-        logger.trace( "Homomorphic XOR generation took {} ms" , stop - start );
-        logger.trace( "Homomorphic XOR has {} monomials" , homomorphicXor.getMonomials().length );
+        logger.trace( "Homomorphic AND generation took {} ms" , stop - start );
+        logger.trace( "Homomorphic AND has {} monomials" , homomorphicXor.getMonomials().length );
         
         BitVector v = BitVectors.randomVector( CIPHERTEXT_LENGTH );
         BitVector plaintext = BitVectors.subVector( v , 0 , PLAINTEXT_LENGTH >>> 6 );
