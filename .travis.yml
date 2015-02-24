@@ -8,4 +8,4 @@ install:
   - git fetch origin "$TRAVIS_BRANCH" --tags
   - git fetch --tags
   - git describe --tags
-script: "./gradlew check --debug"
+script: "./gradlew check --info"

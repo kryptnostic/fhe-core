@@ -1,5 +1,4 @@
 //Easy semantic version based off describe + tags
-print "Travis tag: $System.env.TRAVIS_TAG"
 def getVersionName = { ->
     def stdout = new ByteArrayOutputStream()
     exec {
