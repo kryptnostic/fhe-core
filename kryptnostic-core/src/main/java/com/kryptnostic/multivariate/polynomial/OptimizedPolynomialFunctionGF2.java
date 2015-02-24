@@ -17,7 +17,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
-import com.kryptnostic.multivariate.polynomial.BasePolynomialFunction.ComposePreProcessResults;
 
 public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
     private static final long                       serialVersionUID  = -3308994228325375229L;
@@ -82,24 +81,6 @@ public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
         }
         return result;
     }
-
-//    @Override
-//    public SimplePolynomialFunction compose( SimplePolynomialFunction inner ) {
-//        Preconditions.checkArgument(
-//                inputLength == inner.getOutputLength(),
-//                "Input length of outer function must match output length of inner function it is being composed with" );
-//        if ( ( inner.getMaximumMonomialOrder() == 1 ) && ( getMaximumMonomialOrder() == 2 ) ) {
-//            return mvqCompose( inner );
-//        }
-//
-//        ComposePreProcessResults prereqs = preProcessCompose( inner );
-//
-//        logger.debug( "Expanding outer monomials." );
-//        BitVector[] results = expandOuterMonomials( prereqs.monomialsList, prereqs.innerRows, prereqs.indices );
-//
-//        return postProcessCompose( prereqs.monomialsList, prereqs.indices, results, inner );
-//
-//    }
 
     @Override
     protected BitVector[] expandOuterMonomials(
