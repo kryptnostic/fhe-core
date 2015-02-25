@@ -74,6 +74,11 @@ public class EncryptedSearchPrivateKey {
         return EnhancedBitMatrix.randomInvertibleMatrix( 8 );
     }
 
+    public EncryptedSearchSharingKey calculateSharingKey( EncryptedSearchBridgeKey bridgeKey ) {
+        return new EncryptedSearchSharingKey( this.getLeftSquaringMatrix().multiply( bridgeKey.getBridge() )
+                .multiply( this.getRightSquaringMatrix() ) );
+    }
+
     // TODO: Consider using two separate random functions for the query hasher pair.
     public Pair<SimplePolynomialFunction, SimplePolynomialFunction> getQueryHasherPair(
             SimplePolynomialFunction globalHash,
