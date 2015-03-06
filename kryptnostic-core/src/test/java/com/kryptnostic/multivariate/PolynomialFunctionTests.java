@@ -41,8 +41,8 @@ import com.kryptnostic.multivariate.util.SimplePolynomialFunctions;
 public class PolynomialFunctionTests {
     private static final Logger logger          = LoggerFactory.getLogger( PolynomialFunctionTests.class );
     private static final Random r               = new Random( 0 );
-    private static final int    INPUT_LENGTH    = 64;
-    private static final int    OUTPUT_LENGTH   = 64;
+    private static final int    INPUT_LENGTH    = 32;
+    private static final int    OUTPUT_LENGTH   = 32;
     private static final int    PIPELINE_LENGTH = 2;
 
     @Timed
@@ -162,8 +162,8 @@ public class PolynomialFunctionTests {
 
     @Timed
     public void bucketTest() {
-        OptimizedPolynomialFunctionGF2 outer = (OptimizedPolynomialFunctionGF2) SimplePolynomialFunctions.denseRandomMultivariateQuadratic( 256 , 256 );
-        BasePolynomialFunction inner = (BasePolynomialFunction) SimplePolynomialFunctions.randomManyToOneLinearCombination( 256 );
+        OptimizedPolynomialFunctionGF2 outer = (OptimizedPolynomialFunctionGF2) denseRandomFunction();
+        BasePolynomialFunction inner = (BasePolynomialFunction) linearFunction();
         Stopwatch watch = Stopwatch.createStarted();
         EnhancedBitMatrix BT = inner.orderedAffineContributions();
         logger.info( "Sorting contributions took {} ms.", watch.elapsed( TimeUnit.MILLISECONDS ) );
@@ -209,8 +209,8 @@ public class PolynomialFunctionTests {
 
     @Timed
     public void mvqCompostTest() {
-        OptimizedPolynomialFunctionGF2 outer = (OptimizedPolynomialFunctionGF2)  SimplePolynomialFunctions.denseRandomMultivariateQuadratic( 256 , 256 );
-        SimplePolynomialFunction inner = SimplePolynomialFunctions.randomManyToOneLinearCombination( 256 );
+        OptimizedPolynomialFunctionGF2 outer = (OptimizedPolynomialFunctionGF2)  denseRandomFunction();
+        SimplePolynomialFunction inner = linearFunction();
 
         Stopwatch watch = Stopwatch.createStarted();
         SimplePolynomialFunction composed = outer.mvqCompose( inner );
