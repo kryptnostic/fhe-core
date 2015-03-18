@@ -173,7 +173,7 @@ public class PolynomialFunctionTests {
         logger.info( "Bucketing took {} ms.", watch.elapsed( TimeUnit.MILLISECONDS ) );
 
         for ( int i = 0; i < 25; ++i ) {
-            BitVector randomInput = BitVectors.randomVector( 256 << 1 );
+            BitVector randomInput = BitVectors.randomVector( INPUT_LENGTH << 1  );
             BitVector innerResultByMatrix = BT.transpose().multiply( BitVectors.affineExtend( randomInput ) );
             BitVector innerResult = inner.apply( randomInput );
             BitVector outerResult = outer.apply( innerResult );
@@ -334,7 +334,7 @@ public class PolynomialFunctionTests {
 
         BitVector lhInput = BitVectors.randomVector( INPUT_LENGTH );
         BitVector rhInput = BitVectors.randomVector( INPUT_LENGTH );
-        BitVector interleavedInput = FunctionUtils.concatenate( lhInput, rhInput );
+        BitVector interleavedInput = BitVectors.concatenate( lhInput, rhInput );
 
         BitVector lhResult = lhs.apply( lhInput );
         BitVector rhResult = rhs.apply( rhInput );
@@ -584,8 +584,8 @@ public class PolynomialFunctionTests {
 
         EnhancedBitMatrix.transpose( contribs, f.getContributions().length );
 
-        BitVector lhs = contribs.get( 110 );
-        BitVector rhs = contribs.get( 100 );
+        BitVector lhs = contribs.get( r.nextInt( contribs.size() ) );
+        BitVector rhs = contribs.get( r.nextInt( contribs.size() ) );
         List<Monomial> mList = Lists.newArrayList( monomials );
         OptimizedPolynomialFunctionGF2 function = new OptimizedPolynomialFunctionGF2( 0, 0, null, null );
         BitVector p = function.product( lhs, rhs, mList, indices );
