@@ -55,6 +55,7 @@ public class EncryptedSearchPrivateKeyTests {
         BitVector encryptedSearchHash = privateKey.prepareSearchToken( fhePublicKey, term );
 
         EnhancedBitMatrix expectedMatrix = EnhancedBitMatrix.squareMatrixfromBitVector( globalHash.apply( searchHash ) );
+
         BitVector expected = BitVectors.fromMatrix( expectedMatrix.multiply( expectedMatrix ) );
 
         Pair<SimplePolynomialFunction, SimplePolynomialFunction> p = privateKey.getQueryHasherPair(
@@ -76,6 +77,7 @@ public class EncryptedSearchPrivateKeyTests {
         logger.info( "Evaluation took: {} ms", s.elapsed( TimeUnit.MILLISECONDS ) );
 
         EnhancedBitMatrix intermediateL = EnhancedBitMatrix.squareMatrixfromBitVector( hL.apply( encryptedSearchHash ) );
+
         EnhancedBitMatrix intermediateR = EnhancedBitMatrix.squareMatrixfromBitVector( hR.apply( encryptedSearchHash ) );
 
         EnhancedBitMatrix documentKey = privateKey.newObjectKey();
@@ -95,5 +97,4 @@ public class EncryptedSearchPrivateKeyTests {
                 expectedMatrix ) );
         Assert.assertEquals( expected, actual );
     }
-
 }
