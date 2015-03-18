@@ -1,6 +1,11 @@
 language: java
 jdk:
   - oraclejdk7
-  - openjdk6
   - openjdk7
-script: "./gradlew check --debug"
+  - oraclejdk8
+install: 
+  - echo "$TRAVIS_TAG"
+  - git fetch origin "$TRAVIS_BRANCH" --tags
+  - git fetch --tags
+  - git describe --tags
+script: "./gradlew check --info"

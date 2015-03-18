@@ -5,7 +5,7 @@ exec {
 }
 def branch=stdout.toString().trim();
 
-if( ( (branch.equals("develop") || branch.equals("master") ) ) && 
+if( ( (branch.equals("develop") || branch.equals("master") || branch.contains("release/") ) ) && 
     ( System.getenv("bamboo_JAR_SIGNING_KEYRING") != null) && 
     ( System.getenv("bamboo_JAR_SIGNING_PASSWORD")!=null ) && 
     ( System.getenv("bamboo_SONATYPE_USERNAME")!=null ) && 
@@ -38,7 +38,15 @@ if( ( (branch.equals("develop") || branch.equals("master") ) ) &&
     }
 
     publishing {
-        repositories {
+        repositories {           
+            maven { 
+                url releaseUrl
+                credentials {
+                    username = "$System.env.bamboo_SONATYPE_USERNAME"
+                    password = "$System.env.bamboo_SONATYPE_PASSWORD"
+                }
+            }
+
             maven { 
                 url snapshotUrl
                 credentials {
@@ -46,6 +54,7 @@ if( ( (branch.equals("develop") || branch.equals("master") ) ) &&
                     password = "$System.env.bamboo_SONATYPE_PASSWORD"
                 }
             }
+
         }
 
         publications {

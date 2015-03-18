@@ -390,6 +390,7 @@ public class EnhancedBitMatrix implements Serializable {
 
     public BitVector multiply( BitVector v ) {
         // TODO: Optimize this a little better.
+        Preconditions.checkArgument( v.size() == cols() , "Vector must the same length as the number of columns in the matrix." );
         BitVector result = new BitVector( rows.size() );
         for ( int i = 0; i < rows.size(); ++i ) {
             BitVector row = rows.get( i );
@@ -401,7 +402,7 @@ public class EnhancedBitMatrix implements Serializable {
                 r ^= l;
             }
             if ( BitUtils.parity( r ) == 1L ) {
-                result.set( i );
+                result.putQuick( i, true );
             }
         }
 
@@ -483,7 +484,7 @@ public class EnhancedBitMatrix implements Serializable {
     public String toLatexString() {
         return toLatexString( "\\mathbf X" );
     }
-    
+
     public String toLatexString( String matrixName ) {
         StringBuilder sb = new StringBuilder( "\\begin{equation}\n" ).append( matrixName ).append(
                 " = \\left[ \\begin{array}{" );
@@ -585,6 +586,15 @@ public class EnhancedBitMatrix implements Serializable {
             }
         }
         return true;
+    }
+
+    public EnhancedBitMatrix resizeColumns( final int k ) {
+        BitVector[] newRows = new BitVector[ rows.size() ];
+        final int currentCols = cols();
+        for( int i = 0 ; i < newRows.length ; ++i ) {
+            newRows[ i ] = rows.get( i ).partFromTo( currentCols - k , currentCols - 1 );
+        }
+        return EnhancedBitMatrix.directFromRows( Arrays.asList( newRows ) );
     }
 
     public static EnhancedBitMatrix identityExpander( int identityRows, int randomRows ) {

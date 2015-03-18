@@ -23,6 +23,7 @@ public class PolynomialFunctionPipelineStage {
     private SimplePolynomialFunction upper;
     private final SimplePolynomialFunction step;
 
+    //TODO: Move the composition to before random partioning to reduce work.
     private PolynomialFunctionPipelineStage(SimplePolynomialFunction f, SimplePolynomialFunction inner) {
         c1 = EnhancedBitMatrix.randomInvertibleMatrix(f.getOutputLength());
         c2 = EnhancedBitMatrix.randomInvertibleMatrix(f.getOutputLength());

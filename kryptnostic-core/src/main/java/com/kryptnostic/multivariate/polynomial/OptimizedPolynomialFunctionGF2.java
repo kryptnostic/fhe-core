@@ -82,23 +82,6 @@ public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
         return result;
     }
 
-    /**
-     * Composes an outer function with the inner function.
-     * 
-     */
-    @Override
-    public SimplePolynomialFunction compose( SimplePolynomialFunction inner ) {
-        Preconditions.checkArgument(
-                inputLength == inner.getOutputLength(),
-                "Input length of outer function must match output length of inner function it is being composed with" );
-
-        ComposePreProcessResults prereqs = preProcessCompose( inner );
-
-        BitVector[] results = expandOuterMonomials( prereqs.monomialsList, prereqs.innerRows, prereqs.indices );
-
-        return postProcessCompose( prereqs.monomialsList, prereqs.indices, results, inner );
-    }
-
     @Override
     protected BitVector[] expandOuterMonomials(
             final List<Monomial> mList,

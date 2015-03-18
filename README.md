@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/kryptnostic/fhe-core.svg?branch=release/v0.1.2)](https://travis-ci.org/kryptnostic/fhe-core)
+
 fhe-core
 ===========
 

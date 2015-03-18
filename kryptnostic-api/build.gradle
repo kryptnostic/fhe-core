@@ -54,9 +54,12 @@ repositories {
   maven {
         url "https://oss.sonatype.org/content/repositories/snapshots"
   }
+  maven {
+        url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+  }
 }
 
-ext.jackson_version='2.4.2'
+ext.jackson_version='2.5.1'
 
 dependencies {
     /*

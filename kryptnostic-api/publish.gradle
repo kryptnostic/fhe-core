@@ -5,7 +5,7 @@ exec {
 }
 def branch=stdout.toString().trim();
 
-if( ( (branch.equals("develop") || branch.equals("master") ) ) && 
+if( ( (branch.equals("develop") || branch.equals("master") || branch.contains("release/") ) ) && 
     ( System.getenv("bamboo_JAR_SIGNING_KEYRING") != null) && 
     ( System.getenv("bamboo_JAR_SIGNING_PASSWORD")!=null ) && 
     ( System.getenv("bamboo_SONATYPE_USERNAME")!=null ) && 
@@ -33,10 +33,21 @@ if( ( (branch.equals("develop") || branch.equals("master") ) ) &&
         sign configurations.archives
     }
 
+    signing {
+        sign configurations.pom
+    }
+
     publishing {
         repositories {
             maven { 
                 url snapshotUrl
+                credentials {
+                    username = "$System.env.bamboo_SONATYPE_USERNAME"
+                    password = "$System.env.bamboo_SONATYPE_PASSWORD"
+                }
+            }
+            maven { 
+                url releaseUrl
                 credentials {
                     username = "$System.env.bamboo_SONATYPE_USERNAME"
                     password = "$System.env.bamboo_SONATYPE_PASSWORD"
@@ -59,9 +70,13 @@ if( ( (branch.equals("develop") || branch.equals("master") ) ) &&
                     asNode().children().last() + {
                         resolveStrategy = Closure.DELEGATE_FIRST
                         name 'fhe-core'
-                        description 'Kryptnostic APIs for Fully Homomorphic Encryption'
+                        description 'Kryptnostic implementations of Fully Homomorphic Encryption'
                         url 'https://www.github.com/kryptnostic/fhe-core'
-
+                        scm {
+                            url 'https://www.github.com/kryptnostic/fhe-core'
+                            connection 'https://www.github.com/kryptnostic/fhe-core'
+                            developerConnection 'https://www.github.com/kryptnostic/fhe-core'
+                        }
                         licenses {
                             license {
                                 name 'Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License'

@@ -545,7 +545,7 @@ public class SimplePolynomialFunctions {
 
         return new OptimizedPolynomialFunctionGF2( monomialCount, monomialCount, monomials, contributions );
     }
-
+    
     /**
      * Builds a non-linear sequence of functions that has the same output as another given sequence of functions, but
      * with a unique non-linear partitioning applied at each stage. *

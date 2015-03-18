@@ -30,6 +30,15 @@ public class PolynomialFunctionTestsDriver extends AbstractInstrumentedTest  {
         logger.debug("Tests stopping...");
     }
     
+    @Test
+    public void runFastCompose() {
+        tests.mvqCompostTest();
+    }
+    
+    @Test
+    public void testBucketing() {
+        tests.bucketTest();
+    }
     
     @Test
     public void runCompose() {
