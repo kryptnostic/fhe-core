@@ -93,7 +93,6 @@ public class EncryptedSearchPrivateKeyTests {
         actual = BitVectors
                 .fromSquareMatrix( intermediateL.multiply( bridgeKey.getBridge() ).multiply( intermediateR ) );
         expectedMatrix = EnhancedBitMatrix.squareMatrixfromBitVector( globalHash.apply( searchHash ) );
-
         expected = BitVectors.fromSquareMatrix( expectedMatrix.multiply( sharingKey.getMiddle() ).multiply(
                 expectedMatrix ) );
         Assert.assertEquals( expected, actual );

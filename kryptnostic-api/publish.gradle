@@ -53,13 +53,6 @@ if( ( (branch.equals("develop") || branch.equals("master") || branch.contains("r
                     password = "$System.env.bamboo_SONATYPE_PASSWORD"
                 }
             }
-            maven { 
-                url releaseUrl
-                credentials {
-                    username = "$System.env.bamboo_SONATYPE_USERNAME"
-                    password = "$System.env.bamboo_SONATYPE_PASSWORD"
-                }
-            }
         }
 
         publications {

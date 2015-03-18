@@ -38,16 +38,12 @@ if( ( (branch.equals("develop") || branch.equals("master") || branch.contains("r
     }
 
     publishing {
-
-        repositories {
-            if( branch.equals( "develop" ) ) {
-                maven { 
-                    url snapshotUrl
-                    credentials {
-                        username = "$System.env.bamboo_SONATYPE_USERNAME"
-                        password = "$System.env.bamboo_SONATYPE_PASSWORD"
-                    }
-
+        repositories {           
+            maven { 
+                url releaseUrl
+                credentials {
+                    username = "$System.env.bamboo_SONATYPE_USERNAME"
+                    password = "$System.env.bamboo_SONATYPE_PASSWORD"
                 }
             }
 
