@@ -217,7 +217,7 @@ public class PolynomialFunctionTests {
         logger.info( "Compose took {} ms.", watch.elapsed( TimeUnit.MILLISECONDS ) );
 
         for ( int i = 0; i < 25; ++i ) {
-            BitVector randomInput = BitVectors.randomVector( 256 << 1 );
+            BitVector randomInput = BitVectors.randomVector( INPUT_LENGTH << 1 );
             BitVector innerResult = inner.apply( randomInput );
             BitVector outerResult = outer.apply( innerResult );
             BitVector composedResult = composed.apply( randomInput );
