@@ -10,13 +10,14 @@ import org.slf4j.LoggerFactory;
 import cern.colt.bitvector.BitVector;
 
 import com.google.common.collect.Lists;
-import com.kryptnostic.linear.BitUtils;
+import com.kryptnostic.bitwise.BitVectors;
 import com.kryptnostic.linear.EnhancedBitMatrix;
 import com.kryptnostic.linear.EnhancedBitMatrix.SingularMatrixException;
-import com.kryptnostic.multivariate.PolynomialFunctionGF2;
 import com.kryptnostic.multivariate.gf2.Monomial;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
+import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
+import com.kryptnostic.multivariate.util.Monomials;
 
 
 /**
@@ -31,11 +32,11 @@ public class MultivariateLearning {
 	/**
 	 * Given a polynomial and an assumed order of that polynomial, computes the inverse.
 	 * @param function
-	 * @param order
+	 * @param orderOfInverse
 	 * @return Pair of inverse function and training data over which it was valid
 	 */
 	public static Pair<SimplePolynomialFunction, List <BitVector>> learnInverse(PolynomialFunction function, Integer orderOfInverse) {
-		Set<Monomial> monomials = Monomial.allMonomials( function.getOutputLength() , orderOfInverse);
+		Set<Monomial> monomials = Monomials.allMonomials( function.getOutputLength() , orderOfInverse);
 		SimplePolynomialFunction monomialsFunction = functionFromMonomials( monomials );
 		
 		List<BitVector> functionInputs = null;
@@ -49,7 +50,7 @@ public class MultivariateLearning {
 				functionOutputs.add( monomialsFunction.apply( output ) );
 			}
 			
-			coefficients = learnCoefficients(functionOutputs, functionInputs, monomialsFunction);
+			coefficients = learnCoefficients(functionOutputs, functionInputs);
 			if ( coefficients != null) {
 				logger.info("Succesfully inverted evaluated monomials with " + quantityInput + " inputs");
 				break;
@@ -70,7 +71,7 @@ public class MultivariateLearning {
      * @return Pair of function and training data over which it was valid
      */
     public static Pair<SimplePolynomialFunction, List <BitVector>> learnFunction(PolynomialFunction function, Integer order) {
-        Set<Monomial> monomials = Monomial.allMonomials( function.getInputLength() , order);
+        Set<Monomial> monomials = Monomials.allMonomials( function.getInputLength() , order);
         SimplePolynomialFunction monomialsFunction = functionFromMonomials( monomials );
         
         List<BitVector> functionInputs = null, extendedInputs;
@@ -85,7 +86,7 @@ public class MultivariateLearning {
                 extendedInputs.add( monomialsFunction.apply( input ) );
             }
             
-            coefficients = learnCoefficients(extendedInputs, functionOutputs, monomialsFunction);
+            coefficients = learnCoefficients(extendedInputs, functionOutputs);
             if ( coefficients != null) {
             	logger.info("Succesfully inverted evaluated monomials with " + quantityInput + " inputs");
                 break;
@@ -102,13 +103,13 @@ public class MultivariateLearning {
 	 * Attempts to compute the coefficients of a supplied polynomial function, given training data.
 	 * Returns null on failure to learn coefficients.
 	 */
-	public static EnhancedBitMatrix learnCoefficients(List<BitVector> inputs, List<BitVector> outputs, PolynomialFunction monomialsFunction) {
+	public static EnhancedBitMatrix learnCoefficients(List<BitVector> inputs, List<BitVector> outputs) {
 		EnhancedBitMatrix coefficients;
 		
-		EnhancedBitMatrix outputsTransposed = new EnhancedBitMatrix( outputs ).tranpose();
-		EnhancedBitMatrix inputsTransposed = new EnhancedBitMatrix( inputs ).tranpose();
+		EnhancedBitMatrix outputsTransposed = new EnhancedBitMatrix( outputs ).transpose();
+		EnhancedBitMatrix inputsTransposed = new EnhancedBitMatrix( inputs ).transpose();
 		try {
-			EnhancedBitMatrix generalizedInverseInputs = inputsTransposed.rightGeneralizedInverse();
+			EnhancedBitMatrix generalizedInverseInputs = inputsTransposed.rightInverse();
 			coefficients = outputsTransposed.multiply( generalizedInverseInputs );
 		} catch (SingularMatrixException e) {
 			logger.info( e.toString() );
@@ -132,21 +133,21 @@ public class MultivariateLearning {
 	        contribution.set( i );
 	        contributions[ i ] = contribution;
 	    }
-	    return new PolynomialFunctionGF2( monomials[ 0 ].size() , monomials.length , monomials, contributions );
+	    return new OptimizedPolynomialFunctionGF2( monomials[ 0 ].size() , monomials.length , monomials, contributions );
 	}
 	
 	/**
 	 * Returns a list of random inputs and the corresponding list of outputs for the given function.
 	 * @param function
 	 * @param quantity
-	 * @return
+	 * @return a paired list of input and output bitvectors, chosen randomly from {@code function}.
 	 */
 	private static Pair<List<BitVector>, List<BitVector>> getTrainingData(
 			PolynomialFunction function, int quantity) {
 		List<BitVector> inputs = Lists.newArrayList();
 		List<BitVector> outputs = Lists.newArrayList();
 		for (int i = 0; i < quantity; i++) {
-			inputs.add( BitUtils.randomVector( function.getInputLength() ) );
+			inputs.add( BitVectors.randomVector( function.getInputLength() ) );
 		}
 		
 		for (BitVector input : inputs) {

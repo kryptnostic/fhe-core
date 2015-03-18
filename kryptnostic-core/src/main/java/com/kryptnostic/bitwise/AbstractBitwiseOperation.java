@@ -1,7 +1,6 @@
 package com.kryptnostic.bitwise;
 
 import com.google.common.base.Preconditions;
-import com.kryptnostic.linear.BitUtils;
 import com.kryptnostic.multivariate.gf2.PolynomialFunction;
 
 import cern.colt.bitvector.BitVector;
@@ -16,8 +15,8 @@ public abstract class AbstractBitwiseOperation implements PolynomialFunction {
     @Override
     public BitVector apply( BitVector input ) {
         return apply( 
-                BitUtils.subVector( input , 0 , input.elements().length >>> 1 ) ,
-                BitUtils.subVector( input , input.elements().length >>> 1 , input.elements().length ) );
+                BitVectors.subVector( input , 0 , input.elements().length >>> 1 ) ,
+                BitVectors.subVector( input , input.elements().length >>> 1 , input.elements().length ) );
     }
 
     @Override

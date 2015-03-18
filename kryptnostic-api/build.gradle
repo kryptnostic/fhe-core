@@ -18,7 +18,6 @@ description = "Java Framework for building clustered RESTful web applications"
 group = "com.kryptnostic"
 version = getVersionName()
 
-apply plugin: "maven-publish"
 apply plugin: "application"
 apply plugin: "java"
 apply plugin: "maven"
@@ -43,9 +42,6 @@ task javadocJar(type: Jar, dependsOn:javadoc) {
   from javadoc.destinationDir
 }*/
 
-ext.sourceCompatibility=JavaVersion.VERSION_1_6
-ext.targetCompatibility=JavaVersion.VERSION_1_8
-
 repositories {
   mavenCentral()  
   mavenLocal()
@@ -58,10 +54,12 @@ repositories {
   maven {
         url "https://oss.sonatype.org/content/repositories/snapshots"
   }
+  maven {
+        url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+  }
 }
 
-ext.hazelcastVersion='3.1.5'
-ext.jackson_version='2.3.0'
+ext.jackson_version='2.5.1'
 
 dependencies {
     /*
@@ -69,8 +67,8 @@ dependencies {
      * Currently use Log4J through sl4j. 
      * TODO: Switch to logback
      */
-    compile group: 'org.slf4j', name: 'slf4j-log4j12', version:'1.7.5'
-    compile group: 'org.slf4j', name: 'slf4j-api', version:'1.7.5'
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version:'1.7.6'
+    compile group: 'org.slf4j', name: 'slf4j-api', version:'1.7.6'
 
 //    compile "ch.qos.logback:logback-classic:1.0.13"
     compile "log4j:log4j:1.2.17"
@@ -83,12 +81,13 @@ dependencies {
 
     compile 'com.codahale.metrics:metrics-core:3.0.2'
     compile 'com.codahale.metrics:metrics-graphite:3.0.2'
-    
+    compile 'com.codahale.metrics:metrics-annotation:3.0.2'
+        
     /*
      * GUAVA 
      * EventBus, FluentIterables, ListenableFutures and more
      */
-    compile 'com.google.guava:guava:15.0'
+    compile 'com.google.guava:guava:17.0'
 
     /*
      JODA TIME - A better datetime class.
@@ -142,25 +141,17 @@ dependencies {
     compile 'com.esotericsoftware.kryo:kryo:2.22'
 
     /*
-     * HAZELCAST - DISTRIBUTED DATA GRID
-     * Transparent http clustering, distributed java.util collections
-     */
-
-    compile "com.hazelcast:hazelcast:${hazelcastVersion}"
-    compile "com.hazelcast:hazelcast-client:${hazelcastVersion}"
-    compile "com.hazelcast:hazelcast-wm:${hazelcastVersion}"
-
-    /*
      * TESTING
      */
     testCompile 'junit:junit:4.11'
-}
-
-
-eclipse {
-    ext.downloadSources = true
-    ext.downloadJavadoc = true
-
-    ext.sourceCompatibility=JavaVersion.VERSION_1_6
-    ext.targetCompatibility=JavaVersion.VERSION_1_6
+    if( project.hasProperty('developmentMode') && project.developmentMode ) {
+        logger.quiet("$project.name is using project dependencies.")
+        testCompile( project(":fhe-core:kryptnostic-test") )
+    } else if( project.hasProperty( 'standaloneMode' ) && project.standaloneMode ) {
+        logger.quiet("$project.name is using standalone project dependencies.")
+        testCompile( project(":kryptnostic-test") )
+    } else {
+        logger.quiet(project.name + " using jar dependencies.")
+        testCompile "com.kryptnostic:kryptnostic-test:$version"
+    }
 }

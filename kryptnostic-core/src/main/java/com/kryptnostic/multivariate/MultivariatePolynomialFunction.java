@@ -3,6 +3,7 @@ package com.kryptnostic.multivariate;
 import java.util.List;
 
 import com.kryptnostic.multivariate.gf2.Monomial;
+import com.kryptnostic.multivariate.polynomial.OptimizedPolynomialFunctionGF2;
 
 import cern.colt.bitvector.BitVector;
 //TODO: Make this actually work generically for future GF(2^8) or other implementations.
@@ -18,14 +19,14 @@ public interface MultivariatePolynomialFunction {
      * @param rhs The function to add to the current function.
      * @return The resulting function for adding these two together.
      */
-    public abstract MultivariatePolynomialFunction add(PolynomialFunctionGF2 rhs);
+    public abstract MultivariatePolynomialFunction add(OptimizedPolynomialFunctionGF2 rhs);
 
     /**
      * Computes the direct product of two polynomial functions.
      * @param rhs The function to perform the product with.
      * @return A multivariate function representing the product.
      */
-    public abstract MultivariatePolynomialFunction product( PolynomialFunctionGF2 rhs );
+    public abstract MultivariatePolynomialFunction product( OptimizedPolynomialFunctionGF2 rhs );
     
     /**
      * Evaluates the current polynomial function.
