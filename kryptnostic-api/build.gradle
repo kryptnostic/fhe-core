@@ -32,7 +32,7 @@ task wrapper(type: Wrapper) {
     gradleVersion = '1.9'
 }
 
-task sourceJar (type : Jar) {
+task sourcesJar (type : Jar) {
   classifier = 'sources'
   from sourceSets.main.allSource
 }
@@ -40,7 +40,8 @@ task sourceJar (type : Jar) {
 task javadocJar(type: Jar, dependsOn:javadoc) {
   classifier = 'javadoc'
   from javadoc.destinationDir
-}*/
+}
+*/
 
 repositories {
   mavenCentral()  
@@ -58,8 +59,6 @@ repositories {
         url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
   }
 }
-
-ext.jackson_version='2.5.1'
 
 dependencies {
     /*

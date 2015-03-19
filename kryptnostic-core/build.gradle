@@ -38,9 +38,17 @@ repositories {
         url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
   }
 }
+/*
+task sourcesJar (type : Jar) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+}
 
-
-ext.jackson_version='2.5.1'
+task javadocJar(type: Jar, dependsOn:javadoc) {
+  classifier = 'javadoc'
+  from javadoc.destinationDir
+}
+*/
 
 dependencies {
     /*
