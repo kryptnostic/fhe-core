@@ -25,6 +25,7 @@ allprojects {
     apply plugin: "maven"
     apply plugin: "idea"
     apply plugin: "jacoco"
+    apply plugin: "maven-publish"
 
     task wrapper(type: Wrapper) {
         gradleVersion = '2.4'
