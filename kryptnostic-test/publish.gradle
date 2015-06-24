@@ -39,7 +39,7 @@ if( ( (branch.equals("develop") || branch.equals("master") ) ) &&
 
     publishing {
         repositories {
-            maven { 
+            maven {
                 url snapshotUrl
                 credentials {
                     username = "$System.env.bamboo_SONATYPE_USERNAME"
@@ -82,11 +82,6 @@ if( ( (branch.equals("develop") || branch.equals("master") ) ) &&
                                 id 'geekbeast'
                                 name 'Matthew Tamayo-Rios'
                                 email 'matthew@kryptnostic.com'
-                            }
-                            developer {
-                                id 'hubsmoke'
-                                name 'Sina Iman'
-                                email 'sina@kryptnostic.com'
                             }
                             developer {
                                 id 'nickdhewitt'

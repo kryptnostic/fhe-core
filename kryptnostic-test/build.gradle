@@ -1,60 +1,11 @@
-//Easy semantic version based off describe + tags
-def getVersionName = { ->
-    def stdout = new ByteArrayOutputStream()
-    exec {
-        commandLine 'git', 'describe', '--tags', '--dirty', '--long'
-        standardOutput = stdout
-    }
-    def tagVer = stdout.toString().trim()
-    def semVer = (tagVer =~ /v([\d\.]+)/)[0][1]
-
-    if (tagVer.contains('dev')) {
-        semVer += "-SNAPSHOT"
-    }
-    return semVer
-}
-
-description = "Java Framework for building clustered RESTful web applications"
-group = "com.kryptnostic"
-version = getVersionName()
-
 apply plugin: "application"
-apply plugin: "java"
-apply plugin: "maven"
-apply plugin: "eclipse"
-apply plugin: "idea"
-apply from: "publish.gradle"
 
 mainClassName = ""
-
-repositories {
-  mavenCentral()  
-  mavenLocal()
-  maven {
-    url "http://repo.maven.apache.org/maven2"
-  } 
-  maven {
-        url "https://oss.sonatype.org/content/repositories/snapshots"
-  }
-
-}
-
 
 ext.jackson_version='2.3.0'
 ext.spring_framework_version='4.0.6.RELEASE'
 
 dependencies {
-    /*
-     * SL4J + LOG4J
-     * Currently use Log4J through sl4j. 
-     * TODO: Switch to logback
-     */
-    compile group: 'org.slf4j', name: 'slf4j-log4j12', version:'1.7.6'
-    compile group: 'org.slf4j', name: 'slf4j-api', version:'1.7.6'
-
-//    compile "ch.qos.logback:logback-classic:1.0.13"
-    compile "log4j:log4j:1.2.17"
-    
     /*
      * CORE SPRING FRAMEWORK DEPENDENCIES
      * Depending injection, asynchronous execution, task scheduling, aspect oriented proxies, and more.
@@ -66,81 +17,28 @@ dependencies {
      compile "org.springframework:spring-web:${project.spring_framework_version}"
      compile "org.springframework:spring-webmvc:${project.spring_framework_version}"
      compile "org.springframework:spring-test:${project.spring_framework_version}"
-    
+
     /*
      * Metrics
      * Awesome reporting-- defaults to Graphite
-     * TODO: Integrate Ryan's Spring integration 
      */
-
-    compile 'com.codahale.metrics:metrics-core:3.0.2'
-    compile 'com.codahale.metrics:metrics-graphite:3.0.2'
     compile 'com.ryantenney.metrics:metrics-spring:3.0.1'
 
     /*
      * GUAVA 
      * EventBus, FluentIterables, ListenableFutures and more
      */
-
     compile 'com.google.guava:guava:15.0'
 
-    /*
-     JODA TIME - A better datetime class.
-     */
-    compile 'joda-time:joda-time:2.3'
-    
     /*
      * APACHE COMMONS
      * Logging, StringUtils, RandomStringUtils, IOUtils, and more
      */
-
-    compile 'commons-io:commons-io:2.4'
-    compile 'org.apache.commons:commons-lang3:3.1'
     compile 'commons-codec:commons-codec:1.9'
-    compile 'commons-logging:commons-logging:1.1.3'
-    compile 'commons-collections:commons-collections:3.2.1'
     compile 'org.apache.commons:commons-math3:3.2'
-
-    /*
-     * JACKSON SERIALIZATION
-     * YAML via SnakeYaml
-     * Afterburner for faster serialization
-     * Guava integration
-     * Smile for binary serialization
-     * Jersey integration
-     * Jaxb annotation support
-     */
-    compile "com.fasterxml.jackson.core:jackson-core:${jackson_version}"
-    compile "com.fasterxml.jackson.core:jackson-databind:${jackson_version}"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-guava:${jackson_version}"
-    compile "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:${jackson_version}"
-    compile "com.fasterxml.jackson.module:jackson-module-afterburner:${jackson_version}"
-    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-smile:${jackson_version}"
-    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson_version}"
-    compile "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${jackson_version}"
-    compile 'org.yaml:snakeyaml:1.13'
-
-    /*
-     * @Inject and @Nullable support
-     */
-    compile 'javax.inject:javax.inject:1'
-    compile 'com.google.code.findbugs:jsr305:1.3.9'
-    
-    /*
-     * Linear algebra including GF(2) matrices
-     * TODO: Move to a separate plugin / remove from core
-     */
-	compile 'colt:colt:1.2.0'
-
-    /*
-     * Kryo serialization -- faster generic Java serialization
-     */
-    compile 'com.esotericsoftware.kryo:kryo:2.22'  
-    //compile( project(":kryptnostic-api") )
 
     /*
      * TESTING
      */
-
     compile 'junit:junit:4.11'
 }

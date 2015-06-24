@@ -92,11 +92,6 @@ if( ( (branch.equals("develop") || branch.equals("master") || branch.contains("r
                                 email 'matthew@kryptnostic.com'
                             }
                             developer {
-                                id 'hubsmoke'
-                                name 'Sina Iman'
-                                email 'sina@kryptnostic.com'
-                            }
-                            developer {
                                 id 'nickdhewitt'
                                 name 'Nick Hewitt'
                                 email 'nick@kryptnostic.com'
