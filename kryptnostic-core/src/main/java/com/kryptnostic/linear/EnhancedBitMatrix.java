@@ -542,7 +542,7 @@ public class EnhancedBitMatrix implements Serializable {
             }
         }
 
-        if ( !invertible ) {
+        if ( !invertible || invertibleExtension == null ) {
             throw new SingularMatrixException(
                     "Unable to compute the right generalized inverse, since no invertible extension was found." );
         }
@@ -568,7 +568,7 @@ public class EnhancedBitMatrix implements Serializable {
             }
         }
 
-        if ( !invertible ) {
+        if ( !invertible || inverse == null)  {
             throw new SingularMatrixException(
                     "Unable to compute the left generalized inverse, since no invertible extension was found." );
         }
