@@ -108,7 +108,8 @@ subprojects {
         /*
          JODA TIME - A better datetime class.
          */
-        compile 'joda-time:joda-time:2.3'
+        compile 'joda-time:joda-time:2.8.2'
+        
 
         /*
          * JACKSON SERIALIZATION
