@@ -2,7 +2,7 @@ apply plugin: "application"
 
 mainClassName = ""
 
-ext.jackson_version='2.3.0'
+ext.jackson_version='2.6.1'
 ext.spring_framework_version='4.0.6.RELEASE'
 
 dependencies {
@@ -25,10 +25,10 @@ dependencies {
     compile 'com.ryantenney.metrics:metrics-spring:3.0.1'
 
     /*
-     * GUAVA 
+     * GUAVA
      * EventBus, FluentIterables, ListenableFutures and more
      */
-    compile 'com.google.guava:guava:15.0'
+    compile 'com.google.guava:guava:18.0'
 
     /*
      * APACHE COMMONS
