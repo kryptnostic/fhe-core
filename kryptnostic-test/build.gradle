@@ -25,7 +25,7 @@ dependencies {
     compile 'com.ryantenney.metrics:metrics-spring:3.0.1'
 
     /*
-     * GUAVA 
+     * GUAVA
      * EventBus, FluentIterables, ListenableFutures and more
      */
     compile 'com.google.guava:guava:18.0'

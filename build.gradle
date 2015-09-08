@@ -88,7 +88,7 @@ subprojects {
     dependencies {
         /*
          * SL4J + LOG4J
-         * Currently use Log4J through sl4j. 
+         * Currently use Log4J through sl4j.
          * TODO: Switch to logback
          */
         compile group: 'org.slf4j', name: 'slf4j-log4j12', version:'1.7.6'
@@ -100,7 +100,7 @@ subprojects {
         /*
          * Metrics
          * Awesome reporting-- defaults to Graphite
-         * TODO: Integrate Ryan's Spring integration 
+         * TODO: Integrate Ryan's Spring integration
          */
         compile 'com.codahale.metrics:metrics-core:3.0.2'
         compile 'com.codahale.metrics:metrics-graphite:3.0.2'
@@ -110,6 +110,7 @@ subprojects {
          */
         compile 'joda-time:joda-time:2.8.2'
         
+
         /*
          * JACKSON SERIALIZATION
          * YAML via SnakeYaml
@@ -134,7 +135,7 @@ subprojects {
          */
         compile 'javax.inject:javax.inject:1'
         compile 'com.google.code.findbugs:jsr305:1.3.9'
-        
+
         /*
          * Linear algebra including GF(2) matrices
          * TODO: Move to a separate plugin / remove from core
@@ -144,7 +145,7 @@ subprojects {
         /*
          * Kryo serialization -- faster generic Java serialization
          */
-        compile 'com.esotericsoftware.kryo:kryo:2.22'  
+        compile 'com.esotericsoftware.kryo:kryo:2.22'
 
         /*
          * APACHE COMMONS

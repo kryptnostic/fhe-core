@@ -17,9 +17,9 @@ dependencies {
      * Awesome reporting-- defaults to Graphite
      */
     compile 'com.codahale.metrics:metrics-annotation:3.0.2'
-        
+
     /*
-     * GUAVA 
+     * GUAVA
      * EventBus, FluentIterables, ListenableFutures and more
      */
     compile 'com.google.guava:guava:18.0'
