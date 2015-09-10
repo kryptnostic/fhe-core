@@ -3,6 +3,9 @@
 fhe-core
 ===========
 
+This library is deprecated, please see https://github.com/kryptnostic/krypto for the new implementation
+---------------------------------------------------------------------------------------------------------
+
 Libraries for fully homomorphic encryption.
 
 
