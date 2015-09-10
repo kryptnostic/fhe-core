@@ -1,10 +1,10 @@
 [![Build Status](https://travis-ci.org/kryptnostic/fhe-core.svg?branch=release/v0.1.2)](https://travis-ci.org/kryptnostic/fhe-core)
 
-fhe-core
-===========
-
 This library is deprecated, please see https://github.com/kryptnostic/krypto for the new implementation
 ---------------------------------------------------------------------------------------------------------
+
+fhe-core
+===========
 
 Libraries for fully homomorphic encryption.
 
