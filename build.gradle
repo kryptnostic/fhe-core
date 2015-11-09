@@ -85,6 +85,8 @@ subprojects {
         }
     }
 
+    ext.slf4j_version='1.7.12'
+    ext.log4j_version='2.4.1'
     dependencies {
         /*
         * SL4J + LOG4J2
